@@ -20,14 +20,14 @@ class Person(db.Document):
     last_name = db.StringField(max_length=60, required=True)
     email = db.StringField(max_length=60, required=True)
 
-@app.route("/person/", methods=['POST'])
+@app.route("/Person/", methods=['POST'])
 def add_person():
     body = request.get_json()
     print(body)
     person = Person(**body).save()
     return jsonify(person), 201
 
-@app.route("/person/", methods=['GET'])
+@app.route("/Person/", methods=['GET'])
 def get_people():
     person = Person.objects()
     return jsonify(person), 200

@@ -1,7 +1,6 @@
-import datetime
+import json
 import os
-
-from flask import Flask, Response, request, jsonify
+from flask import Flask
 from flask_mongoengine import MongoEngine
 
 app = Flask(__name__)
@@ -20,17 +19,8 @@ class Person(db.Document):
     last_name = db.StringField(max_length=60, required=True)
     email = db.StringField(max_length=60, required=True)
 
-@app.route("/person/", methods=['POST'])
-def add_person():
-    body = request.get_json()
-    print(body)
-    person = Person(**body).save()
-    return jsonify(person), 201
+with open('db_scripts/example_data/people.json', 'r') as f:
+    people_data = json.load(f)
 
-@app.route("/person/", methods=['GET'])
-def get_people():
-    person = Person.objects()
-    return jsonify(person), 200
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+for person in people_data:
+    Person(**person).save()

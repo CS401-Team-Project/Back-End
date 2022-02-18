@@ -6,12 +6,17 @@ if len(sys.argv) != 3:
     print('python3 setup_db.py [username] [password]')
     sys.exit()
 
+print(os.environ['MONGODB_HOST'])
+print(sys.argv[1])
+print(sys.argv[2])
+
 # create the connection
 client = MongoClient(host=os.environ['MONGODB_HOST'],
                      username=sys.argv[1],
                      password=sys.argv[2],
                      authSource='admin')
-db = client['smart_ledger']
+
+db = client['smart-ledger']
 
 # check if the mongodb user is already created
 listing = db.command('usersInfo')

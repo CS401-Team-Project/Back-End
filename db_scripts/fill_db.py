@@ -71,7 +71,6 @@ if name_list is not None:
 dec_if_equal = lambda x, y, dec=1: x-dec if x == y else x
 min_group_size = dec_if_equal(min_group_size, max_group_size)
 min_group_size = dec_if_equal(min_group_size, max_group_size)
-print(min_email_len, max_email_len)
 min_email_len = dec_if_equal(min_email_len, max_email_len)
 min_transactions = dec_if_equal(min_transactions, max_transactions)
 min_item_quantity = dec_if_equal(min_item_quantity, max_item_quantity)
@@ -109,8 +108,8 @@ def get_one_random_domain(domains):
 # add people to database
 p_ids = []
 for i in range(num_users):
-    username = random_char(np.random.randint(min_email_len, max_email_len)) if email_usernames is None else email_usernames[i]
     first_name, last_name = (names.get_first_name(), names.get_last_name()) if name_list is None else (name_list[i]['first_name'], name_list[i]['last_name'])
+    username = f'{first_name}_{last_name}_{np.random.randint(0,1000):0>4}' if email_usernames is None else email_usernames[i]
     p = {
         "first_name": first_name,
         "last_name": last_name,
@@ -124,7 +123,7 @@ for i in range(num_users):
 g_ids = []
 for group in range(num_groups):
     g = {
-        'name': randomname.generate('a/appearance','a/size', 'n/dogs').replace('-', ' ')
+        'name': randomname.generate('a/appearance', 'a/size', 'n/dogs').replace('-', ' ')
     }
     g = Group(**g)
     g.save()

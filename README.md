@@ -1,10 +1,8 @@
 # Back-End
 
 
-## to set up db 
+## Peaking at the mongo db
 1. docker exec -it mongo bash
-2. mongo -u admin -p
-3. use smart_ledger
-4. db.createUser({user: 'apiuser', pwd: 'apipassword', roles: [{role: 'readWrite', db: 'smart_ledger'}]})
-
-TODO - make script to do this automatically
+2. mongo -u admin -p 
+3. mongo -u apiuser -p apipassword --authenticationDatabase smart-ledger
+4. use smart-ledger

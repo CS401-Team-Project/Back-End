@@ -19,10 +19,18 @@ directory = path.Path(__file__).abspath()
 sys.path.append(directory.parent.parent)
 from models import *
 
-if len(sys.argv) != 3:
-    print('Usage: python3 fill_db.py [admin-username] [admin-password]')
+# get config for data generation
+config = 'scripts/example_data/data_gen_config.json'
+if len(sys.argv) != 2:
+    print('Usage: python3 fill_db.py <config-file.json>')
     sys.exit()
+else:
+    config = sys.argv[1]
 
+with open(config, 'r') as f:
+    config = json.load(f)
+
+# TODO: Implement Flask SECRET_KEY handling: https://flask.palletsprojects.com/en/2.0.x/config/#SECRET_KEY
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
     'host': os.environ['MONGO_HOST'],
@@ -34,13 +42,6 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine()
 db.init_app(app)
-
-# get config for data generation
-config = 'scripts/example_data/data_gen_config.json'
-if len(sys.argv) == 2:
-    config = sys.argv[1]
-with open(config, 'r') as f:
-    config = json.load(f)
 
 # read config variables
 seed = int(config['seed'])

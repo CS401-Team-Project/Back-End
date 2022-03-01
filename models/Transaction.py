@@ -1,3 +1,6 @@
+"""
+TODO: Module docstring
+"""
 import datetime
 
 from mongoengine import ObjectIdField, StringField, Document, DateTimeField, EmbeddedDocumentListField, FloatField
@@ -6,6 +9,9 @@ from .TransactionItem import TransactionItem
 
 
 class Transaction(Document):
+    """
+    TODO: Class docstring
+    """
     # general info
     title = StringField(max_length=60, required=True)
     desc = StringField(default='', required=False)

@@ -1,9 +1,15 @@
+"""
+TODO: Module docstring
+"""
 import datetime
 
 from mongoengine import StringField, Document, EmailField, ListField, DateTimeField
 
 
 class Person(Document):
+    """
+    TODO: Class docstring
+    """
     first_name = StringField(max_length=60, required=True)
     last_name = StringField(max_length=60, required=True)
     email = EmailField(max_length=100, required=True)

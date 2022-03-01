@@ -1,7 +1,13 @@
+"""
+TODO: Module Docstring
+"""
 from mongoengine import StringField, Document, FloatField, IntField
 
 
 class Item(Document):
+    """
+    TODO: Class Docstring
+    """
     # general info
     name = StringField(default='', max_length=60, required=True)
     desc = StringField(default='', required=True)

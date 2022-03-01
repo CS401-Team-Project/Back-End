@@ -1,3 +1,6 @@
+"""
+TODO: Module Docstring
+"""
 # general utils
 import json
 # for the randomness
@@ -15,9 +18,10 @@ import randomname
 from flask import Flask
 from flask_mongoengine import MongoEngine
 
+from models import Person, Group, Transaction, TransactionItem, Item
+
 directory = path.Path(__file__).abspath()
 sys.path.append(directory.parent.parent)
-from models import *
 
 # get config for data generation
 config = 'scripts/example_data/data_gen_config.json'

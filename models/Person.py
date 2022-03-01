@@ -1,5 +1,6 @@
 import datetime
-from mongoengine import *
+
+from mongoengine import StringField, Document, EmailField, ListField, DateTimeField
 
 
 class Person(Document):
@@ -13,4 +14,4 @@ class Person(Document):
     #  - API Key Last Generated ( for google auth and email auth )
     #  - Password ( hash plus salted - only for email auth )
     #  - sub object ( Embedded Document )
-    #      - cashapp, venmo, and user names
+    #      - CashApp, Venmo, and user names

@@ -1,4 +1,4 @@
-from mongoengine import *
+from mongoengine import StringField, Document, ListField
 
 
 class Group(Document):

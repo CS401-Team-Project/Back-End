@@ -1,9 +1,12 @@
+"""
+TODO: Module Docstring
+"""
 import os
 
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
-from models import *
+from models import Person, Group
 
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {

@@ -15,8 +15,8 @@ ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
 
 # Set working directory and addour Flask API files
-WORKDIR /app
-ADD . /app
+WORKDIR /App
+ADD . /App
 
 # Anything added to the end of the docker run command
 # is appended to the entrypoint command

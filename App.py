@@ -23,6 +23,10 @@ db.init_app(app)
 
 @app.route("/person", methods=['GET'])
 def get_person():
+    """
+
+    :return:
+    """
     print(f"ROUTE get_person(): {request}")
     email = request.args.get('email')
     person = Person.objects(email=email).first()
@@ -31,6 +35,10 @@ def get_person():
 
 @app.route("/group", methods=['GET'])
 def get_group():
+    """
+
+    :return:
+    """
     print(f"ROUTE get_group: {request}")
     g_id = request.args.get('id')
     group = Group.objects(id=g_id).first()

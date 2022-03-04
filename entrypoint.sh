@@ -9,13 +9,13 @@ ADMIN_USER=admin
 ADMIN_PASS=password
 
 echo "## Creating MongoDB API user..."
-python ./scripts/create_api_user.py $ADMIN_USER $ADMIN_PASS || exit 1;
+python ./scripts/CreateApiUser.py $ADMIN_USER $ADMIN_PASS || exit 1;
 
 echo "## Filling Database with test data..."
-python ./scripts/fill_db.py || exit 1;
+python ./scripts/FillDB.py || exit 1;
 
 echo "## Starting API Server with Gunicorn"
-gunicorn --bind 0.0.0.0:5000 app:app
+gunicorn --bind 0.0.0.0:5000 App:App
 
 echo "#################################################################"
 echo "## END                   entrypoint.sh                         ##"

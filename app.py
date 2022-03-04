@@ -6,7 +6,7 @@ import os
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
-from models import Person, Group
+from Models import Person, Group
 
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {

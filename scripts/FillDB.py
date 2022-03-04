@@ -18,21 +18,21 @@ import randomname
 from flask import Flask
 from flask_mongoengine import MongoEngine
 
-from models import Person, Group, Transaction, TransactionItem, Item
+from Models import Person, Group, Transaction, TransactionItem, Item
 
 directory = path.Path(__file__).abspath()
 sys.path.append(directory.parent.parent)
 
 # get config for data generation
-config = 'scripts/example_data/data_gen_config.json'
+CONFIG = 'scripts/example_data/data_gen_config.json'
 if len(sys.argv) != 2:
     print('Usage: python3 fill_db.py <config-file.json>')
     sys.exit()
 else:
-    config = sys.argv[1]
+    CONFIG = sys.argv[1]
 
-with open(config, 'r') as f:
-    config = json.load(f)
+with open(CONFIG, 'r') as f:
+    CONFIG = json.load(f)
 
 # TODO: Implement Flask SECRET_KEY handling: https://flask.palletsprojects.com/en/2.0.x/config/#SECRET_KEY
 app = Flask(__name__)
@@ -48,19 +48,19 @@ db = MongoEngine()
 db.init_app(app)
 
 # read config variables
-seed = int(config['seed'])
-email_domains = config['email_domains']
-min_email_len, max_email_len = int(config['min_email_len']), int(config['max_email_len'])
-num_users = int(config['num_users'])
-num_groups = int(config['num_groups'])
-min_group_size, max_group_size = int(config['min_group_size']), int(config['max_group_size'])
-min_transactions, max_transactions = int(config['min_transactions']), int(config['max_transactions'])
-min_item_quantity, max_item_quantity = int(config['min_transactions']), int(config['max_item_quantity'])
-min_item_per_transac_item, max_item_per_transac_item = int(config['min_item_per_transac_item']), int(
-    config['max_item_per_transac_item'])
-min_item_price, max_item_price = float(config['min_item_price']), float(config['max_item_price'])
-email_usernames = config['email_usernames'] if 'email_usernames' in config else None
-name_list = config['names'] if 'names' in config else None
+seed = int(CONFIG['seed'])
+email_domains = CONFIG['email_domains']
+min_email_len, max_email_len = int(CONFIG['min_email_len']), int(CONFIG['max_email_len'])
+num_users = int(CONFIG['num_users'])
+num_groups = int(CONFIG['num_groups'])
+min_group_size, max_group_size = int(CONFIG['min_group_size']), int(CONFIG['max_group_size'])
+min_transactions, max_transactions = int(CONFIG['min_transactions']), int(CONFIG['max_transactions'])
+min_item_quantity, max_item_quantity = int(CONFIG['min_transactions']), int(CONFIG['max_item_quantity'])
+min_item_per_transac_item, max_item_per_transac_item = int(CONFIG['min_item_per_transac_item']), int(
+    CONFIG['max_item_per_transac_item'])
+min_item_price, max_item_price = float(CONFIG['min_item_price']), float(CONFIG['max_item_price'])
+email_usernames = CONFIG['email_usernames'] if 'email_usernames' in CONFIG else None
+name_list = CONFIG['names'] if 'names' in CONFIG else None
 
 # get list of domain names for email generation
 with open(email_domains, 'r') as f:

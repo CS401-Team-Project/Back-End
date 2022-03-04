@@ -17,19 +17,19 @@ import randomname
 # flask imports
 from flask import Flask
 from flask_mongoengine import MongoEngine
-
-from Models import Person, Group, Transaction, TransactionItem, Item
-
 directory = path.Path(__file__).abspath()
 sys.path.append(directory.parent.parent)
+from Models import Person, Group, Transaction, TransactionItem, Item
+
 
 # get config for data generation
-CONFIG = 'scripts/example_data/data_gen_config.json'
-if len(sys.argv) != 2:
+if len(sys.argv) == 2:
+    CONFIG = sys.argv[1]
+elif len(sys.argv) == 1:
+    CONFIG = 'scripts/example_data/data_gen_config.json'
+else:
     print('Usage: python3 fill_db.py <config-file.json>')
     sys.exit()
-else:
-    CONFIG = sys.argv[1]
 
 with open(CONFIG, 'r') as f:
     CONFIG = json.load(f)

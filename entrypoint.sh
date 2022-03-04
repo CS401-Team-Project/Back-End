@@ -15,7 +15,7 @@ echo "## Filling Database with test data..."
 python ./scripts/FillDB.py || exit 1;
 
 echo "## Starting API Server with Gunicorn"
-gunicorn --bind 0.0.0.0:5000 App:App
+gunicorn --bind 0.0.0.0:5000 App:app
 
 echo "#################################################################"
 echo "## END                   entrypoint.sh                         ##"

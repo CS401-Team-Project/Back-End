@@ -190,7 +190,7 @@ for t_id in t_ids:
     t = Transaction.objects(id=t_id).first()
     g_id = transaction_group[t_id]
     num_p_g = len(group_people[g_id])
-    total_price = 0
+    TOTAL_PRICE = 0
     for _ in range(np.random.randint(min_item_per_transac_item, max_item_per_transac_item)):
         item_cost = random_float(min_item_price, max_item_price)
         quantity = np.random.randint(min_item_quantity, max_item_quantity)
@@ -219,8 +219,8 @@ for t_id in t_ids:
             'item_cost': item_cost * quantity
         }
         transac_item = TransactionItem(**transac_item)
-        total_price += item_cost * quantity
+        TOTAL_PRICE += item_cost * quantity
         t.items.append(transac_item)
         t.save()
-    t.total_price = total_price
+    t.total_price = TOTAL_PRICE
     t.save()

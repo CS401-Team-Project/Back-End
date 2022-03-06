@@ -35,7 +35,7 @@ def get_group():
     group = Group.objects(id=g_id).first()
     return jsonify(group), 200
 
-
+#@app.route("/register")
 def check_if_registered():
     token = request.form["idtoken"]
     try:
@@ -55,7 +55,7 @@ def check_if_registered():
         # Invalid token
         return -1
         
-
+#@app.route("/register")
 def register_user():
     token = request.form["idtoken"]
     try:

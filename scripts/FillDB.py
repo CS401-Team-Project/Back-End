@@ -31,7 +31,7 @@ else:
     print('Usage: python3 fill_db.py <config-file.json>')
     sys.exit()
 
-with open(CONFIG, 'r') as f:
+with open(CONFIG, 'r', encoding='UTF-8') as f:
     CONFIG = json.load(f)
 
 # TODO: Implement Flask SECRET_KEY handling: https://flask.palletsprojects.com/en/2.0.x/config/#SECRET_KEY
@@ -63,15 +63,15 @@ email_usernames = CONFIG['email_usernames'] if 'email_usernames' in CONFIG else 
 name_list = CONFIG['names'] if 'names' in CONFIG else None
 
 # get list of domain names for email generation
-with open(email_domains, 'r') as f:
+with open(email_domains, 'r', encoding='UTF-8') as f:
     email_domains = json.load(f)
 
 if email_usernames is not None:
-    with open(email_usernames, 'r') as f:
+    with open(email_usernames, 'r', encoding='UTF-8') as f:
         email_usernames = json.load(f)
 
 if name_list is not None:
-    with open(name_list, 'r') as f:
+    with open(name_list, 'r', encoding='UTF-8') as f:
         name_list = json.load(f)
 
 # fix some values if needed

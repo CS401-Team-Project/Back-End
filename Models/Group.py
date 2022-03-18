@@ -1,7 +1,13 @@
-from mongoengine import *
+"""
+TODO: Module docstring
+"""
+from mongoengine import StringField, Document, ListField
 
 
 class Group(Document):
+    """
+    TODO: Class Docstring
+    """
     name = StringField(max_length=60, required=True)
     people = ListField(default=[])
     transactions = ListField(default=[])

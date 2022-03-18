@@ -10,16 +10,6 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Turn off buffering
 ENV PYTHONUNBUFFERED 1
 
-# Environment Variables for Init Script
-# ARG MONGODB_USERNAME
-# ENV MONGODB_USERNAME $MONGODB_USERNAME
-
-# ARG MONGODB_PASSWORD
-# ENV MONGODB_PASSWORD $MONGODB_PASSWORD
-
-# ARG MONGODB_HOST
-# ENV MONGODB_HOST $MONGODB_HOST
-
 # Install requirements using pip
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
@@ -28,4 +18,6 @@ RUN python -m pip install -r requirements.txt
 WORKDIR /app
 ADD . /app
 
-# RUN python /app/db_scripts/create_api_user.py admin password
+# Anything added to the end of the docker run command
+# is appended to the entrypoint command
+ENTRYPOINT ["./entrypoint.sh"]

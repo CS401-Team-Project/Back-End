@@ -1,19 +1,14 @@
 {
-
   "seed": 0,
-
   "num_users": 7,
-  "email_domains": "db_scripts/example_data/domains.json",
+  "email_domains": "scripts/example_data/domains.json",
   "min_email_len": 1,
   "max_email_len": 60,
-
   "num_groups": 3,
   "min_group_size": 3,
   "max_group_size": 8,
-
   "min_transactions": 5,
   "max_transactions": 20,
-
   "min_item_per_transac_item": 1,
   "max_item_per_transac_item": 20,
   "min_item_price": 0.99,

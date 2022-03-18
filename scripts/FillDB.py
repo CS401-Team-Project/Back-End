@@ -105,10 +105,20 @@ random.seed(seed)
 
 
 def random_char(char_num):
+    """
+    get random string of characters
+    :param char_num: number of characters
+    :return:
+    """
     return ''.join(random.choice(string.ascii_letters) for _ in range(char_num))
 
 
 def get_one_random_domain(domains):
+    """
+    pick a random domain from the list of domains
+    :param domains: list of email domains
+    :return:
+    """
     return random.choice(domains)
 
 
@@ -182,6 +192,12 @@ for g_id in g_ids:
 
 # randomly add items to transactions
 def random_float(low, high):
+    """
+    get random float between two values
+    :param low: lowest float
+    :param high: highest float
+    :return:
+    """
     return np.random.random() * (high - low) + low
 
 

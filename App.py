@@ -44,6 +44,14 @@ def get_group():
     group = Group.objects(id=g_id).first()
     return jsonify(group), 200
 
+@app.route("/test", methods=['GET'])
+def test():
+    """
+    Just a test route to verify that the API is working.
+    :return: Smart Ledger API Endpoint: OK
+    """
+    print(f"ROUTE test: {request}")
+    return "Smart Ledger API Endpoint: OK", 200
 
 if __name__ == "__main__":
     # TODO: Change to production debug False

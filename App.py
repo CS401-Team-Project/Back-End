@@ -61,7 +61,6 @@ def test():
 
 
 # dont hardcode this. Will fix at later date
-CLIENT_ID = '996982688294-rqhcr4d5b6m3vk0e3ur2no457iqql2u5.apps.googleusercontent.com'
 
 
 def verify_token():
@@ -72,14 +71,14 @@ def verify_token():
     token = request.args.get('token')
     try:
         # verify the token
-        token_info = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+        token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
 
         # check validity of toke issuer
         if token_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
             raise ValueError('Wrong issuer.')
 
         # recheck client id
-        if token_info['aud'] != CLIENT_ID:
+        if token_info['aud'] != os.environ['CLIENT_ID']:
             raise ValueError('Client ID does not match.')
 
         person = {

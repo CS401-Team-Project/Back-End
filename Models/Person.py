@@ -3,7 +3,7 @@ TODO: Module docstring
 """
 import datetime
 
-from mongoengine import StringField, Document, EmailField, ListField, DateTimeField
+from mongoengine import StringField, Document, EmailField, ListField, DateTimeField, ObjectIdField
 
 
 class Person(Document):
@@ -16,8 +16,8 @@ class Person(Document):
     groups = ListField(default=[])
     date_joined = DateTimeField(default=datetime.datetime.utcnow)
     sub = StringField(max_length=255, unique=True)
-    token_latest # Not sure what kind of field this should be or if this is what i should store
-    token_exp = DateTimeField
+    token = ObjectIdField()
+    token_exp = DateTimeField()
     # TODO - Fields to add
     #  - API Key ( will have to change regularly )
     #  - API Key Last Generated ( for google auth and email auth )

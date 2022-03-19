@@ -1,6 +1,6 @@
-name: Pylint
+name: Back-End - Pylint
 
-on: [push]
+on: [ push ]
 
 jobs:
   build:

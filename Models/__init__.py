@@ -1,3 +1,6 @@
+"""
+TODO: Module Docstring
+"""
 __all__ = ["Group", "Person", "TransactionItem", "Transaction", "Item"]
 from .Group import Group
 from .Person import Person

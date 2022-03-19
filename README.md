@@ -1,5 +1,6 @@
 # Back-End
 
+[![Pylint](https://github.com/CS401-Team-Project/Back-End/actions/workflows/pylint.yml/badge.svg)](https://github.com/CS401-Team-Project/Back-End/actions/workflows/pylint.yml)
 
 ## Peaking at the mongo db
 1. docker exec -it mongo bash

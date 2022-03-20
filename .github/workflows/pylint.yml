@@ -21,7 +21,7 @@ jobs:
         pip install -r requirements.txt
     - name: Analyse Code
       run: |
-        python3 -m pylint src/* > output.txt || echo $? > code.txt
+        python3 -m pylint $(git ls-files '*.py') > output.txt || echo $? > code.txt
         cat output.txt
         cat output.txt | grep -i rated > result.txt
         export MESSAGE_ENV=$(xargs < result.txt)

@@ -154,6 +154,7 @@ def get_groups(person):
     except Exception as exp:
         return jsonify({'msg': exp}), 505
 
+
 if __name__ == "__main__":
     # TODO: Change to production debug False
-    app.run(debug=True, port=5000)
+    app.run(debug=bool(os.environ['DEBUG']), port=5000)

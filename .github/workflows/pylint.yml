@@ -1,25 +1,39 @@
-name: Back-End - Pylint
+name: PyLint
 
-on: [ push ]
+on: [pull_request]
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        python-version: 3.8
+    - name: Install Deps
       run: |
-        python -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip
         pip install pylint
-        pip install wheel
+        pip install pylint-exit
         pip install -r requirements.txt
-    - name: Analysing the code with pylint
+    - name: Analyse Code
       run: |
-        pylint $(git ls-files '*.py')
+        python3 -m pylint $(git ls-files '*.py') > output.txt || echo $? > code.txt
+        cat output.txt
+        cat output.txt | grep -i "Your code has been rated" > result.txt
+        export MESSAGE_ENV=$(xargs < result.txt)
+        echo $MESSAGE_ENV
+        echo "MESSAGE=$MESSAGE_ENV" >> $GITHUB_ENV
+    - name: Comment PR
+      uses: unsplash/comment-on-pr@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        msg: ${{ env.MESSAGE }}
+        check_for_duplicate_msg: true  # OPTIONAL
+    - name: Return
+      run:
+        cat code.txt | xargs pylint-exit -efail

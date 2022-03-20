@@ -36,18 +36,6 @@ def get_person():
     person = Person.objects(email=email).first()
     return jsonify(person), 200
 
-
-@app.route("/group", methods=['GET'])
-def get_group():
-    """
-
-    :return:
-    """
-    print(f"ROUTE get_group: {request}")
-    g_id = request.args.get('id')
-    group = Group.objects(id=g_id).first()
-    return jsonify(group), 200
-
 @app.route("/test", methods=['GET'])
 def test():
     """
@@ -106,6 +94,9 @@ def update_token(person):
 
 @app.route('/register', methods=['GET'])
 def register():
+    """
+    used for logging in a user. creates an account if not already exists
+    """
     token = verify_token()
     if token[1] == 404:
         return jsonify(token[0]), token[1]
@@ -127,8 +118,11 @@ def register():
     return jsonify({'msg': 'OK'}), 200
 
 
-@app.route('/get_group', methods=['GET'])
-def get_group():
+@app.route('/get_groups', methods=['GET'])
+def get_groups():
+    """
+    get the groups the user belongs to
+    """
     token = verify_token()
     if token[1] == 404:
         return jsonify(token[0]), token[1]

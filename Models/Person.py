@@ -15,12 +15,11 @@ class Person(Document):
     email = EmailField(max_length=100, required=True)
     groups = ListField(default=[])
     date_joined = DateTimeField(default=datetime.datetime.utcnow)
+    picture = StringField(max_length=255)
     sub = StringField(max_length=255, unique=True)
-    token = ObjectIdField()
-    token_exp = DateTimeField()
+
     # TODO - Fields to add
-    #  - API Key ( will have to change regularly )
-    #  - API Key Last Generated ( for google auth and email auth )
+    #  - can add email verified: https://developers.google.com/identity/sign-in/web/backend-auth
     #  - Password ( hash plus salted - only for email auth )
     #  - sub object ( Embedded Document )
     #      - CashApp, Venmo, and user names

@@ -2,8 +2,7 @@
 Main api request endpoint
 """
 import os
-import datetime
-
+from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -25,17 +24,6 @@ db = MongoEngine()
 db.init_app(app)
 
 
-@app.route("/person", methods=['GET'])
-def get_person():
-    """
-
-    :return:
-    """
-    print(f"ROUTE get_person(): {request}")
-    email = request.args.get('email')
-    person = Person.objects(email=email).first()
-    return jsonify(person), 200
-
 @app.route("/test", methods=['GET'])
 def test():
     """
@@ -46,50 +34,38 @@ def test():
     return "Smart Ledger API Endpoint: OK", 200
 
 
-
-
-# dont hardcode this. Will fix at later date
-
-
-def verify_token():
+def verify_token(func):
     """
     verify the given token
     :return: return a dictionary of the persons info from google
     """
-    token = request.args.get('token')
-    try:
-        # verify the token
-        token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
 
-        # check validity of toke issuer
-        if token_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        """
+        wrap the given function
+        """
+        try:
+            # get token
+            token = request.args.get('token')
 
-        # recheck client id
-        if token_info['aud'] != os.environ['CLIENT_ID']:
-            raise ValueError('Client ID does not match.')
+            # verify the token
+            token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
 
-        person = {
-            'first_name': token_info['given_name'],
-            'last_name': token_info['family_name'],
-            'email': token_info['email'],
-            'token': token_info['sub'],
-            'token_exp': datetime.datetime.fromtimestamp(token_info['exp'])
-        }
-        return person, 200
-    except ValueError as e:
-        # Invalid token
-        return {"error": str(e)}, 404
+            # verify the subject
+            sub = token_info['sub']
 
+            # get the person
+            person = Person.objects.get(sub=sub)
 
-# TODO
-def update_token(person):
-    """
-    check token exp date and update it if needed
-    :param person: a person object from the database
-    :return:
-    """
-    pass
+            # call the wrapped function
+            return func(person, *args, **kwargs)
+
+        except Exception as exp:
+            # Invalid token
+            return jsonify({"msg": str(exp)}), 401
+
+    return wrap
 
 
 @app.route('/register', methods=['GET'])
@@ -97,56 +73,85 @@ def register():
     """
     used for logging in a user. creates an account if not already exists
     """
-    token = verify_token()
-    if token[1] == 404:
-        return jsonify(token[0]), token[1]
+    # get token
+    token = request.args.get('token')
+    print(token)
+    # verify the token
+    token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
+    print(token_info)
 
-    person_dict = token[0]
-    person = Person.objects(email=person_dict['email']).first()
+    # verify the subject
+    sub = token_info['sub']
+    print(sub)
+    person = Person.objects(sub=sub)
 
-    # TODO - verify that None is returned if the persons email is not found
+    if len(person) > 1:
+        return jsonify({'msg', 'Too many people returned.'}), 401
+    person = person.first()
+    print(type(person))
+    print(person)
     # if person not in DB create them
     if person is None:
-        person = Person(first_name=person_dict['first_name'],
-                       last_name=person_dict['last_name'],
-                       email=person_dict['email'],
-                       token=person_dict['token'],
-                       token_exp=person_dict['token_exp'])
+        print("person no exist creating them")
+        # TODO - add email verified and handle it
+        person = Person(first_name=token_info['given_name'],
+                        last_name=token_info['family_name'],
+                        email=token_info['email'],
+                        sub=token_info['sub'],
+                        picture=token_info['picture'])
         person.save()
+    print(person)
 
     # return OK message
     return jsonify({'msg': 'OK'}), 200
 
 
+@app.route('/user_profile', methods=['GET'])
+@verify_token
+def user_profile(person):
+    """
+    get the currently logged in person
+    """
+    if 'sub' in request.args:
+        try:
+            # requesting another users info
+            person = Person.objects.get(sub=request.args.get('sub'))
+
+            # explicitly build the returned json
+            ret = {
+                'email': person['email'],
+                'first_name': person['first_name'],
+                'last_name': person['last_name'],
+                'picture': person['picture'],
+                'sub': person['sub'],
+                'date_joined': person['date_joined']
+            }
+            return jsonify(ret), 200
+
+        except Exception as exp:
+            return jsonify({'msg': exp}), 500
+    # else return the users info
+    return jsonify(person), 200
+
 @app.route('/get_groups', methods=['GET'])
-def get_groups():
+@verify_token
+def get_groups(person):
     """
     get the groups the user belongs to
     """
-    token = verify_token()
-    if token[1] == 404:
-        return jsonify(token[0]), token[1]
+    try:
+        # list of groups [{id: name}...]
+        group_list = []
 
-    # check if person is in db
-    person = Person.objects(email=token[0]['email']).first()
-    if person is None:
-        return jsonify({'error': 'Person not found'})
-
-    # check token date
-    update_token(person)
-
-    # list of groups [{id: name}...]
-    group_list = []
-
-    # go through list of group ids that person is in and get group names
-    g_ids = person['groups']
-    for g_id in g_ids:
-        group = Group(id=g_id)
-        group_list.append({'g_id': group['name']})
-
-    # return list of groups
-    return jsonify({'groups': group_list}), 200
-
+        # go through list of group ids that person is in and get group names
+        g_ids = person['groups']
+        for g_id in g_ids:
+                group = Group.objects.get(id=g_id)
+                group_list.append({g_id: group['name']})
+        # return list of groups
+        return jsonify({'groups': group_list}), 200
+    except Exception as exp:
+        return jsonify({'msg': exp}), 505
 
 if __name__ == "__main__":
     # TODO: Change to production debug False

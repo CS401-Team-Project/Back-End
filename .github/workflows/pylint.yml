@@ -1,6 +1,8 @@
 name: PyLint
 
-on: [pull_request]
+on:
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -8,32 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install Deps
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install pylint
-        pip install pylint-exit
-        pip install -r requirements.txt
-    - name: Analyse Code
-      run: |
-        python3 -m pylint $(git ls-files '*.py') > output.txt || echo $? > code.txt
-        cat output.txt
-        cat output.txt | grep -i "Your code has been rated" > result.txt
-        export MESSAGE_ENV=$(xargs < result.txt)
-        echo $MESSAGE_ENV
-        echo "MESSAGE=$MESSAGE_ENV" >> $GITHUB_ENV
-    - name: Comment PR
-      uses: unsplash/comment-on-pr@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: ${{ env.MESSAGE }}
-        check_for_duplicate_msg: true  # OPTIONAL
-    - name: Return
-      run:
-        cat code.txt | xargs pylint-exit -efail
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install Deps
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install pylint
+          pip install pylint-exit
+          pip install -r requirements.txt
+      - name: Analyse Code
+        run: |
+          python3 -m pylint $(git ls-files '*.py') > output.txt || echo $? > code.txt
+          cat output.txt
+          cat output.txt | grep -i "Your code has been rated" > result.txt
+          export MESSAGE_ENV=$(xargs < result.txt)
+          echo $MESSAGE_ENV
+          echo "MESSAGE=$MESSAGE_ENV" >> $GITHUB_ENV
+      - name: Comment PR
+        uses: unsplash/comment-on-pr@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: ${{ env.MESSAGE }}
+          check_for_duplicate_msg: true  # OPTIONAL
+      - name: Return
+        run:
+          cat code.txt | xargs pylint-exit -efail

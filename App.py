@@ -133,6 +133,7 @@ def user_profile(person):
     # else return the users info
     return jsonify(person), 200
 
+
 @app.route('/get_groups', methods=['GET'])
 @verify_token
 def get_groups(person):

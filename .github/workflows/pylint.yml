@@ -36,4 +36,4 @@ jobs:
         check_for_duplicate_msg: true  # OPTIONAL
     - name: Return
       run:
-        cat code.txt | xargs pylint-exit -efail -wfail -cfail
+        cat code.txt | xargs pylint-exit -efail

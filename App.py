@@ -11,6 +11,7 @@ from flask_mongoengine import MongoEngine
 
 from Models import Person, Group
 
+# setup the Flask server
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
     'host': os.environ['MONGO_HOST'],
@@ -68,49 +69,69 @@ def verify_token(func):
     return wrap
 
 
-@app.route('/register', methods=['GET'])
+@app.route('/register', methods=['POST'])
 def register():
     """
     used for logging in a user. creates an account if not already exists
+    :return: status of the registration
     """
+    print(request)
+    print(request.data)
+    print(request.args)
+    print(request.form)
+    print(request.values)
+    print(request.json)
     # get token
     token = request.args.get('token')
-    print(token)
+    print('token', token)
+
     # verify the token
     token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
-    print(token_info)
+    print('token_info', token_info)
 
-    # verify the subject
+    # get the subject
     sub = token_info['sub']
-    print(sub)
-    person = Person.objects(sub=sub)
 
+    # attempt to get the person
+    person = Person.objects.get(sub=sub)
+
+    # if there are more than one people returned. thats a problem
     if len(person) > 1:
         return jsonify({'msg', 'Too many people returned.'}), 401
+
+    # get the person that is returned
     person = person.first()
-    print(type(person))
-    print(person)
+
     # if person not in DB create them
+    msg = 'User Exists'
     if person is None:
-        print("person no exist creating them")
         # TODO - add email verified and handle it
+
+        # create the person object
         person = Person(first_name=token_info['given_name'],
                         last_name=token_info['family_name'],
                         email=token_info['email'],
                         sub=token_info['sub'],
                         picture=token_info['picture'])
+
+        # save the person object
         person.save()
-    print(person)
+        msg = 'User Created'
 
-    # return OK message
-    return jsonify({'msg': 'OK'}), 200
+    # return status message
+    return jsonify({'msg': msg}), 200
 
 
-@app.route('/user_profile', methods=['GET'])
+@app.route('/user_profile', methods=['POST'])
 @verify_token
 def user_profile(person):
     """
-    get the currently logged in person
+    get a persons profile information.
+    If the sub param is NOT passed, will return the current users profile info
+    If the sub param is passed, will return the given sub profile info
+
+    :param person: current logged in user
+    :return: returns json of
     """
     if 'sub' in request.args:
         try:
@@ -134,11 +155,14 @@ def user_profile(person):
     return jsonify(person), 200
 
 
-@app.route('/get_groups', methods=['GET'])
+@app.route('/get_groups', methods=['POST'])
 @verify_token
 def get_groups(person):
     """
     get the groups the user belongs to
+    token needs to be passed in the request
+    :param person: current logged in user
+    :return:
     """
     try:
         # list of groups [{id: name}...]
@@ -147,14 +171,15 @@ def get_groups(person):
         # go through list of group ids that person is in and get group names
         g_ids = person['groups']
         for g_id in g_ids:
-                group = Group.objects.get(id=g_id)
-                group_list.append({g_id: group['name']})
+            # retrieve the groups name
+            group = Group.objects.get(id=g_id)
+            group_list.append({g_id: group['name']})
         # return list of groups
-        return jsonify({'groups': group_list}), 200
+        return jsonify(group_list), 200
+
     except Exception as exp:
         return jsonify({'msg': exp}), 505
 
 
 if __name__ == "__main__":
-    # TODO: Change to production debug False
     app.run(debug=bool(os.environ['DEBUG']), port=5000)

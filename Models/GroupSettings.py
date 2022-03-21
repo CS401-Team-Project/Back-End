@@ -19,4 +19,13 @@ class GroupSettings(EmbeddedDocument):
     only_owner_modify_transaction = BooleanField(default=True)
 
     # can the admin overrule the owner of a transaction and modify it
-    admin_overrule_transaction = BooleanField(default=True)
+    admin_overrule_modify_transaction = BooleanField(default=True)
+
+    # can users delete transaction
+    user_delete_transaction = BooleanField(default=True)
+
+    # can only the owner of a transaction delete it
+    only_owner_delete_transaction = BooleanField(default=True)
+
+    # can the admin overrule the owner of a transaction and delete it
+    admin_overrule_delete_transaction = BooleanField(default=True)

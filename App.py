@@ -669,6 +669,48 @@ def update_transaction(person):
         return jsonify({'msg': exp}), 500
 
 
+@app.route('/transaction/delete', methods=['POST'])
+@verify_token
+def delete_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - id: transaction id
+    :param person: the person making the request
+    :return: returns a transaction id used to link items to the transaction
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['id']
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+        group_id = transaction.group
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('Person does not belong to group')
+
+        # make sure user is authorized
+        if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
+            if not group.settings.user_delete_transaction:
+                if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
+                    raise Exception('User is not authorized to update the transaction.')
+
+        # delete the transaction
+        transaction.delete()
+
+        return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################

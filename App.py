@@ -9,7 +9,8 @@ from google.auth.transport import requests
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
-from Models import Person, Group
+from Models import Person, Group, Item, TransactionItem, Transaction
+from password_generator import PasswordGenerator
 
 # setup the Flask server
 app = Flask(__name__)
@@ -24,6 +25,11 @@ app.config['MONGODB_SETTINGS'] = {
 db = MongoEngine()
 db.init_app(app)
 
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+# TEST API ENDPOINT
+# TODO - this should only be available in debug
 
 @app.route("/test", methods=['GET'])
 def test():
@@ -34,6 +40,10 @@ def test():
     print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
 
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+# WRAPPERS
 
 def verify_token(func):
     """
@@ -77,10 +87,12 @@ def verify_token(func):
 
 
 ###############################################################################################################
+###############################################################################################################
+###############################################################################################################
 ## PERSON API ENDPOINTS
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/person/register', methods=['POST'])
 def register():
     """
     used for logging in a user. creates an account if not already exists
@@ -139,7 +151,7 @@ def register():
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/user_profile', methods=['POST'])
+@app.route('/person/user_profile', methods=['POST'])
 @verify_token
 def user_profile(person):
     """
@@ -175,7 +187,7 @@ def user_profile(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/get_groups', methods=['POST'])
+@app.route('/person/get_groups', methods=['POST'])
 @verify_token
 def get_groups(person):
     """
@@ -203,34 +215,14 @@ def get_groups(person):
 
 
 ###############################################################################################################
+###############################################################################################################
+###############################################################################################################
 ## GROUP API ENDPOINTS
 
-@app.route('/get_members', methods=['POST'])
-@verify_token
-def get_members(_):
-    """
-    Get a list of members that belong to a group
-    request must contain a token and a group id
-    """
+###############################################################################################################
+## GROUP CREATION/DELETION
 
-    try:
-        # get the request data
-        request_data = request.get_json(force=True, silent=True)
-        g_id = request_data.get('id')
-
-        # query the group
-        group = Group.objects.get(id=g_id)
-
-        # get the members
-        members = group.people
-
-        return jsonify(members), 200
-
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
-
-
-@app.route('/create_group', methods=['POST'])
+@app.route('/group/create_group', methods=['POST'])
 @verify_token
 def create_group(person):
     """
@@ -238,6 +230,8 @@ def create_group(person):
     request must contain:
         - token
         - name: group name
+    :param person: the person making the request
+    :return: returns json with group id and msg
     """
 
     try:
@@ -245,8 +239,11 @@ def create_group(person):
         request_data = request.get_json(force=True, silent=True)
         group_name = request_data.get('name')
 
+        # create a random password for joining the group
+        pwd = PasswordGenerator().generate()
+
         # create the group
-        group = Group(name=group_name)
+        group = Group(name=group_name, admin=person.id, join_code=pwd)
 
         # add the creating user to the group
         group.people.append(person.sub)
@@ -264,6 +261,277 @@ def create_group(person):
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
+
+@app.route('/group/delete_group', methods=['POST'])
+@verify_token
+def delete_group(person):
+    """
+    Create a group add the creator to the group
+    request must contain:
+        - token
+        - id: group id
+    :param person: the person making the request
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data.get('id')
+
+        # query the group
+        group = Group(id=group_id)
+
+        # check privilege
+        if person.sub != group.admin:
+            raise Exception("User not authorized to delete group.")
+
+        # Iterate through people and unlink them from the groups
+        for p_sub in group.people:
+
+            # try to get the person from the DB
+            try:
+                person = Person.objects.get(sub=p_sub)
+            except Exception:
+                print('Person does not exist')
+                continue
+
+            # try to remove person from group
+            try:
+                person.groups.remove(group_id)
+                person.save()
+            except Exception:
+                print('Person does not belong to group')
+                continue
+
+        # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
+        for t_id in group.transactions:
+            # try to get the transaction
+            try:
+                transaction = Transaction.objects.get(id=t_id)
+            except Exception:
+                print("Transaction does not exist")
+                continue
+
+            # iterate through all transaction items
+            for transaction_item in transaction.items:
+                # get the item id
+                item_id = transaction_item.item_id
+
+                # try to get the item
+                try:
+                    item = Item.objects.get(id=item_id)
+                except Exception:
+                    print('item does not exist')
+                    continue
+
+                # decrement the items usage count
+                item.usage_count -= 1
+
+                # if the usage count is 0 delete it
+                if item.usage_count <= 0:
+                    item.delete()
+
+        return jsonify({'msg': 'Group Deleted'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+###############################################################################################################
+## JOIN CODE GET/SET
+
+
+@app.route('/group/get_join_code', methods=['POST'])
+@verify_token
+def get_join_code(person):
+    """
+    Retrieve a groups join code
+    request must contain:
+        - token
+        - id: group id
+    :param person: the person making the request
+    :return: returns json with group id and msg
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data['id']
+
+        # create the group
+        group = Group.objects.get(id=group_id)
+
+        # check privilege
+        if group.settings.only_admin_view_join_code and group.admin != person.sub:
+            raise Exception("User not authorized to view join code.")
+
+        # get the join code
+        join_code = group.join_code
+
+        return jsonify({'join_code': join_code}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/group/set_join_code', methods=['POST'])
+@verify_token
+def set_join_code(person):
+    """
+    set a groups join code
+    request must contain:
+        - token
+        - id: group id
+        - join_code
+    :param person: the person making the request
+    :return: returns json with group id and msg
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data['id']
+        join_code = request_data['join_code']
+
+        # create the group
+        group = Group.objects.get(id=group_id)
+
+        # check privilege
+        if group.settings.only_admin_set_join_code and group.admin != person.sub:
+            raise Exception("User not authorized to set join code.")
+
+        # set the join code
+        group.join_code = join_code
+
+        # save the group
+        group.save()
+
+        return jsonify({'msg': 'Join code changed'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+###############################################################################################################
+## GROUP MEMBER GET/ADD/REMOVE
+
+
+@app.route('/group/get_members', methods=['POST'])
+@verify_token
+def get_members(person):
+    """
+    Get a list of members that belong to a group
+    request must contain a token and a group id
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data.get('id')
+
+        # query the group
+        group = Group.objects.get(id=group_id)
+
+        # get the members
+        members = group.people
+
+        # check if user is in the group
+        if person.sub not in members:
+            raise Exception('User does not belong to group.')
+
+        return jsonify(members), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/group/add_member', methods=['POST'])
+@verify_token
+def add_member(person):
+    """
+    Add a member to the group
+    request must contain:
+        - token
+        - id: group id
+        - join_code
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data.get('id')
+        join_code = request_data.get('join_code')
+
+        # query the group
+        group = Group.objects.get(id=group_id)
+
+        # check if user join code is correct
+        if group.join_code != join_code:
+            raise Exception('Join code is not correct')
+
+        # add person to group
+        group.people.append(person.sub)
+
+        # save group
+        group.save()
+
+        # link group to member
+        person.groups.append(group.id)
+
+        # save person
+        person.save()
+
+        return jsonify({'msg': 'User added to group.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/group/remove_member', methods=['POST'])
+@verify_token
+def remove_member(person):
+    """
+    Add a member to the group
+    request must contain:
+        - token
+        - id: group id
+        - sub: [optional] user to remove from the grou
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data.get('id')
+        join_code = request_data.get('join_code')
+
+        # query the group
+        group = Group.objects.get(id=group_id)
+
+        # check if user join code is correct
+        if group.join_code != join_code:
+            raise Exception('Join code is not correct')
+
+        # add person to group
+        group.people.append(person.sub)
+
+        # save group
+        group.save()
+
+        # link group to member
+        person.groups.append(group.id)
+
+        # save person
+        person.save()
+
+        return jsonify({'msg': 'User added to group.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+## MAIN
+
 
 if __name__ == "__main__":
     app.run(debug=bool(os.environ['DEBUG']), port=5000)

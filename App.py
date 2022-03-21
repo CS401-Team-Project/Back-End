@@ -6,12 +6,12 @@ import os
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from password_generator import PasswordGenerator
 
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
 from Models import Person, Group, Item, TransactionItem, Transaction
-from password_generator import PasswordGenerator
 
 # setup the Flask server
 app = Flask(__name__)

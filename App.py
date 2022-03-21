@@ -25,6 +25,7 @@ app.config['MONGODB_SETTINGS'] = {
 db = MongoEngine()
 db.init_app(app)
 
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
@@ -39,6 +40,7 @@ def test():
     """
     print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -337,6 +339,7 @@ def delete_group(person):
     except Exception as exp:
         return jsonify({'msg': exp}), 500
 
+
 ###############################################################################################################
 ## JOIN CODE GET/SET
 
@@ -410,6 +413,7 @@ def set_join_code(person):
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
 
 ###############################################################################################################
 ## GROUP MEMBER GET/ADD/REMOVE
@@ -501,31 +505,44 @@ def remove_member(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
-        join_code = request_data.get('join_code')
+        sub = request_data.get('sub')
 
         # query the group
         group = Group.objects.get(id=group_id)
 
-        # check if user join code is correct
-        if group.join_code != join_code:
-            raise Exception('Join code is not correct')
+        # if the user is trying to delete another user in the group
+        if sub is not None:
+            # check if user join code is correct
+            if group.settings.only_admin_remove_user and group.admin != person.sub:
+                raise Exception('User not authorized to remove member.')
 
-        # add person to group
-        group.people.append(person.sub)
+        else:
+            # if person is trying to delete themselves from the group
+            sub = person.sub
 
-        # save group
+        # check if the given sub is not in group
+        if sub not in group.people:
+            raise Exception('User does not belong to group.')
+
+        # remove the person from the group
+        group.people.remove(sub)
+
+        # save the group
         group.save()
 
-        # link group to member
-        person.groups.append(group.id)
+        # if group is tied to person object
+        if group_id in person.groups:
+            # remove group from person
+            person.groups.remove(group_id)
 
-        # save person
-        person.save()
+            # save person
+            person.save()
 
         return jsonify({'msg': 'User added to group.'}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
 
 ###############################################################################################################
 ###############################################################################################################

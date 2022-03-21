@@ -4,6 +4,7 @@ TODO: Module docstring
 from . import GroupSettings
 from mongoengine import StringField, Document, ListField, EmbeddedDocument
 
+
 class Group(Document):
     """
     TODO: Class Docstring

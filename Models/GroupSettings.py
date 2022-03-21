@@ -1,7 +1,7 @@
 """
 TODO: Module docstring
 """
-from mongoengine import EmbeddedDocument, ObjectIdField, IntField, FloatField, BooleanField
+from mongoengine import EmbeddedDocument, BooleanField
 
 
 class GroupSettings(EmbeddedDocument):

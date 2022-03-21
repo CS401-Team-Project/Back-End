@@ -678,7 +678,6 @@ def delete_transaction(person):
         - token
         - id: transaction id
     :param person: the person making the request
-    :return: returns a transaction id used to link items to the transaction
     """
     try:
         # get the request data
@@ -704,6 +703,72 @@ def delete_transaction(person):
 
         # delete the transaction
         transaction.delete()
+
+        return jsonify({'msg': 'Transaction deleted.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/transaction/add', methods=['POST'])
+@verify_token
+def add_item_to_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - t_id: transaction id
+        - i_id: item id
+        - quantity
+        - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['t_id']
+        item_id = request_data['i_id']
+        quantity = request_data['quantity']
+        person_id = request_data.get('person')
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+        group_id = transaction.group
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # get what person id the transaction item will belong to
+        sub = person_id if person_id is not None else person.sub
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people or sub not in group.people:
+            raise Exception('Person does not belong to group')
+
+        # check quantity for proper value
+        if quantity < 1:
+            raise Exception('Quantity cannot be less than 1.')
+
+        # query the item to make sure it exists
+        item = Item.objects.get(id=item_id)
+
+        # create the transaction item
+        transaction_item = TransactionItem(item_id=item_id,
+                                           person=sub,
+                                           quantity=quantity,
+                                           item_cost=item.unit_price * quantity)
+
+        # add the transaction item to the transaction
+        transaction.items.append(transaction_item)
+
+        # save the transaction
+        transaction.save()
+
+        # increment usage count
+        item.usage_count += 1
+
+        # save the item
+        item.save()
 
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
@@ -736,6 +801,10 @@ def get_item(_):
         desc = request_data['desc']
         unit_price = request_data['unit_price']
 
+        # check quantity for proper value
+        if unit_price <= 0:
+            raise Exception('Unit price cannot be less than 0.')
+
         # initial declarations
         item = None
         msg = 'Retrieved item.'
@@ -755,9 +824,6 @@ def get_item(_):
             item = Item(name=name,
                         desc=desc,
                         unit_price=unit_price)
-
-        # increment usage count
-        item.usage_count += 1
 
         # save item
         item.save()

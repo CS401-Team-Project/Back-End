@@ -1,6 +1,7 @@
 """
 Main api request endpoint
 """
+import datetime
 import os
 from functools import wraps
 from google.oauth2 import id_token
@@ -224,7 +225,7 @@ def get_groups(person):
 ###############################################################################################################
 ## GROUP CREATION/DELETION
 
-@app.route('/group/create_group', methods=['POST'])
+@app.route('/group/create', methods=['POST'])
 @verify_token
 def create_group(person):
     """
@@ -265,7 +266,7 @@ def create_group(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/group/delete_group', methods=['POST'])
+@app.route('/group/delete', methods=['POST'])
 @verify_token
 def delete_group(person):
     """
@@ -283,6 +284,10 @@ def delete_group(person):
 
         # query the group
         group = Group(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('User does not belong to group')
 
         # check privilege
         if person.sub != group.admin:
@@ -364,6 +369,10 @@ def get_join_code(person):
         # create the group
         group = Group.objects.get(id=group_id)
 
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('User does not belong to group')
+
         # check privilege
         if group.settings.only_admin_view_join_code and group.admin != person.sub:
             raise Exception("User not authorized to view join code.")
@@ -398,6 +407,10 @@ def set_join_code(person):
 
         # create the group
         group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('User does not belong to group')
 
         # check privilege
         if group.settings.only_admin_set_join_code and group.admin != person.sub:
@@ -434,6 +447,10 @@ def get_members(person):
 
         # query the group
         group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('User does not belong to group')
 
         # get the members
         members = group.people
@@ -539,6 +556,171 @@ def remove_member(person):
             person.save()
 
         return jsonify({'msg': 'User added to group.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+## TRANSACTIONS
+
+
+@app.route('/group/create', methods=['POST'])
+@verify_token
+def create_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - id: group id
+        - title: transaction title required
+        - desc: optional
+        - vendor: optional
+    :param person: the person making the request
+    :return: returns a transaction id used to link items to the transaction
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data['id']
+        title = request_data['title']
+        desc = request_data.get('id', default='')
+        vendor = request_data.get('vendor', default='')
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('Person does not belong to group')
+
+        # create the transaction
+        transaction = Transaction(title=title,
+                                  group=group_id,
+                                  desc=desc,
+                                  vendor=vendor,
+                                  created_by=person.sub,
+                                  modified_by=person.sub)
+
+        # save the transaction
+        transaction.save()
+
+        return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/transaction/update', methods=['POST'])
+@verify_token
+def update_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - id: transaction id
+        - title: transaction title required
+        - desc: optional
+        - vendor: optional
+    :param person: the person making the request
+    :return: returns a transaction id used to link items to the transaction
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['id']
+        title = request_data['title']
+        desc = request_data.get('id', default='')
+        vendor = request_data.get('vendor', default='')
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+        group_id = transaction.group
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            raise Exception('Person does not belong to group')
+
+        # make sure user is authorized
+        if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
+            if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
+                raise Exception('User is not authorized to update the transaction.')
+
+        # update the transaction
+        transaction.title = title
+        transaction.desc = desc
+        transaction.vendor = vendor
+
+        # update the last modified by
+        transaction.modified_by = person.sub
+        transaction.date_modified = datetime.datetime.utcnow()
+
+        # save the transaction
+        transaction.save()
+
+        return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+## ITEM
+
+
+@app.route('/item/get', methods=['POST'])
+@verify_token
+def get_item(_):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - name
+        - desc
+        - unit_price
+    :return: returns a transaction id used to link items to the transaction
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        name = request_data['name']
+        desc = request_data['desc']
+        unit_price = request_data['unit_price']
+
+        # initial declarations
+        item = None
+        msg = 'Retrieved item.'
+
+        # try to get the item if exists
+        try:
+            item = Item.objects.get(name=name,
+                                    desc=desc,
+                                    unit_price=unit_price)
+        except Exception:
+            pass
+
+        # if the item does not exist
+        if item is None:
+            # create the item
+            msg = 'Created item.'
+            item = Item(name=name,
+                        desc=desc,
+                        unit_price=unit_price)
+
+        # increment usage count
+        item.usage_count += 1
+
+        # save item
+        item.save()
+
+        return jsonify({'id': item.id, 'msg': msg}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500

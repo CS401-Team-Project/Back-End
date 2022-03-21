@@ -47,8 +47,15 @@ def verify_token(func):
         wrap the given function
         """
         try:
-            # get token
-            token = request.args.get('token')
+            # get the request args depending on the type of request
+            request_data = {}
+            if request.method == "POST":
+                request_data = request.get_json(force=True, silent=True)
+            elif request.method == "GET":
+                request_data = request.args
+
+            # get the token from the request
+            token = request_data.get('token')
 
             # verify the token
             token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
@@ -69,57 +76,67 @@ def verify_token(func):
     return wrap
 
 
+###############################################################################################################
+## PERSON API ENDPOINTS
+
+
 @app.route('/register', methods=['POST'])
 def register():
     """
     used for logging in a user. creates an account if not already exists
     :return: status of the registration
     """
-    print(request)
-    print(request.data)
-    print(request.args)
-    print(request.form)
-    print(request.values)
-    print(request.json)
-    # get token
-    token = request.args.get('token')
-    print('token', token)
+    try:
+        print('request\n', request)
+        request_data = request.get_json(force=True, silent=True)
 
-    # verify the token
-    token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
-    print('token_info', token_info)
+        if request_data is None:
+            raise Exception('Request could not be parsed.')
 
-    # get the subject
-    sub = token_info['sub']
+        # get token
+        token = request_data.get('token')
+        print('token', token)
 
-    # attempt to get the person
-    person = Person.objects.get(sub=sub)
+        # verify the token
+        token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
+        print('token_info', token_info)
 
-    # if there are more than one people returned. thats a problem
-    if len(person) > 1:
-        return jsonify({'msg', 'Too many people returned.'}), 401
+        # get the subject
+        sub = token_info['sub']
 
-    # get the person that is returned
-    person = person.first()
+        # attempt to get the person
+        # NOTE - this needs to not be an objects.get call because that will throw error when there is no user
+        person = Person.objects(sub=sub)
+        print('person', person)
 
-    # if person not in DB create them
-    msg = 'User Exists'
-    if person is None:
-        # TODO - add email verified and handle it
+        # if there are more than one people returned. thats a problem
+        if len(person) > 1:
+            return jsonify({'msg': 'Too many people returned.'}), 401
 
-        # create the person object
-        person = Person(first_name=token_info['given_name'],
-                        last_name=token_info['family_name'],
-                        email=token_info['email'],
-                        sub=token_info['sub'],
-                        picture=token_info['picture'])
+        # get the person that is returned
+        person = person.first()
 
-        # save the person object
-        person.save()
-        msg = 'User Created'
+        # if person not in DB create them
+        msg = 'User Exists'
+        if person is None:
+            # TODO - add email verified and handle it
 
-    # return status message
-    return jsonify({'msg': msg}), 200
+            # create the person object
+            person = Person(first_name=token_info['given_name'],
+                            last_name=token_info['family_name'],
+                            email=token_info['email'],
+                            sub=token_info['sub'],
+                            picture=token_info['picture'])
+
+            # save the person object
+            person.save()
+            msg = 'User Created'
+
+        # return status message
+        return jsonify({'msg': msg}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
 
 
 @app.route('/user_profile', methods=['POST'])
@@ -133,14 +150,16 @@ def user_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
-    if 'sub' in request.args:
-        try:
+    try:
+        request_data = request.get_json(force=True, silent=True)
+
+        # if sub was given to us
+        if 'sub' in request_data:
             # requesting another users info
-            person = Person.objects.get(sub=request.args.get('sub'))
+            person = Person.objects.get(sub=request_data.get('sub'))
 
             # explicitly build the returned json
             ret = {
-                'email': person['email'],
                 'first_name': person['first_name'],
                 'last_name': person['last_name'],
                 'picture': person['picture'],
@@ -149,10 +168,11 @@ def user_profile(person):
             }
             return jsonify(ret), 200
 
-        except Exception as exp:
-            return jsonify({'msg': exp}), 500
-    # else return the users info
-    return jsonify(person), 200
+        # else return the users info
+        return jsonify(person), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
 
 
 @app.route('/get_groups', methods=['POST'])
@@ -164,6 +184,7 @@ def get_groups(person):
     :param person: current logged in user
     :return:
     """
+
     try:
         # list of groups [{id: name}...]
         group_list = []
@@ -178,8 +199,71 @@ def get_groups(person):
         return jsonify(group_list), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 505
+        return jsonify({'msg': exp}), 500
 
+
+###############################################################################################################
+## GROUP API ENDPOINTS
+
+@app.route('/get_members', methods=['POST'])
+@verify_token
+def get_members(_):
+    """
+    Get a list of members that belong to a group
+    request must contain a token and a group id
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        g_id = request_data.get('id')
+
+        # query the group
+        group = Group.objects.get(id=g_id)
+
+        # get the members
+        members = group.people
+
+        return jsonify(members), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+@app.route('/create_group', methods=['POST'])
+@verify_token
+def create_group(person):
+    """
+    Create a group add the creator to the group
+    request must contain:
+        - token
+        - name: group name
+    """
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_name = request_data.get('name')
+
+        # create the group
+        group = Group(name=group_name)
+
+        # add the creating user to the group
+        group.people.append(person.sub)
+
+        # save the group
+        group.save()
+
+        # add the groups id to the persons list of groups
+        person.groups.append(group.id)
+
+        # save the person object
+        person.save()
+
+        return jsonify({'id': group.id, 'msg': 'Created group'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
 
 if __name__ == "__main__":
     app.run(debug=bool(os.environ['DEBUG']), port=5000)

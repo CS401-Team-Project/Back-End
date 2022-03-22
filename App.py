@@ -191,6 +191,29 @@ def user_profile(person):
         return jsonify({'msg': exp}), 500
 
 
+@app.route('/person/delete', methods=['POST'])
+@verify_token
+def delete_profile(person):
+    """
+    delete a users profile
+    :param person: current logged in user
+    :return: returns json of
+    """
+    try:
+        # unlink person from all groups
+        # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
+        for group in person.groups:
+            try:
+                group.people.remove(person.sub)
+            except Exception:
+                pass
+
+        # delete the person from the database
+        person.delete()
+        return jsonify({'msg': 'User account deleted.'}), 500
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################

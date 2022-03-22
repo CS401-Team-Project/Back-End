@@ -191,33 +191,6 @@ def user_profile(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/person/groups', methods=['POST'])
-@verify_token
-def get_groups(person):
-    """
-    get the groups the user belongs to
-    token needs to be passed in the request
-    :param person: current logged in user
-    :return:
-    """
-
-    try:
-        # list of groups [{id: name}...]
-        group_list = []
-
-        # go through list of group ids that person is in and get group names
-        g_ids = person['groups']
-        for g_id in g_ids:
-            # retrieve the groups name
-            group = Group.objects.get(id=g_id)
-            group_list.append({g_id: group['name']})
-        # return list of groups
-        return jsonify(group_list), 200
-
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
-
-
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################

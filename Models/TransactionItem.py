@@ -13,3 +13,5 @@ class TransactionItem(EmbeddedDocument):
     person = ObjectIdField(required=True)
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
+
+    # TODO last modified and modified by

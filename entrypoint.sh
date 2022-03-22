@@ -3,6 +3,9 @@
 echo "#################################################################"
 echo "## START                 entrypoint.sh                         ##"
 echo "#################################################################"
+echo "## Printing Environment Variables...                           ##"
+env
+echo "#################################################################"
 
 # TODO: Change default admin credentials for MongoDB or lock admin account
 ADMIN_USER=admin

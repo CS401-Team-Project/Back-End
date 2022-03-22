@@ -20,6 +20,5 @@ class Person(Document):
 
     # TODO - Fields to add
     #  - can add email verified: https://developers.google.com/identity/sign-in/web/backend-auth
-    #  - Password ( hash plus salted - only for email auth )
     #  - sub object ( Embedded Document )
     #      - CashApp, Venmo, and user names

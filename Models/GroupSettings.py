@@ -29,3 +29,5 @@ class GroupSettings(EmbeddedDocument):
 
     # can the admin overrule the owner of a transaction and delete it
     admin_overrule_delete_transaction = BooleanField(default=True)
+
+    # TODO last modified

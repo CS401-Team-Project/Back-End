@@ -2,7 +2,7 @@
 TODO: Module docstring
 """
 from . import GroupSettings
-from mongoengine import StringField, Document, ListField, EmbeddedDocument
+from mongoengine import StringField, Document, ListField, EmbeddedDocument, DateField
 
 
 class Group(Document):
@@ -15,8 +15,9 @@ class Group(Document):
     people = ListField(default=[])
     transactions = ListField(default=[])
     settings = EmbeddedDocument(GroupSettings)
+
+    # #
     # TODO - add time when person joined group ( embedded document or map )
     #   - date group was created
-    #   - owner of group
     #   - group settings
     #      - who can modify transactions (just creator or everyone, etc.)

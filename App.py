@@ -34,6 +34,7 @@ db.init_app(app)
 # TODO - this should only be available in debug
 
 @app.route("/test", methods=['GET'])
+
 def test():
     """
     Just a test route to verify that the API is working.
@@ -154,7 +155,7 @@ def register():
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/person/user_profile', methods=['POST'])
+@app.route('/person/profile', methods=['POST'])
 @verify_token
 def user_profile(person):
     """
@@ -190,7 +191,7 @@ def user_profile(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/person/get_groups', methods=['POST'])
+@app.route('/person/groups', methods=['POST'])
 @verify_token
 def get_groups(person):
     """
@@ -233,6 +234,7 @@ def create_group(person):
     request must contain:
         - token
         - name: group name
+        - join_code: [optional]
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -241,12 +243,13 @@ def create_group(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_name = request_data.get('name')
+        join_code = request_data.get('join_code', default=None)
 
         # create a random password for joining the group
-        pwd = PasswordGenerator().generate()
+        join_code = join_code if join_code is not None else PasswordGenerator().generate()
 
         # create the group
-        group = Group(name=group_name, admin=person.id, join_code=pwd)
+        group = Group(name=group_name, admin=person.id, join_code=join_code)
 
         # add the creating user to the group
         group.people.append(person.sub)
@@ -260,7 +263,7 @@ def create_group(person):
         # save the person object
         person.save()
 
-        return jsonify({'id': group.id, 'msg': 'Created group'}), 200
+        return jsonify({'id': group.id, 'join_code': join_code, 'msg': 'Created group'}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
@@ -284,10 +287,6 @@ def delete_group(person):
 
         # query the group
         group = Group(id=group_id)
-
-        # make sure the user belongs to the group
-        if person.sub not in group.people:
-            raise Exception('User does not belong to group')
 
         # check privilege
         if person.sub != group.admin:
@@ -316,28 +315,10 @@ def delete_group(person):
             # try to get the transaction
             try:
                 transaction = Transaction.objects.get(id=t_id)
+                _delete_transaction(transaction)
             except Exception:
                 print("Transaction does not exist")
                 continue
-
-            # iterate through all transaction items
-            for transaction_item in transaction.items:
-                # get the item id
-                item_id = transaction_item.item_id
-
-                # try to get the item
-                try:
-                    item = Item.objects.get(id=item_id)
-                except Exception:
-                    print('item does not exist')
-                    continue
-
-                # decrement the items usage count
-                item.usage_count -= 1
-
-                # if the usage count is 0 delete it
-                if item.usage_count <= 0:
-                    item.delete()
 
         return jsonify({'msg': 'Group Deleted'}), 200
 
@@ -345,15 +326,11 @@ def delete_group(person):
         return jsonify({'msg': exp}), 500
 
 
-###############################################################################################################
-## JOIN CODE GET/SET
-
-
-@app.route('/group/get_join_code', methods=['POST'])
+@app.route('/group/get', methods=['POST'])
 @verify_token
-def get_join_code(person):
+def get_group(person):
     """
-    Retrieve a groups join code
+    Return a group the user is in
     request must contain:
         - token
         - id: group id
@@ -364,37 +341,38 @@ def get_join_code(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data['id']
+        group_id = request_data.get('id')
 
-        # create the group
-        group = Group.objects.get(id=group_id)
+        # get the group
+        group = Group(id=group_id)
 
-        # make sure the user belongs to the group
+        # check if user is in group
         if person.sub not in group.people:
-            raise Exception('User does not belong to group')
+            raise Exception('User not in group')
 
-        # check privilege
+        # if only the admin can view the join code and user is not admin, clear out the join code
         if group.settings.only_admin_view_join_code and group.admin != person.sub:
-            raise Exception("User not authorized to view join code.")
+            group.join_code = None
 
-        # get the join code
-        join_code = group.join_code
+        # add the creating user to the group
+        group.people.append(person.sub)
 
-        return jsonify({'join_code': join_code}), 200
+        # return the group
+        return jsonify(group), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/group/set_join_code', methods=['POST'])
+@app.route('/group/set', methods=['POST'])
 @verify_token
-def set_join_code(person):
+def set_group(person):
     """
-    set a groups join code
+    Return a group the user is in
     request must contain:
         - token
         - id: group id
-        - join_code
+        - group: dictionary that holds all fields you want to change
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -402,37 +380,48 @@ def set_join_code(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data['id']
-        join_code = request_data['join_code']
+        group_id = request_data.get('id')
+        group_new = request_data.get('group')
 
-        # create the group
-        group = Group.objects.get(id=group_id)
+        # get the group
+        group = Group(id=group_id)
 
-        # make sure the user belongs to the group
+        # check if user is in group
         if person.sub not in group.people:
-            raise Exception('User does not belong to group')
+            raise Exception('User not in group')
 
-        # check privilege
-        if group.settings.only_admin_set_join_code and group.admin != person.sub:
-            raise Exception("User not authorized to set join code.")
+        # iterate through all items
+        for k, v in group_new.items():
+            # if the key is the id, people, or settings ignore it
+            # if the user wants to delete a transaction they should use delete_transaction
+            # TODO - assign the settings here. settings must check if only admin has permissions to change this.
+            if k in ['id', 'people', 'settings', 'transactions']:
+                continue
 
-        # set the join code
-        group.join_code = join_code
+            # if is join code check if authorized
+            elif k == 'join_code':
+                # if only the admin can view the join code and user is not admin
+                if group.settings.only_admin_set_join_code and group.admin != person.sub:
+                    continue
+                group.join_code = v
 
+            else:
+                # TODO - test this at some point to make sure this works
+                group[k] = v
         # save the group
         group.save()
 
-        return jsonify({'msg': 'Join code changed'}), 200
+        # return the group
+        return jsonify({'msg': 'Group updated'}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
-
 
 ###############################################################################################################
 ## GROUP MEMBER GET/ADD/REMOVE
 
 
-@app.route('/group/get_members', methods=['POST'])
+@app.route('/group/members', methods=['POST'])
 @verify_token
 def get_members(person):
     """
@@ -465,9 +454,9 @@ def get_members(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/group/add_member', methods=['POST'])
+@app.route('/group/join', methods=['POST'])
 @verify_token
-def add_member(person):
+def join_group(person):
     """
     Add a member to the group
     request must contain:
@@ -529,10 +518,9 @@ def remove_member(person):
 
         # if the user is trying to delete another user in the group
         if sub is not None:
-            # check if user join code is correct
-            if group.settings.only_admin_remove_user and group.admin != person.sub:
+            # check if authorized to remove member
+            if (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
                 raise Exception('User not authorized to remove member.')
-
         else:
             # if person is trying to delete themselves from the group
             sub = person.sub
@@ -566,8 +554,9 @@ def remove_member(person):
 ###############################################################################################################
 ## TRANSACTIONS
 
+# TODO - add get transaction
 
-@app.route('/group/create', methods=['POST'])
+@app.route('/transaction/create', methods=['POST'])
 @verify_token
 def create_transaction(person):
     """
@@ -607,12 +596,19 @@ def create_transaction(person):
         # save the transaction
         transaction.save()
 
+        # append the transaction to the group
+        group.transactions.append(transaction.id)
+
+        # save the group
+        group.save()
+
         return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
 
 
+# TODO update to replace transaction items
 @app.route('/transaction/update', methods=['POST'])
 @verify_token
 def update_transaction(person):
@@ -621,9 +617,7 @@ def update_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - title: transaction title required
-        - desc: optional
-        - vendor: optional
+        - transaction: json containing fields to update
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
@@ -631,9 +625,7 @@ def update_transaction(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         transaction_id = request_data['id']
-        title = request_data['title']
-        desc = request_data.get('id', default='')
-        vendor = request_data.get('vendor', default='')
+        transaction_new = request_data['transaction']
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -652,9 +644,30 @@ def update_transaction(person):
                 raise Exception('User is not authorized to update the transaction.')
 
         # update the transaction
-        transaction.title = title
-        transaction.desc = desc
-        transaction.vendor = vendor
+        for k, v in transaction_new.items():
+            # if the key is equal to items that should not be modified, ignore it
+            if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price']:
+                continue
+            # if user re-writing items
+            elif k == 'items':
+                # clear all previous transaction items
+                for transaction_item in transaction.items:
+                    _delete_item(transaction_item.item_id)
+                transaction.items.clear()
+
+                # add the new transaction items
+                for transaction_item in v:
+                    # TODO - probably find a better way
+                    # this assumes the user will pass the item information in the item field rather than the id
+                    _add_item_to_transaction(person, transaction,
+                                             quantity=transaction_item.quantity,
+                                             person_id=transaction_item.person,
+                                             name=transaction_item.item.name,
+                                             desc=transaction_item.item.desc,
+                                             unit_price=transaction_item.item.unit_price)
+            # if normal string field
+            else:
+                transaction[k] = v
 
         # update the last modified by
         transaction.modified_by = person.sub
@@ -701,14 +714,50 @@ def delete_transaction(person):
                 if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
                     raise Exception('User is not authorized to update the transaction.')
 
+        # check if transaction is the group
+        if transaction_id not in group.transactions:
+            raise Exception('Transaction not in group')
+
+        # remove the transaction from the group
+        group.transactions.remove(transaction_id)
+
         # delete the transaction
-        transaction.delete()
+        _delete_transaction(transaction)
 
         return jsonify({'msg': 'Transaction deleted.'}), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
 
+
+def _delete_transaction(transaction):
+    """
+    helper to delete transaction from db
+    """
+    # iterate through all transaction items
+    for transaction_item in transaction.items:
+        # get the item id
+        item_id = transaction_item.item_id
+
+        # try to get the item
+        item = Item.objects.get(id=item_id)
+
+        # delete the item
+        _delete_item(item)
+
+    # delete the transaction
+    transaction.delete()
+
+def _delete_item(item):
+    """
+    unlink an item and delete if necessary
+    """
+    # decrement the items usage count
+    item.usage_count -= 1
+
+    # if the usage count is 0 delete it
+    if item.usage_count <= 0:
+        item.delete()
 
 @app.route('/transaction/add', methods=['POST'])
 @verify_token
@@ -717,19 +766,95 @@ def add_item_to_transaction(person):
     Create a transaction in the group
     request must contain:
         - token
-        - t_id: transaction id
-        - i_id: item id
+        - id: transaction id
         - quantity
+        - name: name of item
+        - desc: desc of item
+        - unit_price: unit price of item
         - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
     :param person: the person making the request
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['t_id']
-        item_id = request_data['i_id']
+        transaction_id = request_data['id']
         quantity = request_data['quantity']
         person_id = request_data.get('person')
+
+        # get the item data from the request
+        name = request_data.get('name')
+        desc = request_data.get('desc')
+        unit_price = request_data.get('unit_price')
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+
+        # add the item to the transaction
+        _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price)
+
+        return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
+def _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price):
+    """
+    helper function to add item to transaction
+    """
+    # get the group id
+    group_id = transaction.group
+
+    # query the group to make sure it exists
+    group = Group.objects.get(id=group_id)
+
+    # get what person id the transaction item will belong to
+    sub = person_id if person_id is not None else person.sub
+
+    # make sure the user belongs to the group
+    if person.sub not in group.people or sub not in group.people:
+        raise Exception('Person does not belong to group')
+
+    # check quantity for proper value
+    if quantity < 1:
+        raise Exception('Quantity cannot be less than 1.')
+
+    # query the item to make sure it exists
+    item = _create_item(name, desc, unit_price)
+
+    # create the transaction item
+    transaction_item = TransactionItem(item_id=item.id,
+                                       person=sub,
+                                       quantity=quantity,
+                                       item_cost=item.unit_price * quantity)
+
+    # add the transaction item to the transaction
+    transaction.items.append(transaction_item)
+
+    # save the transaction
+    transaction.save()
+
+    # increment usage count
+    item.usage_count += 1
+
+    # save the item
+    item.save()
+
+
+@app.route('/transaction/get', methods=['POST'])
+@verify_token
+def get_transaction(person):
+    """
+    get a transaction in the group
+    request must contain:
+        - token
+        - id: transaction id
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['id']
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -738,43 +863,14 @@ def add_item_to_transaction(person):
         # query the group to make sure it exists
         group = Group.objects.get(id=group_id)
 
-        # get what person id the transaction item will belong to
-        sub = person_id if person_id is not None else person.sub
-
         # make sure the user belongs to the group
-        if person.sub not in group.people or sub not in group.people:
+        if person.sub not in group.people:
             raise Exception('Person does not belong to group')
 
-        # check quantity for proper value
-        if quantity < 1:
-            raise Exception('Quantity cannot be less than 1.')
-
-        # query the item to make sure it exists
-        item = Item.objects.get(id=item_id)
-
-        # create the transaction item
-        transaction_item = TransactionItem(item_id=item_id,
-                                           person=sub,
-                                           quantity=quantity,
-                                           item_cost=item.unit_price * quantity)
-
-        # add the transaction item to the transaction
-        transaction.items.append(transaction_item)
-
-        # save the transaction
-        transaction.save()
-
-        # increment usage count
-        item.usage_count += 1
-
-        # save the item
-        item.save()
-
-        return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
+        return jsonify(transaction), 200
 
     except Exception as exp:
         return jsonify({'msg': exp}), 500
-
 
 ###############################################################################################################
 ###############################################################################################################
@@ -782,57 +878,66 @@ def add_item_to_transaction(person):
 ## ITEM
 
 
-@app.route('/item/get', methods=['POST'])
-@verify_token
-def get_item(_):
+def _create_item(name: str, desc: str, unit_price: float):
     """
-    Create a transaction in the group
+    Create an item
     request must contain:
         - token
         - name
         - desc
         - unit_price
-    :return: returns a transaction id used to link items to the transaction
+    :return: returns a item id used to link items to the transaction
+    """
+
+    # check quantity for proper value
+    if unit_price <= 0:
+        raise Exception('Unit price cannot be less than 0.')
+
+    # initial declarations
+    item = None
+
+    # try to get the item if exists
+    try:
+        item = Item.objects.get(name=name,
+                                desc=desc,
+                                unit_price=unit_price)
+    except Exception:
+        pass
+
+    # if the item does not exist
+    if item is None:
+        # create the item
+        item = Item(name=name,
+                    desc=desc,
+                    unit_price=unit_price)
+
+    # save item
+    item.save()
+
+    return item
+
+
+@app.route('/item/get', methods=['POST'])
+@verify_token
+def get_item(_):
+    """
+    get an item
+    request must contain:
+        - token
+        - id
+    :return: returns an item
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        name = request_data['name']
-        desc = request_data['desc']
-        unit_price = request_data['unit_price']
+        item_id = request_data['id']
 
-        # check quantity for proper value
-        if unit_price <= 0:
-            raise Exception('Unit price cannot be less than 0.')
+        # get an item
+        item = Item.objects.get(id=item_id)
 
-        # initial declarations
-        item = None
-        msg = 'Retrieved item.'
-
-        # try to get the item if exists
-        try:
-            item = Item.objects.get(name=name,
-                                    desc=desc,
-                                    unit_price=unit_price)
-        except Exception:
-            pass
-
-        # if the item does not exist
-        if item is None:
-            # create the item
-            msg = 'Created item.'
-            item = Item(name=name,
-                        desc=desc,
-                        unit_price=unit_price)
-
-        # save item
-        item.save()
-
-        return jsonify({'id': item.id, 'msg': msg}), 200
-
+        return jsonify(item), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
-
 
 ###############################################################################################################
 ###############################################################################################################

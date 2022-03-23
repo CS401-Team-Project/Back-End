@@ -2,13 +2,13 @@
 
 ## Table of Contents
 
-#### [/register](#register)
+#### [/register](#register-1)
 
-#### [/user/profile](#user-profile)
+#### [/user/profile](#userprofile-1)
 
-#### [/user/update](#user-profile-update)
+#### [/user/update](#userupdate-1)
 
-#### [/user/delete](#user-profile-delete)
+#### [/user/delete](#userdelete-1)
 
 ---
 

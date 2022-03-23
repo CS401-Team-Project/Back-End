@@ -6,7 +6,7 @@
 
 #### [/group/create](#groupcreate-1)
 
-#### [/group/update](#groupupdatee-1)
+#### [/group/update](#groupupdate-1)
 
 #### [/group/delete](#groupdelete-1)
 

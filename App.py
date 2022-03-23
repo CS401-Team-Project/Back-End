@@ -159,24 +159,31 @@ def register():
 @verify_token
 def set_profile(person):
     """
-    delete a users profile
+    modify a users profile
     :param person: current logged in user
+    :param profile: json with key value pairs of things to set
     :return: returns json of
     """
     try:
-        # unlink person from all groups
-        # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
-        for group in person.groups:
-            try:
-                group.people.remove(person.sub)
-            except Exception:
-                pass
+        # get fields
+        request_data = request.get_json(force=True, silent=True)
+        profile = request_data['profile']
 
-        # delete the person from the database
-        person.delete()
+        # iterate through given fields
+        for k,v in profile.items():
+            # if in list do nothing
+            if k in ['email', 'sub', 'date_joined', 'picture', 'groups']:
+                continue
+            # set the keyed value
+            else:
+                person[k] = v
+
+        # save the person
+        person.save()
         return jsonify({'msg': 'User account deleted.'}), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
 
 @app.route('/person/profile', methods=['POST'])
 @verify_token

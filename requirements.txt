@@ -20,5 +20,6 @@ WTForms==3.0.1
 google-api-python-client==2.41.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.5.1
+google-api-core>=1.14.0
 google~=3.0.0
 random-password-generator==2.2.0

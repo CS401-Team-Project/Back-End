@@ -1,8 +1,8 @@
 """
 TODO: Module docstring
 """
-from . import GroupSettings
-from mongoengine import StringField, Document, ListField, EmbeddedDocument, DateField
+from .GroupSettings import GroupSettings
+from mongoengine import StringField, Document, ListField, EmbeddedDocumentField, DateField
 
 
 class Group(Document):
@@ -14,7 +14,7 @@ class Group(Document):
     join_code = StringField(max_length=255)
     people = ListField(default=[])
     transactions = ListField(default=[])
-    settings = EmbeddedDocument(GroupSettings)
+    settings = EmbeddedDocumentField(GroupSettings)
 
     # #
     # TODO - add time when person joined group ( embedded document or map )

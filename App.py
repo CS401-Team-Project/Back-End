@@ -155,6 +155,36 @@ def register():
         return jsonify({'msg': exp}), 500
 
 
+@app.route('/person/set', methods=['POST'])
+@verify_token
+def set_profile(person):
+    """
+    modify a users profile
+    :param person: current logged in user
+    :param profile: json with key value pairs of things to set
+    :return: returns json of
+    """
+    try:
+        # get fields
+        request_data = request.get_json(force=True, silent=True)
+        profile = request_data['profile']
+
+        # iterate through given fields
+        for k,v in profile.items():
+            # if in list do nothing
+            if k in ['email', 'sub', 'date_joined', 'picture', 'groups']:
+                continue
+            # set the keyed value
+            else:
+                person[k] = v
+
+        # save the person
+        person.save()
+        return jsonify({'msg': 'User account deleted.'}), 500
+    except Exception as exp:
+        return jsonify({'msg': exp}), 500
+
+
 @app.route('/person/profile', methods=['POST'])
 @verify_token
 def user_profile(person):
@@ -191,32 +221,28 @@ def user_profile(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/person/groups', methods=['POST'])
+@app.route('/person/delete', methods=['POST'])
 @verify_token
-def get_groups(person):
+def delete_profile(person):
     """
-    get the groups the user belongs to
-    token needs to be passed in the request
+    delete a users profile
     :param person: current logged in user
-    :return:
+    :return: returns json of
     """
-
     try:
-        # list of groups [{id: name}...]
-        group_list = []
+        # unlink person from all groups
+        # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
+        for group in person.groups:
+            try:
+                group.people.remove(person.sub)
+            except Exception:
+                pass
 
-        # go through list of group ids that person is in and get group names
-        g_ids = person['groups']
-        for g_id in g_ids:
-            # retrieve the groups name
-            group = Group.objects.get(id=g_id)
-            group_list.append({g_id: group['name']})
-        # return list of groups
-        return jsonify(group_list), 200
-
+        # delete the person from the database
+        person.delete()
+        return jsonify({'msg': 'User account deleted.'}), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
-
 
 ###############################################################################################################
 ###############################################################################################################

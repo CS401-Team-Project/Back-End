@@ -16,7 +16,7 @@
 
 #### [/group/remove-member](#groupremovemember-1)
 
-#### [/group/refresh-id](#grouprefreshid-1)
+#### [/group/refresh-id](#grouprefresh-id-1)
 
 ---
 
@@ -242,7 +242,7 @@ axios.post('/group/delete', {
 
 ---
 
-## /group/invite_member
+## /group/invite-member
 
 **HTTP Method**: POST
 
@@ -325,7 +325,7 @@ axios.post('/group/join', {
 });
 ```
 
-## /group/remove_member
+## /group/remove-member
 
 **HTTP Method**: POST
 

@@ -10,11 +10,11 @@
 
 #### [/group/delete](#groupdelete-1)
 
-#### [/group/invite-member](#groupinvitemember-1)
+#### [/group/invite-member](#groupinvite-member-1)
 
 #### [/group/join](#groupjoin-1)
 
-#### [/group/remove-member](#groupremovemember-1)
+#### [/group/remove-member](#groupremove-member-1)
 
 #### [/group/refresh-id](#grouprefresh-id-1)
 

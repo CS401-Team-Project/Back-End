@@ -2,21 +2,21 @@
 
 ## Table of Contents
 
-#### [/group/profile](#group-profile)
+#### [/group/profile](#groupprofile-1)
 
-#### [/group/create](#group-create)
+#### [/group/create](#groupcreate-1)
 
-#### [/group/update](#group-updatee)
+#### [/group/update](#groupupdatee-1)
 
-#### [/group/delete](#group-delete)
+#### [/group/delete](#groupdelete-1)
 
-#### [/group/invite-member](#group-invite-member)
+#### [/group/invite-member](#groupinvitemember-1)
 
-#### [/group/join](#group-join)
+#### [/group/join](#groupjoin-1)
 
-#### [/group/remove-member](#group-remove-member)
+#### [/group/remove-member](#groupremovemember-1)
 
-#### [/group/refresh-id](#group-refresh-id)
+#### [/group/refresh-id](#grouprefreshid-1)
 
 ---
 
@@ -270,11 +270,6 @@ axios.post('/group/delete', {
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 409    | Conflict              | Member already exists in group.                |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
-
-### Response:
-
-| status | statusText | data.msg |
-|--------|------------|----------|
 
 ### Examples:
 

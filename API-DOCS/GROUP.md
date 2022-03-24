@@ -12,9 +12,9 @@
 
 #### [/group/delete](#groupdelete-1)
 
-#### [/group/invite-member](#groupinvite-member-1)
-
 #### [/group/join](#groupjoin-1)
+
+#### [/group/invite-member](#groupinvite-member-1)
 
 #### [/group/remove-member](#groupremove-member-1)
 
@@ -244,6 +244,46 @@ axios.post('/group/delete', {
 
 ---
 
+## /group/join
+
+**HTTP Method**: POST
+
+**Description**: Allows a user to join a group they have been invited to based on the group's unique identifier.
+
+**Note**: The user must have been invited to the group in order to join it.
+
+### Request:
+
+| Field | Type   | Required | Default | Description        |
+|-------|--------|----------|---------|--------------------|
+| token | String | Yes      | -       | Google OAuth Token |
+| id    | String | Yes      | -       | Group ID           |
+
+### Response:
+
+| status | statusText            | data.msg                                     |
+|--------|-----------------------|----------------------------------------------|
+| 200    | OK                    | User joined group.                           |
+| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s). |
+| 401    | Unauthorized          | User is not invited or group does not exist. |
+| 409    | Conflict              | User is already a member of the group.       |
+| 500    | Internal Server Error | An unexpected error occurred.                |
+
+### Examples:
+
+```js
+axios.post('/group/join', {
+    token: '<Google OAuth Token>',
+    id: '<Group ID>'
+}).then(function (response) {
+    console.log(response);
+}).catch(function (error) {
+    console.log(error);
+});
+```
+
+---
+
 ## /group/invite-member
 
 **HTTP Method**: POST
@@ -280,46 +320,6 @@ axios.post('/group/invite_member', {
     token: '<Google OAuth Token>',
     id: '<Group ID>',
     email: '<Member Email>'
-}).then(function (response) {
-    console.log(response);
-}).catch(function (error) {
-    console.log(error);
-});
-```
-
----
-
-## /group/join
-
-**HTTP Method**: POST
-
-**Description**: Allows a user to join a group they have been invited to based on the group's unique identifier.
-
-**Note**: The user must have been invited to the group in order to join it.
-
-### Request:
-
-| Field | Type   | Required | Default | Description        |
-|-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
-| id    | String | Yes      | -       | Group ID           |
-
-### Response:
-
-| status | statusText            | data.msg                                     |
-|--------|-----------------------|----------------------------------------------|
-| 200    | OK                    | User joined group.                           |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s). |
-| 401    | Unauthorized          | User is not invited or group does not exist. |
-| 409    | Conflict              | User is already a member of the group.       |
-| 500    | Internal Server Error | An unexpected error occurred.                |
-
-### Examples:
-
-```js
-axios.post('/group/join', {
-    token: '<Google OAuth Token>',
-    id: '<Group ID>'
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {

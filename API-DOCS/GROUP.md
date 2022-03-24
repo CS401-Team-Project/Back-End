@@ -4,7 +4,7 @@
 
 #### [<= Back](./README.md)
 
-#### [/group/info](#groupprofile-1)
+#### [/group/info](#groupinfo-1)
 
 #### [/group/create](#groupcreate-1)
 

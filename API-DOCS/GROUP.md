@@ -316,7 +316,7 @@ axios.post('/group/join', {
 ### Examples:
 
 ```js
-axios.post('/group/invite_member', {
+axios.post('/group/invite-member', {
     token: '<Google OAuth Token>',
     id: '<Group ID>',
     email: '<Member Email>'
@@ -362,7 +362,7 @@ axios.post('/group/invite_member', {
 ### Examples:
 
 ```js
-axios.post('/group/remove_member', {
+axios.post('/group/remove-member', {
     token: '<Google OAuth Token>',
     id: '<Group ID>',
     userid: '<Member ID>'

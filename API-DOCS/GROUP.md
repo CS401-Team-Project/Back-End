@@ -42,7 +42,7 @@
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
 | 200    | OK                    | Successfully retrieved group info.             |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).   |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
 
@@ -97,28 +97,28 @@ axios.post('/group/info', {
 
 ### Request:
 
-| Field | Type   | Required | Default | Description        |
-|-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
-| data  | JSON   | Yes      | -       | Group Data         |
-
-**Note**: The `data` object may contain the following fields:
-
-- **name**: The group's name [**Required**] [String]
-- **description**: The group's description [Optional] [String]
-- **members**: The users to invite to the group [Optional] [Array]
-    - The current user is added as an admin by default.
-    - If no members are specified, the admin will be able to invite new users later on.
-    - If members are specified, they will be invited to join the group.
+| Field       | Type   | Required | Default            | Description                            |
+|-------------|--------|----------|--------------------|----------------------------------------|
+| token       | String | Yes      | -                  | Google OAuth Token                     |
+| name        | String | Yes      | -                  | The group's name                       |
+| description | String | No       | ""                 | The group's description                |
+| members     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
+| permissions | Object | No       | DefaultPermissions | The group's permission settings        |
 
 ### Response:
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
 | 201    | Created               | Group successfully created.                   |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).  |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 401    | Unauthorized          | Token is unauthorized to perform the request. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
+
+### Notes:
+
+- The current user is added as an admin by default.
+- If no members are specified, the admin will be able to invite new users later on.
+- If members are specified, they will be invited to join the group.
 
 ### Examples:
 
@@ -127,11 +127,9 @@ axios.post('/group/info', {
 ```js
 axios.post('/group/create', {
     token: '<Google OAuth Token>',
-    data: {
-        name: 'My Group', // Required
-        description: 'This is my group.', // Optional
-        members: ['<User 1 Email>', '<User 2 Email>'], // Optional
-    }
+    name: 'My Group', // Required
+    description: 'This is my group.', // Optional
+    members: ['<User 1 Email>', '<User 2 Email>'], // Optional
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -154,36 +152,22 @@ axios.post('/group/create', {
 
 ### Request:
 
-| Field | Type   | Required | Default | Description        |
-|-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
-| id    | String | Yes      | -       | Group ID           |
-| data  | JSON   | Yes      | -       | Group Data         |
+| Field | Type   | Required | Default | Description                    |
+|-------|--------|----------|---------|--------------------------------|
+| token | String | Yes      | -       | Google OAuth Token             |
+| id    | String | Yes      | -       | Group ID                       |
+| data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
-#### Note:
+#### Notes:
 
-1. The data object **must** contain the _key-value_ pairs of fields to update.
-2. The data object may **only** contain the following fields:
-    1. `name`: The group's name [**Optional**] [String]
-    2. `description`: The group's description [Optional] [String]
-    3. `permissions`: The group's permissions [JSON]
-3. The data object may **not** contain the following fields:
-    - `id`: The group's unique identifier [String]
-    - `admin`: The group's admin unique identifier [String]
-    - `members`: The group members' unique identifiers. [Array of Strings]
-    - `restricted`: The group's restricted items. [Array of Strings]
-        - `balance`: The group's balance. [Float]
-        - `transactions`: The transactions associated with the group [Array]
-        - `date`: [JSON]
-            - `created`: The group's creation date [String]
-            - `updated`: The group's last update date  [String]
+- **Should not** be able to update the `restricted` field.
 
 ### Response:
 
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
 | 200    | OK                    | Group successfully updated.                    |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).   |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
 
@@ -194,9 +178,9 @@ axios.post('/group/create', {
 ```js
 axios.post('/group/update', {
     token: '<Google OAuth Token>',
-    id: '<Group ID>',
+    id: '<Group ID>', // Required
     data: {
-        name: 'My Group', // Required
+        name: 'New Group Name'
     }
 }).then(function (response) {
     console.log(response);
@@ -225,7 +209,7 @@ axios.post('/group/update', {
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
 | 200    | OK                    | Group successfully deleted.                    |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).   |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
 
@@ -261,13 +245,13 @@ axios.post('/group/delete', {
 
 ### Response:
 
-| status | statusText            | data.msg                                     |
-|--------|-----------------------|----------------------------------------------|
-| 200    | OK                    | User joined group.                           |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s). |
-| 401    | Unauthorized          | User is not invited or group does not exist. |
-| 409    | Conflict              | User is already a member of the group.       |
-| 500    | Internal Server Error | An unexpected error occurred.                |
+| status | statusText            | data.msg                                      |
+|--------|-----------------------|-----------------------------------------------|
+| 200    | OK                    | User joined group.                            |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
+| 401    | Unauthorized          | User is not invited or group does not exist.  |
+| 409    | Conflict              | User is already a member of the group.        |
+| 500    | Internal Server Error | An unexpected error occurred.                 |
 
 ### Examples:
 
@@ -308,7 +292,7 @@ axios.post('/group/join', {
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
 | 200    | OK                    | Member successfully invited.                   |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).   |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 409    | Conflict              | Member already exists in group.                |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
@@ -354,7 +338,7 @@ axios.post('/group/invite-member', {
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
 | 200    | OK                    | Member successfully removed.                   |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).   |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 409    | Conflict              | Member is not a member of the group.           |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
@@ -401,7 +385,7 @@ axios.post('/group/remove-member', {
 | status | statusText            | data.msg                                          |
 |--------|-----------------------|---------------------------------------------------|
 | 200    | OK                    | Group's unique identifier successfully refreshed. |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).      |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).     |
 | 401    | Unauthorized          | Token is unauthorized or group does not exist.    |
 | 500    | Internal Server Error | An unexpected error occurred.                     |
 

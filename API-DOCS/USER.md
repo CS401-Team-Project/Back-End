@@ -34,7 +34,7 @@
 |--------|-----------------------|-----------------------------------------------|
 | 201    | Created               | User account created.                         |
 | 200    | OK                    | User account already exists.                  |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).  |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 401    | Unauthorized          | Token is unauthorized to perform the request. | 
 | 500    | Internal Server Error | An unexpected error occurred.                 |
 
@@ -74,7 +74,7 @@ axios.post('/person/register', {
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
 | 200    | OK                    | User profile successfully retrieved.          |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).  |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
 
@@ -146,10 +146,10 @@ axios.post('/user/info', {
 
 ### Request:
 
-| Field | Type        | Required | Default | Description                                  |
-|-------|-------------|----------|---------|----------------------------------------------|
-| token | String      | Yes      | -       | Google OAuth Token                           |
-| data  | JSON Object | Yes      | -       | Contains key-value pairs of fields to update |
+| Field | Type   | Required | Default | Description                    |
+|-------|--------|----------|---------|--------------------------------|
+| token | String | Yes      | -       | Google OAuth Token             |
+| data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
 #### Note:
 
@@ -178,7 +178,7 @@ axios.post('/user/info', {
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
 | 200    | OK                    | User profile successfully updated.            |
-| 400    | Bad Request           | Missing Required Field(s) / Invalid Type(s).  |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 401    | Unauthorized          | Token is unauthorized to perform the request. |
 | 404    | Not Found             | User profile not found.                       |
 | 500    | Internal Server Error | An unexpected error occurred.                 |

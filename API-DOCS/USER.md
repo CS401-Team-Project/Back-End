@@ -6,7 +6,7 @@
 
 #### [/register](#register-1)
 
-#### [/user/info](#userprofile-1)
+#### [/user/info](#userinfo-1)
 
 #### [/user/update](#userupdate-1)
 

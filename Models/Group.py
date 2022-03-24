@@ -1,8 +1,43 @@
 """
 TODO: Module docstring
 """
-from .GroupSettings import GroupSettings
-from mongoengine import StringField, Document, ListField, EmbeddedDocumentField, DateField
+import datetime
+from mongoengine import *
+
+
+class GroupPermissions(EmbeddedDocument):
+    """
+    TODO: Class docstring
+    """
+    # can only the admin modify transactions
+    only_admin_remove_user = BooleanField(default=True)
+
+    # can only the owner of a transaction modify it
+    only_owner_modify_transaction = BooleanField(default=True)
+
+    # can the admin overrule the owner of a transaction and modify it
+    admin_overrule_modify_transaction = BooleanField(default=True)
+
+    # can users delete transaction
+    user_delete_transaction = BooleanField(default=True)
+
+    # can only the owner of a transaction delete it
+    only_owner_delete_transaction = BooleanField(default=True)
+
+    # can the admin overrule the owner of a transaction and delete it
+    admin_overrule_delete_transaction = BooleanField(default=True)
+
+
+class GroupDate(EmbeddedDocument):
+    created = DateTimeField(default=datetime.datetime.utcnow)
+    updated = DateTimeField(default=datetime.datetime.utcnow)
+    last_refreshed = DateTimeField(default=datetime.datetime.utcnow)
+
+
+class GroupRestricted(EmbeddedDocument):
+    balance = FloatField(default=0)
+    transactions = ListField(default=[])
+    date = EmbeddedDocumentField(GroupDate)
 
 
 class Group(Document):
@@ -10,11 +45,12 @@ class Group(Document):
     TODO: Class Docstring
     """
     name = StringField(max_length=60, required=True)
+    desc = StringField(max_length=255, default='')
     admin = StringField(max_length=255, required=True)
-    join_code = StringField(max_length=255)
-    people = ListField(default=[])
-    transactions = ListField(default=[])
-    settings = EmbeddedDocumentField(GroupSettings)
+    members = ListField(default=[])
+    permissions = EmbeddedDocumentField(GroupPermissions)
+    restricted = EmbeddedDocumentField(GroupRestricted)
+
 
     # #
     # TODO - add time when person joined group ( embedded document or map )

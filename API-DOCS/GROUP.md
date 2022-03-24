@@ -4,7 +4,7 @@
 
 #### [<= Back](./README.md)
 
-#### [/group/profile](#groupprofile-1)
+#### [/group/info](#groupprofile-1)
 
 #### [/group/create](#groupcreate-1)
 
@@ -22,13 +22,13 @@
 
 ---
 
-## /group/profile
+## /group/info
 
 **HTTP Method**: POST
 
 **Description**: Retrieve a Group's Information
 
-**TODO Back-End**: Change `/group/get` to `/group/profile`
+**TODO Back-End**: Change `/group/get` to `/group/info`
 
 ### Request:
 
@@ -77,7 +77,7 @@
 ### Examples:
 
 ```js
-axios.post('/group/profile', {
+axios.post('/group/info', {
     token: '<TOKEN>',
     id: '<GROUP_ID>'
 }).then(function (response) {

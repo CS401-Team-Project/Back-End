@@ -6,7 +6,7 @@
 
 #### [/register](#register-1)
 
-#### [/user/profile](#userprofile-1)
+#### [/user/info](#userprofile-1)
 
 #### [/user/update](#userupdate-1)
 
@@ -54,13 +54,13 @@ axios.post('/person/register', {
 
 ---
 
-## /user/profile
+## /user/info
 
 **HTTP Method**: POST
 
 **Description**: Retrieves a user's profile.
 
-**TODO Back-End**: Change `/person/profile` to `/user/profile`
+**TODO Back-End**: Change `/person/profile` to `/user/info`
 
 ### Request:
 

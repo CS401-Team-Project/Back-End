@@ -60,7 +60,7 @@ axios.post('/person/register', {
 
 **Description**: Retrieves a user's profile.
 
-**TODO Back-End**: Change `/person/profile` to `/user/info`
+**TODO Back-End**: Change `/user/info` to `/user/info`
 
 ### Request:
 
@@ -110,7 +110,7 @@ axios.post('/person/register', {
 #### User gets their own private profile:
 
 ```js
-axios.post('/person/profile', {
+axios.post('/user/info', {
     token: '<Google OAuth Token>',
 }).then(function (response) {
     console.log(response);
@@ -122,7 +122,7 @@ axios.post('/person/profile', {
 #### User gets another person's public profile
 
 ```js
-axios.post('/person/profile', {
+axios.post('/user/info', {
     token: '<Google OAuth Token>',
     sub: '<Unique identifier for person>'
 }).then(function (response) {

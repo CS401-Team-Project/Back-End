@@ -50,7 +50,14 @@
 ### Examples:
 
 ```js
-
+axios.post('/transaction/info', {
+    token: '<TOKEN>',
+    id: '<TRANSACTION_ID>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 ## /transaction/create
@@ -86,7 +93,18 @@
 ### Examples:
 
 ```js
-
+axios.post('/transaction/create', {
+    token: '<TOKEN>',
+    id: '<GROUP_ID>',
+    title: '<TRANSACTION_TITLE>',
+    description: '<TRANSACTION_DESCRIPTION>',
+    vendor: '<TRANSACTION_VENDOR>',
+    date: '<TRANSACTION_DATE>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 ---
@@ -121,7 +139,20 @@
 ### Examples:
 
 ```js
-
+axios.post('/transaction/update', {
+    token: '<TOKEN>',
+    id: '<TRANSACTION_ID>',
+    data: {
+        title: '<TRANSACTION_TITLE>',
+        description: '<TRANSACTION_DESCRIPTION>',
+        vendor: '<TRANSACTION_VENDOR>',
+        date: '<TRANSACTION_DATE>'
+    }
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 ---
@@ -155,7 +186,14 @@
 ### Examples:
 
 ```js
-
+axios.post('/transaction/delete', {
+    token: '<TOKEN>',
+    id: '<TRANSACTION_ID>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 ---
@@ -190,6 +228,19 @@
 ### Examples:
 
 ```js
+axios.post('/transaction/add-item', {
+    token: '<TOKEN>',
+    id: '<TRANSACTION_ID>',
+    name: '<ITEM_ID>',
+    quantity: '<QUANTITY>',
+    unit_price: '<UNIT_PRICE>',
+    owed_by: '<USER_ID>',
+    description: '<DESCRIPTION>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 
 ```
 
@@ -225,7 +276,15 @@
 ### Examples:
 
 ```js
-
+axios.post('/transaction/remove-item', {
+    token: '<TOKEN>',
+    id: '<TRANSACTION_ID>',
+    item_id: '<ITEM_ID>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 ---
@@ -259,7 +318,14 @@
 ### Examples:
 
 ```js
-
+axios.post('/item/info', {
+    token: '<TOKEN>',
+    id: '<ITEM_ID>'
+}).then(response => {
+    console.log(response.data);
+}).catch(error => {
+    console.log(error.response.data);
+});
 ```
 
 

@@ -30,6 +30,11 @@
 
 **TODO Back-End**: Change `/group/get` to `/group/info`
 
+### Notes:
+
+- If the user hasn't yet joined the group, the response **will not include** the `restricted` and `permissions` object.
+- Only once the user has joined the group, the response **will include** the `restricted` and `permissions` object.
+
 ### Request:
 
 | Field | Type   | Required | Default | Description        |
@@ -46,27 +51,26 @@
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
 
-#### Note:
+#### Restrictions:
 
-- If the user hasn't yet joined the group, the response **will not include** the `restricted` and `permissions` object.
-- Only once the user has joined the group, the response **will include** the `restricted` and `permissions` object.
+- The user must be an admin/member of the group OR must have been invited to the group.
 
-### If the user has joined the group:
+#### If the user has joined the group:
 
 - `id`: The group's unique identifier. [String]
 - `name`: The group's name. [String]
 - `description`: The group's description. [String]
 - `admin`: The group's admin unique identifier [String]
 - `members`: The group members' unique identifiers. [Array of Strings]
-- `permissions`: The group's permission settings [JSON]
 - `restricted`: The group's restricted items. [Array of Strings]
+    - `permissions`: The group's permission settings [JSON]
     - `balance`: The group's balance. [Float]
     - `transactions`: The transactions associated with the group [Array]
     - `date`: [JSON]
         - `created`: The group's creation date [String]
         - `updated`: The group's last update date  [String]
 
-### If the user has not yet joined the group:
+#### If the user has not yet joined the group, but has been invited:
 
 - `id`: The group's unique identifier. [String]
 - `name`: The group's name. [String]
@@ -95,6 +99,13 @@ axios.post('/group/info', {
 
 **Description**: Create a new Group
 
+### Notes:
+
+- Can be used by anyone.
+- The current user is added as an admin by default.
+- If no members are specified, the admin will be able to invite new users later on.
+- If members are specified, they will be invited to join the group.
+
 ### Request:
 
 | Field       | Type   | Required | Default            | Description                            |
@@ -103,7 +114,10 @@ axios.post('/group/info', {
 | name        | String | Yes      | -                  | The group's name                       |
 | description | String | No       | ""                 | The group's description                |
 | members     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
-| permissions | Object | No       | DefaultPermissions | The group's permission settings        |
+
+#### Restrictions:
+
+- Can only be called once every 5 minutes.
 
 ### Response:
 
@@ -114,15 +128,9 @@ axios.post('/group/info', {
 | 401    | Unauthorized          | Token is unauthorized to perform the request. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
 
-### Notes:
-
-- The current user is added as an admin by default.
-- If no members are specified, the admin will be able to invite new users later on.
-- If members are specified, they will be invited to join the group.
-
 ### Examples:
 
-#### Create a new group:
+#### Create a new group with a name, description, 2 initial members (+ admin):
 
 ```js
 axios.post('/group/create', {
@@ -130,6 +138,20 @@ axios.post('/group/create', {
     name: 'My Group', // Required
     description: 'This is my group.', // Optional
     members: ['<User 1 Email>', '<User 2 Email>'], // Optional
+}).then(function (response) {
+    console.log(response);
+}).catch(function (error) {
+    console.log(error);
+});
+```
+
+#### Create a new group with a name, description, and no initial members:
+
+```js
+axios.post('/group/create', {
+    token: '<Google OAuth Token>',
+    name: 'My Group', // Required
+    description: 'This is my group.', // Optional
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -145,10 +167,9 @@ axios.post('/group/create', {
 
 **Description**: Update a Group's profile
 
-**Note**: This endpoint is only available to either:
+### Notes:
 
-- The group's admin (which created the group initially)
-- A group's member where the group's permissions allow them to update the group profile
+- Can always be used by the group's admin (which created the group initially)
 
 ### Request:
 
@@ -158,9 +179,13 @@ axios.post('/group/create', {
 | id    | String | Yes      | -       | Group ID                       |
 | data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
-#### Notes:
+#### Restrictions:
 
+- Can only be used by a group's member if the group's permissions allow them to update the group profile
 - **Should not** be able to update the `restricted` field.
+- **Should not** be able to update the `admin` field, unless the user is the group's admin.
+- **Should not** be able to update the `members` field
+    - See [/group/invite-member](#groupinvite-member-1) and [/group/remove-member](#groupremove-member-1).
 
 ### Response:
 
@@ -195,7 +220,9 @@ axios.post('/group/update', {
 
 **Description**: Delete a Group
 
-**Note**: This endpoint is only available to the group's admin (which created the group initially).
+### Notes:
+
+- Can only be used by the group's admin (which created the group initially)
 
 ### Request:
 
@@ -203,6 +230,10 @@ axios.post('/group/update', {
 |-------|--------|----------|---------|--------------------|
 | token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
+
+#### Restrictions:
+
+- Cannot be used by group members, or anyone else but the admin.
 
 ### Response:
 
@@ -232,9 +263,11 @@ axios.post('/group/delete', {
 
 **HTTP Method**: POST
 
-**Description**: Allows a user to join a group they have been invited to based on the group's unique identifier.
+**Description**: Join a group
 
-**Note**: The user must have been invited to the group in order to join it.
+### Notes:
+
+- A user may join a group based on the group's unique identifier (shared to them by the group's admin)
 
 ### Request:
 
@@ -242,6 +275,11 @@ axios.post('/group/delete', {
 |-------|--------|----------|---------|--------------------|
 | token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
+
+#### Restrictions:
+
+- Can only be used by a user who has not yet joined the group
+- Can only be used by a user who has been invited to the group
 
 ### Response:
 
@@ -274,10 +312,9 @@ axios.post('/group/join', {
 
 **Description**: Invite a member to a Group
 
-**Note**: This endpoint is only available to:
+### Notes:
 
-- the group's admin (which created the group initially).
-- regular group members where the group's admin allowed permission to invite members.
+- Can always be used by the group's admin (which created the group initially)
 
 ### Request:
 
@@ -286,6 +323,10 @@ axios.post('/group/join', {
 | token | String | Yes      | -       | Google OAuth Token     |
 | id    | String | Yes      | -       | Group ID               |
 | email | String | Yes      | -       | Member Email to Invite |
+
+#### Restrictions:
+
+- Can be used by normal members if and only if the group's admin has allowed permission to invite members
 
 ### Response:
 
@@ -317,12 +358,10 @@ axios.post('/group/invite-member', {
 
 **Description**: Remove a member from a Group
 
-**Restrictions**:
+### Notes:
 
-- Only the group's admin (which created the group initially) can remove members, unless the group's admin allowed
-  permission to remove members.
-- Non-Admin members may not remove other members from the group, unless the group's admin allowed permission to remove
-  members.
+- Can always be used by the group's admin (which created the group initially)
+
 - A member may always remove themselves from the group.
 
 ### Request:
@@ -332,6 +371,10 @@ axios.post('/group/invite-member', {
 | token  | String | Yes      | -       | Google OAuth Token  |
 | id     | String | Yes      | -       | Group ID            |
 | userid | String | Yes      | -       | Member ID to Remove |
+
+#### Restrictions:
+
+- Can be used by normal members if and only if the group's admin has allowed permission to remove members
 
 ### Response:
 
@@ -365,13 +408,10 @@ axios.post('/group/remove-member', {
 
 **Description**: Refresh a Group's unique identifier.
 
-**Note**: This identifier is shared by a group admin to allow other users to join the group.
+### Notes:
 
-**Restrictions**:
-
-- Only the group's admin can refresh the group's unique identifier.
-- The group's unique identifier can only be refreshed once every 1 hour.
-- When the unique identifier is refreshed, there should NOT be duplicate group identifiers in the Database.
+- The group's unique identifier is used to allow other users to join the group.
+- Only the group's admin can refresh the group's unique identifier
 
 ### Request:
 
@@ -379,6 +419,10 @@ axios.post('/group/remove-member', {
 |-------|--------|----------|---------|--------------|
 | token | String | Yes      | -       | Google OAuth |
 | id    | String | Yes      | -       | Group ID     |
+
+#### Restrictions:
+
+- The group's unique identifier can only be refreshed once every 1 hour.
 
 ### Response:
 

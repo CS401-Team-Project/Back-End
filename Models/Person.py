@@ -19,6 +19,8 @@ class Person(Document):
     sub = StringField(max_length=255, unique=True)
 
     # TODO - Fields to add
+    #  - datetime profile modified
+    #  - datetime last login
     #  - can add email verified: https://developers.google.com/identity/sign-in/web/backend-auth
     #  - sub object ( Embedded Document )
     #      - CashApp, Venmo, and user names

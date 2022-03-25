@@ -5,10 +5,10 @@ echo "## START                 entrypoint.sh                         ##"
 echo "#################################################################"
 
 # TODO: Figure out what needs to be done with the API user and password storing
-MONGO_HOST="mongodb"
-API_USERNAME="apiuser"
-API_PASSWORD="apipassword"
-CLIENT_ID="996982688294-rqhcr4d5b6m3vk0e3ur2no457iqql2u5.apps.googleusercontent.com"
+export MONGO_HOST="mongodb"
+export API_USERNAME="apiuser"
+export API_PASSWORD="apipassword"
+export CLIENT_ID="996982688294-rqhcr4d5b6m3vk0e3ur2no457iqql2u5.apps.googleusercontent.com"
 # TODO: Change default admin credentials for MongoDB or lock admin account
 ADMIN_USER=admin
 ADMIN_PASS=password

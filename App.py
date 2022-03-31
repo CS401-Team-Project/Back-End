@@ -624,8 +624,6 @@ def refresh_id(person):
 ###############################################################################################################
 ## TRANSACTIONS
 
-# TODO - add get transaction
-
 
 @app.route('/transaction/create', methods=['POST'])
 @verify_token
@@ -638,23 +636,28 @@ def create_transaction(person):
         - title: transaction title required
         - desc: optional
         - vendor: optional
+        - date: optional
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data['id']
-        title = request_data['title']
+        group_id = request_data.get('group', default=None)
+        title = request_data.get('title', default=None)
         desc = request_data.get('id', default='')
         vendor = request_data.get('vendor', default='')
+        date = request_data.get('date', default=datetime.datetime.utcnow)
+
+        if group_id is None or title is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the group to make sure it exists
         group = Group.objects.get(id=group_id)
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # create the transaction
         transaction = Transaction(title=title,
@@ -662,7 +665,8 @@ def create_transaction(person):
                                   desc=desc,
                                   vendor=vendor,
                                   created_by=person.sub,
-                                  modified_by=person.sub)
+                                  modified_by=person.sub,
+                                  date_purchased=date)
 
         # save the transaction
         transaction.save()
@@ -675,8 +679,8 @@ def create_transaction(person):
 
         return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 # TODO update to replace transaction items
@@ -688,15 +692,18 @@ def update_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - transaction: json containing fields to update
+        - data: json containing fields to update
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-        transaction_new = request_data['transaction']
+        transaction_id = request_data.get('id', default=None)
+        transaction_new = request_data.get('data', default=None)
+
+        if transaction_id is None or transaction_new is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -707,12 +714,12 @@ def update_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # make sure user is authorized
         if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
             if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
-                raise Exception('User is not authorized to update the transaction.')
+                return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # update the transaction
         for k, v in transaction_new.items():
@@ -750,7 +757,7 @@ def update_transaction(person):
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 @app.route('/transaction/delete', methods=['POST'])
@@ -766,7 +773,10 @@ def delete_transaction(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
+        transaction_id = request_data.get('id', default=None)
+
+        if transaction_id is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -777,17 +787,17 @@ def delete_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # make sure user is authorized
         if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
             if not group.settings.user_delete_transaction:
                 if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
-                    raise Exception('User is not authorized to update the transaction.')
+                    return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # check if transaction is the group
         if transaction_id not in group.transactions:
-            raise Exception('Transaction not in group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # remove the transaction from the group
         group.transactions.remove(transaction_id)
@@ -797,8 +807,8 @@ def delete_transaction(person):
 
         return jsonify({'msg': 'Transaction deleted.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 def _delete_transaction(transaction):
@@ -829,8 +839,11 @@ def _delete_item(item):
     # if the usage count is 0 delete it
     if item.usage_count <= 0:
         item.delete()
+    else:
+        item.save()
 
-@app.route('/transaction/add', methods=['POST'])
+
+@app.route('/transaction/add-item', methods=['POST'])
 @verify_token
 def add_item_to_transaction(person):
     """
@@ -838,8 +851,8 @@ def add_item_to_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - quantity
         - name: name of item
+        - quantity
         - desc: desc of item
         - unit_price: unit price of item
         - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
@@ -848,14 +861,18 @@ def add_item_to_transaction(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-        quantity = request_data['quantity']
-        person_id = request_data.get('person')
+        transaction_id = request_data.get('id', default=None)
+        quantity = request_data.get('quantity', default=None, type=int)
+        person_id = request_data.get('person', default=None)
 
         # get the item data from the request
-        name = request_data.get('name')
-        desc = request_data.get('desc')
-        unit_price = request_data.get('unit_price')
+        name = request_data.get('name', default=None)
+        desc = request_data.get('desc', default='')
+        unit_price = request_data.get('unit_price', default=None, type=float)
+
+        if transaction_id is None or quantity is None or person_id is None or \
+            name is None or unit_price is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -866,7 +883,7 @@ def add_item_to_transaction(person):
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 def _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price):
@@ -912,7 +929,53 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     item.save()
 
 
-@app.route('/transaction/get', methods=['POST'])
+@app.route('/transaction/remove-item', methods=['POST'])
+@verify_token
+def remove_item_from_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - id: transaction id
+        - data: transaction item to delete
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data.get('id', default=None)
+        transaction_item = request_data.get('data', default=None)
+
+        if transaction_id is None or transaction_item is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+
+        # get the transaction item and delete it
+        transaction_item = transaction.items.objects.get(**transaction_item)
+
+        # delete the item or decrement its count
+        item = Item(id=transaction_item.item_id)
+        _delete_item(item)
+
+        # delete the transaction item
+        transaction_item.delete()
+
+        # update the last modified by
+        transaction.modified_by = person.sub
+        transaction.date_modified = datetime.datetime.utcnow()
+
+        # save transaction
+        transaction.save()
+
+        return jsonify({'msg': 'Transaction updated.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
+
+@app.route('/transaction/info', methods=['POST'])
 @verify_token
 def get_transaction(person):
     """
@@ -936,12 +999,12 @@ def get_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
         return jsonify(transaction), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
 ###############################################################################################################
@@ -988,7 +1051,7 @@ def _create_item(name: str, desc: str, unit_price: float):
     return item
 
 
-@app.route('/item/get', methods=['POST'])
+@app.route('/item/info', methods=['POST'])
 @verify_token
 def get_item(_):
     """

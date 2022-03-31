@@ -19,7 +19,6 @@ class Item(Document):
     usage_count = IntField(default=0)
 
 
-
 class TransactionItem(EmbeddedDocument):
     """
     TODO: Class docstring
@@ -42,6 +41,9 @@ class Transaction(Document):
 
     # linking
     group = ObjectIdField(required=True)
+
+    #
+    date_purchased = DateTimeField(default=datetime.datetime.utcnow)
 
     # keep track of when and who created it
     date_created = DateTimeField(default=datetime.datetime.utcnow)

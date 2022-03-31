@@ -59,5 +59,14 @@ class Transaction(Document):
 
     # optional meta data
     vendor = StringField(default='', required=False)
-    # TODO - have this as its own collection and have it hold the id to the receipt document
-    # receipt         = ImageField(required=False)
+
+    # TODO - make required=true for final product
+    receipt = ObjectIdField(required=False)
+
+
+class Receipt(Document):
+    """
+    TODO - add docstring
+    """
+    receipt = ImageField(required=True)
+

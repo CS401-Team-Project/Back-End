@@ -193,6 +193,7 @@ def user_profile(person):
 
         # else return the users info
         person.msg = 'User profile successfully retrieved.'
+
         return jsonify(person), 200
 
     except Exception:
@@ -403,7 +404,6 @@ def get_group(person):
         # check if user is in group
         if person.sub not in group.members:
             group.restricted = None
-            group.permissions = None
 
         # return the group
         return jsonify(group), 200

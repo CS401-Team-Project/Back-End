@@ -35,6 +35,7 @@ class GroupDate(EmbeddedDocument):
 
 
 class GroupRestricted(EmbeddedDocument):
+    permissions = EmbeddedDocumentField(GroupPermissions)
     balance = FloatField(default=0)
     transactions = ListField(default=[])
     date = EmbeddedDocumentField(GroupDate)
@@ -48,7 +49,6 @@ class Group(Document):
     desc = StringField(max_length=255, default='')
     admin = StringField(max_length=255, required=True)
     members = ListField(default=[])
-    permissions = EmbeddedDocumentField(GroupPermissions)
     restricted = EmbeddedDocumentField(GroupRestricted)
 
 

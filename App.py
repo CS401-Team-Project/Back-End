@@ -1,12 +1,13 @@
 """
 Main api request endpoint
 """
+import array
 import datetime
 import os
+from copy import deepcopy
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from password_generator import PasswordGenerator
 
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
@@ -85,7 +86,7 @@ def verify_token(func):
 
         except Exception as exp:
             # Invalid token
-            return jsonify({"msg": str(exp)}), 401
+            return 'Token is unauthorized or user does not exist.', 404
 
     return wrap
 
@@ -96,7 +97,7 @@ def verify_token(func):
 ## PERSON API ENDPOINTS
 
 
-@app.route('/person/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     """
     used for logging in a user. creates an account if not already exists
@@ -107,7 +108,7 @@ def register():
         request_data = request.get_json(force=True, silent=True)
 
         if request_data is None:
-            raise Exception('Request could not be parsed.')
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # get token
         token = request_data.get('token')
@@ -127,13 +128,12 @@ def register():
 
         # if there are more than one people returned. thats a problem
         if len(person) > 1:
-            return jsonify({'msg': 'Too many people returned.'}), 401
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # get the person that is returned
         person = person.first()
 
         # if person not in DB create them
-        msg = 'User Exists'
         if person is None:
             # TODO - add email verified and handle it
 
@@ -144,48 +144,18 @@ def register():
                             sub=token_info['sub'],
                             picture=token_info['picture'])
 
-            # save the person object
-            person.save()
-            msg = 'User Created'
+        # save the person object
+        person.date.last_login = datetime.datetime.utcnow()
+        person.save()
 
         # return status message
-        return jsonify({'msg': msg}), 200
+        return jsonify({'msg': 'User profile successfully retrieved.'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
-@app.route('/person/set', methods=['POST'])
-@verify_token
-def set_profile(person):
-    """
-    modify a users profile
-    :param person: current logged in user
-    :param profile: json with key value pairs of things to set
-    :return: returns json of
-    """
-    try:
-        # get fields
-        request_data = request.get_json(force=True, silent=True)
-        profile = request_data['profile']
-
-        # iterate through given fields
-        for k,v in profile.items():
-            # if in list do nothing
-            if k in ['email', 'sub', 'date_joined', 'picture', 'groups']:
-                continue
-            # set the keyed value
-            else:
-                person[k] = v
-
-        # save the person
-        person.save()
-        return jsonify({'msg': 'User account deleted.'}), 500
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
-
-
-@app.route('/person/profile', methods=['POST'])
+@app.route('/user/info', methods=['POST'])
 @verify_token
 def user_profile(person):
     """
@@ -205,23 +175,71 @@ def user_profile(person):
             person = Person.objects.get(sub=request_data.get('sub'))
 
             # explicitly build the returned json
-            ret = {
+            date = {
+                'created': person['date']['created']
+            }
+            person = {
+                'sub': person['sub'],
                 'first_name': person['first_name'],
                 'last_name': person['last_name'],
+                'email': person['email'],
+                'email_verified': person['email_verified'],
                 'picture': person['picture'],
-                'sub': person['sub'],
-                'date_joined': person['date_joined']
+                'date': date,
+                'pay_with': person['pay_with']
             }
-            return jsonify(ret), 200
+            person.msg = 'User profile successfully retrieved.'
+            return jsonify(person), 200
 
         # else return the users info
+        person.msg = 'User profile successfully retrieved.'
+
         return jsonify(person), 200
 
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
+
+@app.route('/user/update', methods=['POST'])
+@verify_token
+def update_profile(person):
+    """
+    modify a users profile
+    :param person: current logged in user
+    :param data: json with key value pairs of things to set
+    :return: returns json of
+    """
+    try:
+        # get fields
+        request_data = request.get_json(force=True, silent=True)
+        profile = request_data['data']
+
+        # check for unallowed fields
+        if set(profile.keys()).union({'email', 'sub', 'date_joined', 'picture', 'groups'}):
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+
+        # iterate through given fields
+        for k,v in profile.items():
+            if k not in person:
+                return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+
+            # if key is pay_with must iterate through embedded dictionary
+            elif k == 'pay_with':
+                for k2, v2 in v.items():
+                    person[k][k2] = v2
+            # set the keyed value
+            else:
+                person[k] = v
+
+        # save the person
+        person.date.updated = datetime.datetime.utcnow()
+        person.save()
+        return jsonify({'msg': 'User account deleted.'}), 500
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
-@app.route('/person/delete', methods=['POST'])
+@app.route('/user/delete', methods=['POST'])
 @verify_token
 def delete_profile(person):
     """
@@ -240,7 +258,7 @@ def delete_profile(person):
 
         # delete the person from the database
         person.delete()
-        return jsonify({'msg': 'User account deleted.'}), 500
+        return jsonify({'msg': 'User profile successfully deleted.'}), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
 
@@ -260,6 +278,7 @@ def create_group(person):
     request must contain:
         - token
         - name: group name
+        - desc: [optional]
         - join_code: [optional]
     :param person: the person making the request
     :return: returns json with group id and msg
@@ -268,17 +287,20 @@ def create_group(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_name = request_data.get('name')
-        join_code = request_data.get('join_code', default=None)
 
-        # create a random password for joining the group
-        join_code = join_code if join_code is not None else PasswordGenerator().generate()
+        data = request_data.get('data', default=None)
+        if 'name' not in data:
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+
+        group_name = data['name']
+        group_desc = data.get('desc', default='')
+        members = data.get('members')
 
         # create the group
-        group = Group(name=group_name, admin=person.id, join_code=join_code)
+        group = Group(name=group_name, desc=group_desc, admin=person.id)
 
         # add the creating user to the group
-        group.people.append(person.sub)
+        group.members.append(person.sub)
 
         # save the group
         group.save()
@@ -287,12 +309,21 @@ def create_group(person):
         person.groups.append(group.id)
 
         # save the person object
+        person.date.updated = datetime.datetime.utcnow()
         person.save()
 
-        return jsonify({'id': group.id, 'join_code': join_code, 'msg': 'Created group'}), 200
+        # TODO - finish this when invites are implemented
+        if members is not None:
+            if type(members) is not array:
+                return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+            for member in members:
+                pass
+        group.save()
+        group.msg = 'Created group.'
+        return jsonify(group), 201
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 @app.route('/group/delete', methods=['POST'])
@@ -312,28 +343,27 @@ def delete_group(person):
         group_id = request_data.get('id')
 
         # query the group
-        group = Group(id=group_id)
+        group = Group.objects(id=group_id)
+        if len(group) == 0 or person.sub != group.admin:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
-        # check privilege
-        if person.sub != group.admin:
-            raise Exception("User not authorized to delete group.")
+        group = group.first()
 
         # Iterate through people and unlink them from the groups
-        for p_sub in group.people:
+        for p_sub in group.members:
 
             # try to get the person from the DB
             try:
                 person = Person.objects.get(sub=p_sub)
             except Exception:
-                print('Person does not exist')
                 continue
 
             # try to remove person from group
             try:
                 person.groups.remove(group_id)
+                person.date.updated = datetime.datetime.utcnow()
                 person.save()
             except Exception:
-                print('Person does not belong to group')
                 continue
 
         # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
@@ -343,16 +373,15 @@ def delete_group(person):
                 transaction = Transaction.objects.get(id=t_id)
                 _delete_transaction(transaction)
             except Exception:
-                print("Transaction does not exist")
                 continue
 
-        return jsonify({'msg': 'Group Deleted'}), 200
+        return jsonify({'msg': 'Group successfully deleted.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
-@app.route('/group/get', methods=['POST'])
+@app.route('/group/info', methods=['POST'])
 @verify_token
 def get_group(person):
     """
@@ -373,15 +402,8 @@ def get_group(person):
         group = Group(id=group_id)
 
         # check if user is in group
-        if person.sub not in group.people:
-            raise Exception('User not in group')
-
-        # if only the admin can view the join code and user is not admin, clear out the join code
-        if group.settings.only_admin_view_join_code and group.admin != person.sub:
-            group.join_code = None
-
-        # add the creating user to the group
-        group.people.append(person.sub)
+        if person.sub not in group.members:
+            group.restricted = None
 
         # return the group
         return jsonify(group), 200
@@ -390,9 +412,9 @@ def get_group(person):
         return jsonify({'msg': exp}), 500
 
 
-@app.route('/group/set', methods=['POST'])
+@app.route('/group/update', methods=['POST'])
 @verify_token
-def set_group(person):
+def update_group(person):
     """
     Return a group the user is in
     request must contain:
@@ -407,33 +429,33 @@ def set_group(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
-        group_new = request_data.get('group')
+        data = request_data.get('data')
 
         # get the group
-        group = Group(id=group_id)
+        group = Group.objects(id=group_id)
+        if len(group) == 0:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+        group = group.first()
 
         # check if user is in group
         if person.sub not in group.people:
-            raise Exception('User not in group')
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+
+        # weed out bad fields
+        if not set(data.keys()).union({'name', 'description', 'permissions'}):
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # iterate through all items
-        for k, v in group_new.items():
-            # if the key is the id, people, or settings ignore it
-            # if the user wants to delete a transaction they should use delete_transaction
-            # TODO - assign the settings here. settings must check if only admin has permissions to change this.
-            if k in ['id', 'people', 'settings', 'transactions']:
-                continue
-
+        for k, v in data.items():
             # if is join code check if authorized
-            elif k == 'join_code':
-                # if only the admin can view the join code and user is not admin
-                if group.settings.only_admin_set_join_code and group.admin != person.sub:
-                    continue
-                group.join_code = v
-
+            if k == 'permissions':
+                for k2, v2 in v.items():
+                    person[k][k2] = v2
             else:
-                # TODO - test this at some point to make sure this works
                 group[k] = v
+
+        group.date.update = datetime.datetime.utcnow()
+
         # save the group
         group.save()
 
@@ -441,43 +463,10 @@ def set_group(person):
         return jsonify({'msg': 'Group updated'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
-## GROUP MEMBER GET/ADD/REMOVE
-
-
-@app.route('/group/members', methods=['POST'])
-@verify_token
-def get_members(person):
-    """
-    Get a list of members that belong to a group
-    request must contain a token and a group id
-    """
-
-    try:
-        # get the request data
-        request_data = request.get_json(force=True, silent=True)
-        group_id = request_data.get('id')
-
-        # query the group
-        group = Group.objects.get(id=group_id)
-
-        # make sure the user belongs to the group
-        if person.sub not in group.people:
-            raise Exception('User does not belong to group')
-
-        # get the members
-        members = group.people
-
-        # check if user is in the group
-        if person.sub not in members:
-            raise Exception('User does not belong to group.')
-
-        return jsonify(members), 200
-
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+## GROUP MEMBER ADD/REMOVE
 
 
 @app.route('/group/join', methods=['POST'])
@@ -488,24 +477,28 @@ def join_group(person):
     request must contain:
         - token
         - id: group id
-        - join_code
     :param person: the person making the request
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
-        join_code = request_data.get('join_code')
 
         # query the group
-        group = Group.objects.get(id=group_id)
+        group = Group.objects(id=group_id)
+        if len(group) == 0:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+        group = group.first()
 
-        # check if user join code is correct
-        if group.join_code != join_code:
-            raise Exception('Join code is not correct')
+        # check if already a member
+        if person.sub in group.members:
+            return jsonify({'msg': 'User is already a member of the group.'}), 409
+
+        # TODO - need to verify if invited
 
         # add person to group
         group.people.append(person.sub)
+        group.updated = datetime.datetime.utcnow()
 
         # save group
         group.save()
@@ -514,15 +507,16 @@ def join_group(person):
         person.groups.append(group.id)
 
         # save person
+        person.date.updated = datetime.datetime.utcnow()
         person.save()
 
-        return jsonify({'msg': 'User added to group.'}), 200
+        return jsonify({'msg': 'User joined group.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
-@app.route('/group/remove_member', methods=['POST'])
+@app.route('/group/remove-member', methods=['POST'])
 @verify_token
 def remove_member(person):
     """
@@ -530,35 +524,40 @@ def remove_member(person):
     request must contain:
         - token
         - id: group id
-        - sub: [optional] user to remove from the grou
+        - userid: [optional] user to remove from the grou
     :param person: the person making the request
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
-        sub = request_data.get('sub')
+        sub = request_data.get('userid')
 
         # query the group
-        group = Group.objects.get(id=group_id)
+        group = Group.objects(id=group_id)
+        if len(group) == 0:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+        group = group.first()
 
         # if the user is trying to delete another user in the group
         if sub is not None:
             # check if authorized to remove member
             if (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
-                raise Exception('User not authorized to remove member.')
+                return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+
         else:
             # if person is trying to delete themselves from the group
             sub = person.sub
 
         # check if the given sub is not in group
         if sub not in group.people:
-            raise Exception('User does not belong to group.')
+            return jsonify({'msg': 'User is not a member of the group.'}), 409
 
         # remove the person from the group
         group.people.remove(sub)
 
         # save the group
+        group.updated = datetime.datetime.utcnow()
         group.save()
 
         # if group is tied to person object
@@ -567,20 +566,64 @@ def remove_member(person):
             person.groups.remove(group_id)
 
             # save person
+            person.date.updated = datetime.datetime.utcnow()
             person.save()
 
-        return jsonify({'msg': 'User added to group.'}), 200
+        return jsonify({'msg': 'Member successfully removed.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
+
+@app.route('/group/refresh-id', methods=['POST'])
+@verify_token
+def refresh_id(person):
+    """
+    refreshes the group id
+    request must contain:
+        - token
+        - id: group id
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        group_id = request_data.get('id')
+
+        # query the group
+        group = Group.objects(id=group_id)
+        if len(group) == 0:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+        group = group.first()
+
+        # is person admin
+        if person.sub != group.admin:
+            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+
+        old_group = group
+        group = deepcopy(old_group)
+        group.id = None
+
+        # TODO - need to update all links in person and Transaction DB
+
+        # update times
+        time = datetime.datetime.utcnow()
+        group.updated = time
+        group.last_refreshed = time
+
+        # save the group
+        group.save()
+        old_group.delete()
+        return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
+
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
 ## TRANSACTIONS
 
-# TODO - add get transaction
 
 @app.route('/transaction/create', methods=['POST'])
 @verify_token
@@ -593,23 +636,28 @@ def create_transaction(person):
         - title: transaction title required
         - desc: optional
         - vendor: optional
+        - date: optional
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data['id']
-        title = request_data['title']
+        group_id = request_data.get('group', default=None)
+        title = request_data.get('title', default=None)
         desc = request_data.get('id', default='')
         vendor = request_data.get('vendor', default='')
+        date = request_data.get('date', default=datetime.datetime.utcnow)
+
+        if group_id is None or title is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the group to make sure it exists
         group = Group.objects.get(id=group_id)
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # create the transaction
         transaction = Transaction(title=title,
@@ -617,7 +665,8 @@ def create_transaction(person):
                                   desc=desc,
                                   vendor=vendor,
                                   created_by=person.sub,
-                                  modified_by=person.sub)
+                                  modified_by=person.sub,
+                                  date_purchased=date)
 
         # save the transaction
         transaction.save()
@@ -630,8 +679,8 @@ def create_transaction(person):
 
         return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 # TODO update to replace transaction items
@@ -643,15 +692,18 @@ def update_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - transaction: json containing fields to update
+        - data: json containing fields to update
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-        transaction_new = request_data['transaction']
+        transaction_id = request_data.get('id', default=None)
+        transaction_new = request_data.get('data', default=None)
+
+        if transaction_id is None or transaction_new is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -662,12 +714,12 @@ def update_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # make sure user is authorized
         if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
             if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
-                raise Exception('User is not authorized to update the transaction.')
+                return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # update the transaction
         for k, v in transaction_new.items():
@@ -705,7 +757,7 @@ def update_transaction(person):
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 @app.route('/transaction/delete', methods=['POST'])
@@ -721,7 +773,10 @@ def delete_transaction(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
+        transaction_id = request_data.get('id', default=None)
+
+        if transaction_id is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -732,17 +787,17 @@ def delete_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # make sure user is authorized
         if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
             if not group.settings.user_delete_transaction:
                 if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
-                    raise Exception('User is not authorized to update the transaction.')
+                    return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # check if transaction is the group
         if transaction_id not in group.transactions:
-            raise Exception('Transaction not in group')
+            return jsonify({'msg': 'Token is unauthorized.'}), 404
 
         # remove the transaction from the group
         group.transactions.remove(transaction_id)
@@ -752,8 +807,8 @@ def delete_transaction(person):
 
         return jsonify({'msg': 'Transaction deleted.'}), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 def _delete_transaction(transaction):
@@ -784,8 +839,11 @@ def _delete_item(item):
     # if the usage count is 0 delete it
     if item.usage_count <= 0:
         item.delete()
+    else:
+        item.save()
 
-@app.route('/transaction/add', methods=['POST'])
+
+@app.route('/transaction/add-item', methods=['POST'])
 @verify_token
 def add_item_to_transaction(person):
     """
@@ -793,8 +851,8 @@ def add_item_to_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - quantity
         - name: name of item
+        - quantity
         - desc: desc of item
         - unit_price: unit price of item
         - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
@@ -803,14 +861,18 @@ def add_item_to_transaction(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-        quantity = request_data['quantity']
-        person_id = request_data.get('person')
+        transaction_id = request_data.get('id', default=None)
+        quantity = request_data.get('quantity', default=None, type=int)
+        person_id = request_data.get('person', default=None)
 
         # get the item data from the request
-        name = request_data.get('name')
-        desc = request_data.get('desc')
-        unit_price = request_data.get('unit_price')
+        name = request_data.get('name', default=None)
+        desc = request_data.get('desc', default='')
+        unit_price = request_data.get('unit_price', default=None, type=float)
+
+        if transaction_id is None or quantity is None or person_id is None or \
+            name is None or unit_price is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
@@ -821,7 +883,7 @@ def add_item_to_transaction(person):
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
-        return jsonify({'msg': exp}), 500
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
 def _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price):
@@ -867,7 +929,53 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     item.save()
 
 
-@app.route('/transaction/get', methods=['POST'])
+@app.route('/transaction/remove-item', methods=['POST'])
+@verify_token
+def remove_item_from_transaction(person):
+    """
+    Create a transaction in the group
+    request must contain:
+        - token
+        - id: transaction id
+        - data: transaction item to delete
+    :param person: the person making the request
+    """
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data.get('id', default=None)
+        transaction_item = request_data.get('data', default=None)
+
+        if transaction_id is None or transaction_item is None:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+
+        # get the transaction item and delete it
+        transaction_item = transaction.items.objects.get(**transaction_item)
+
+        # delete the item or decrement its count
+        item = Item(id=transaction_item.item_id)
+        _delete_item(item)
+
+        # delete the transaction item
+        transaction_item.delete()
+
+        # update the last modified by
+        transaction.modified_by = person.sub
+        transaction.date_modified = datetime.datetime.utcnow()
+
+        # save transaction
+        transaction.save()
+
+        return jsonify({'msg': 'Transaction updated.'}), 200
+
+    except Exception as exp:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
+
+@app.route('/transaction/info', methods=['POST'])
 @verify_token
 def get_transaction(person):
     """
@@ -891,12 +999,12 @@ def get_transaction(person):
 
         # make sure the user belongs to the group
         if person.sub not in group.people:
-            raise Exception('Person does not belong to group')
+            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
         return jsonify(transaction), 200
 
-    except Exception as exp:
-        return jsonify({'msg': exp}), 500
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
 ###############################################################################################################
@@ -943,7 +1051,7 @@ def _create_item(name: str, desc: str, unit_price: float):
     return item
 
 
-@app.route('/item/get', methods=['POST'])
+@app.route('/item/info', methods=['POST'])
 @verify_token
 def get_item(_):
     """

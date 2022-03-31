@@ -254,11 +254,11 @@ axios.post('/transaction/add-item', {
 
 ### Request:
 
-| Field   | Type   | Required | Description        |
-|---------|--------|----------|--------------------|
-| token   | String | Yes      | Google OAuth Token |
-| id      | String | Yes      | Transaction ID     |
-| item_id | String | Yes      | Item ID            |
+| Field | Type   | Required | Description                    |
+|-------|--------|----------|--------------------------------|
+| token | String | Yes      | Google OAuth Token             |
+| id    | String | Yes      | Transaction ID                 |
+| data  | Object | Yes      | Transaction Item To Be Deleted |
 
 ### Response:
 

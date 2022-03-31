@@ -3,9 +3,32 @@ TODO: Module docstring
 """
 import datetime
 
-from mongoengine import ObjectIdField, StringField, Document, DateTimeField, EmbeddedDocumentListField, FloatField
+from mongoengine import *
 
-from .TransactionItem import TransactionItem
+
+class Item(Document):
+    """
+    TODO: Class Docstring
+    """
+    # general info
+    name = StringField(default='', max_length=60, required=True)
+    desc = StringField(default='', required=True)
+    unit_price = FloatField(default=0.0, required=True)
+
+    # if the usage_count turns to 0 we delete it from the db
+    usage_count = IntField(default=0)
+
+
+class TransactionItem(EmbeddedDocument):
+    """
+    TODO: Class docstring
+    """
+    # general info
+    item_id = ObjectIdField(required=True)
+    person = ObjectIdField(required=True)
+    quantity = IntField(default=1, required=True)
+    item_cost = FloatField(default=0.0, required=True)
+    # TODO last modified and modified by
 
 
 class Transaction(Document):
@@ -18,6 +41,9 @@ class Transaction(Document):
 
     # linking
     group = ObjectIdField(required=True)
+
+    #
+    date_purchased = DateTimeField(default=datetime.datetime.utcnow)
 
     # keep track of when and who created it
     date_created = DateTimeField(default=datetime.datetime.utcnow)

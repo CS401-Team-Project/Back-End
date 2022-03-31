@@ -14,6 +14,8 @@ from flask_mongoengine import MongoEngine
 
 from Models import Person, Group, Item, TransactionItem, Transaction
 
+debug = os.environ['DEBUG']
+
 # setup the Flask server
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
@@ -62,6 +64,10 @@ def verify_token(func):
         wrap the given function
         """
         try:
+            # TODO - remove this once dev is done
+            if debug:
+                return func(None, *args, **kwargs)
+
             # get the request args depending on the type of request
             request_data = {}
             if request.method == "POST":
@@ -104,6 +110,9 @@ def register():
     :return: status of the registration
     """
     try:
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User profile successfully retrieved.'}), 200
         print('request\n', request)
         request_data = request.get_json(force=True, silent=True)
 
@@ -169,6 +178,37 @@ def user_profile(person):
     try:
         request_data = request.get_json(force=True, silent=True)
 
+        # TODO - remove this once dev is done
+        if debug:
+            if 'sub' in request_data:
+                date = {
+                    'created': datetime.datetime.utcnow(),
+                }
+            else:
+                date = {
+                    'created': datetime.datetime.utcnow(),
+                    'updated': datetime.datetime.utcnow(),
+                    'last_login': datetime.datetime.utcnow()
+                }
+            person = {
+                'sub': '1234abcd',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'email': 'johndoe@email.com',
+                'email_verified': True,
+                'picture': None,
+                'date': date,
+                'pay_with': {
+                    'venmo': '',
+                    'cashapp': '',
+                    'paypal': '',
+                    'preferred': 'venmo'
+                }
+            }
+            person.msg = 'User profile successfully retrieved.'
+            return jsonify(person), 200
+
+
         # if sub was given to us
         if 'sub' in request_data:
             # requesting another users info
@@ -210,16 +250,21 @@ def update_profile(person):
     :return: returns json of
     """
     try:
+
         # get fields
         request_data = request.get_json(force=True, silent=True)
         profile = request_data['data']
+
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User account update.'}), 500
 
         # check for unallowed fields
         if set(profile.keys()).union({'email', 'sub', 'date_joined', 'picture', 'groups'}):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # iterate through given fields
-        for k,v in profile.items():
+        for k, v in profile.items():
             if k not in person:
                 return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
@@ -234,8 +279,8 @@ def update_profile(person):
         # save the person
         person.date.updated = datetime.datetime.utcnow()
         person.save()
-        return jsonify({'msg': 'User account deleted.'}), 500
-    except Exception as exp:
+        return jsonify({'msg': 'User account update.'}), 500
+    except Exception:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -248,6 +293,10 @@ def delete_profile(person):
     :return: returns json of
     """
     try:
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User profile successfully deleted.'}), 500
+
         # unlink person from all groups
         # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
         for group in person.groups:
@@ -287,6 +336,14 @@ def create_group(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
+
+        # TODO - remove this once dev is done
+        if debug:
+            group = {
+                
+            }
+
+            return jsonify(group), 500
 
         data = request_data.get('data', default=None)
         if 'name' not in data:

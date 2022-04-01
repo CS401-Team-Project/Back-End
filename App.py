@@ -851,38 +851,47 @@ def add_item_to_transaction(person):
     request must contain:
         - token
         - id: transaction id
-        - name: name of item
-        - quantity
-        - desc: desc of item
-        - unit_price: unit price of item
-        - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
+        - items: [
+            {
+                - name: name of item
+                - quantity
+                - desc: desc of item
+                - unit_price: unit price of item
+                - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
+            }, ...
+        ]
     :param person: the person making the request
     """
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         transaction_id = request_data.get('id', default=None)
-        quantity = request_data.get('quantity', default=None, type=int)
-        person_id = request_data.get('person', default=None)
+        items = request_data.get('items', default=None, type=list)
 
-        # get the item data from the request
-        name = request_data.get('name', default=None)
-        desc = request_data.get('desc', default='')
-        unit_price = request_data.get('unit_price', default=None, type=float)
-
-        if transaction_id is None or quantity is None or person_id is None or \
-            name is None or unit_price is None:
+        if transaction_id is None or items is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
 
-        # add the item to the transaction
-        _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price)
+        for item in items:
+            quantity = item.get('quantity', default=None, type=int)
+            person_id = item.get('person', default=None)
+
+            # get the item data from the request
+            name = item.get('name', default=None)
+            desc = item.get('desc', default='')
+            unit_price = item.get('unit_price', default=None, type=float)
+
+            if quantity is None or person_id is None or name is None or unit_price is None:
+                return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+
+            # add the item to the transaction
+            _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price)
 
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
-    except Exception as exp:
+    except Exception:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 

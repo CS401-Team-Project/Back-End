@@ -442,15 +442,19 @@ def update_group(person):
             return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
         # weed out bad fields
-        if not set(data.keys()).union({'name', 'description', 'permissions'}):
+        if not set(data.keys()).union({'name', 'description', 'restricted'}):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # iterate through all items
         for k, v in data.items():
             # if is join code check if authorized
-            if k == 'permissions':
+            if k == 'restricted':
                 for k2, v2 in v.items():
-                    person[k][k2] = v2
+                    if k2 == 'permissions':
+                        if person.sub != group.admin:
+                            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+                        for k3, v3 in v2.items():
+                            group[k][k3] = v3
             else:
                 group[k] = v
 
@@ -460,7 +464,7 @@ def update_group(person):
         group.save()
 
         # return the group
-        return jsonify({'msg': 'Group updated'}), 200
+        return jsonify({'msg': 'Group updated.'}), 200
 
     except Exception as exp:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500

@@ -29,12 +29,18 @@ class GroupPermissions(EmbeddedDocument):
 
 
 class GroupDate(EmbeddedDocument):
+    """
+    TODO: Class Docstring
+    """
     created = DateTimeField(default=datetime.datetime.utcnow)
     updated = DateTimeField(default=datetime.datetime.utcnow)
     last_refreshed = DateTimeField(default=datetime.datetime.utcnow)
 
 
 class GroupRestricted(EmbeddedDocument):
+    """
+    TODO: Class Docstring
+    """
     permissions = EmbeddedDocumentField(GroupPermissions)
     balance = FloatField(default=0)
     transactions = ListField(default=[])
@@ -52,7 +58,7 @@ class Group(Document):
     restricted = EmbeddedDocumentField(GroupRestricted)
 
 
-    # #
+    #
     # TODO - add time when person joined group ( embedded document or map )
     #   - date group was created
     #   - group settings

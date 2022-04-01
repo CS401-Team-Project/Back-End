@@ -1,6 +1,7 @@
 """
 Main api request endpoint
 """
+
 import array
 import datetime
 import os
@@ -8,7 +9,7 @@ from copy import deepcopy
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
-
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
@@ -18,6 +19,11 @@ debug = os.environ['DEBUG']
 
 # setup the Flask server
 app = Flask(__name__)
+
+# If on debug allow cross-origin resource sharing
+if bool(os.environ['DEBUG']):
+    CORS(app)
+
 app.config['MONGODB_SETTINGS'] = {
     'host': os.environ['MONGO_HOST'],
     'username': os.environ['API_USERNAME'],
@@ -36,7 +42,7 @@ db.init_app(app)
 # TEST API ENDPOINT
 # TODO - this should only be available in debug
 
-@app.route("/test", methods=['GET'])
+@app.route("/test_get", methods=['GET'])
 def test():
     """
     Just a test route to verify that the API is working.
@@ -45,6 +51,29 @@ def test():
     print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
 
+
+@app.route("/test_post", methods=['POST'])
+def test():
+    """
+    Just a test route to verify that the API is working.
+    :return: Smart Ledger API Endpoint: OK
+    """
+    print(f"ROUTE test_post: {request}")
+    request_data = request.get_json(force=True, silent=True)
+    n1 = request_data.get('n1')
+    n2 = request_data.get('n1')
+    op = request_data.get('n1')
+
+    if op == "add":
+        return str(n1 + n2), 200
+    elif op == "sub":
+        return str(n1 - n2), 200
+    elif op == "mul":
+        return str(n1 * n2), 200
+    elif op == "div":
+        return str(n1 / n2), 200
+    else:
+        return "Unsupported operation", 501
 
 ###############################################################################################################
 ###############################################################################################################

@@ -15,6 +15,8 @@ from flask_mongoengine import MongoEngine
 
 from Models import Person, Group, Item, TransactionItem, Transaction
 
+debug = os.environ['DEBUG']
+
 # setup the Flask server
 app = Flask(__name__)
 
@@ -90,6 +92,10 @@ def verify_token(func):
         wrap the given function
         """
         try:
+            # TODO - remove this once dev is done
+            if debug:
+                return func(None, *args, **kwargs)
+
             # get the request args depending on the type of request
             request_data = {}
             if request.method == "POST":
@@ -132,6 +138,9 @@ def register():
     :return: status of the registration
     """
     try:
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User profile successfully retrieved.'}), 200
         print('request\n', request)
         request_data = request.get_json(force=True, silent=True)
 
@@ -197,6 +206,36 @@ def user_profile(person):
     try:
         request_data = request.get_json(force=True, silent=True)
 
+        # TODO - remove this once dev is done
+        if debug:
+            if 'sub' in request_data:
+                date = {
+                    'created': datetime.datetime.utcnow(),
+                }
+            else:
+                date = {
+                    'created': datetime.datetime.utcnow(),
+                    'updated': datetime.datetime.utcnow(),
+                    'last_login': datetime.datetime.utcnow()
+                }
+            person = {
+                'sub': '1234abcd',
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'email': 'johndoe@email.com',
+                'email_verified': True,
+                'picture': None,
+                'date': date,
+                'pay_with': {
+                    'venmo': '',
+                    'cashapp': '',
+                    'paypal': '',
+                    'preferred': 'venmo'
+                }
+            }
+            person.msg = 'User profile successfully retrieved.'
+            return jsonify(person), 200
+
         # if sub was given to us
         if 'sub' in request_data:
             # requesting another users info
@@ -238,16 +277,21 @@ def update_profile(person):
     :return: returns json of
     """
     try:
+
         # get fields
         request_data = request.get_json(force=True, silent=True)
         profile = request_data['data']
+
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User account update.'}), 500
 
         # check for unallowed fields
         if set(profile.keys()).union({'email', 'sub', 'date_joined', 'picture', 'groups'}):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # iterate through given fields
-        for k,v in profile.items():
+        for k, v in profile.items():
             if k not in person:
                 return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
@@ -262,8 +306,8 @@ def update_profile(person):
         # save the person
         person.date.updated = datetime.datetime.utcnow()
         person.save()
-        return jsonify({'msg': 'User account deleted.'}), 500
-    except Exception as exp:
+        return jsonify({'msg': 'User account update.'}), 500
+    except Exception:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -276,6 +320,10 @@ def delete_profile(person):
     :return: returns json of
     """
     try:
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'User profile successfully deleted.'}), 500
+
         # unlink person from all groups
         # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
         for group in person.groups:
@@ -289,6 +337,7 @@ def delete_profile(person):
         return jsonify({'msg': 'User profile successfully deleted.'}), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -307,7 +356,6 @@ def create_group(person):
         - token
         - name: group name
         - desc: [optional]
-        - join_code: [optional]
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -315,6 +363,35 @@ def create_group(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
+
+        # TODO - remove this once dev is done
+        if debug:
+            group = {
+                'name': 'example group',
+                'desc': 'example group description.',
+                'admin': '1234abcd',
+                'members': ['1234abcd', 'laksdjfl2', 'i232kjhsx', 'ai232j22'],
+                'restricted': {
+                    'permissions': {
+                        'only_admin_remove_user': True,
+                        'only_owner_modify_transaction': True,
+                        'admin_overrule_modify_transaction': True,
+                        'user_delete_transaction': True,
+                        'only_owner_delete_transaction': True,
+                        'admin_overrule_delete_transaction': True
+                    },
+                    'balance': 0,
+                    'transactions': ['213lknsdf', 'klsj234kn', 'askldfj2n', 'kjlsju2'],
+                    'date': {
+                        'created': datetime.datetime.utcnow(),
+                        'updated': datetime.datetime.utcnow(),
+                        'last_refreshed': datetime.datetime.utcnow()
+                    }
+                },
+                'msg': 'An unexpected error occurred.'
+            }
+
+            return jsonify(group), 200
 
         data = request_data.get('data', default=None)
         if 'name' not in data:
@@ -368,7 +445,11 @@ def delete_group(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data.get('id')
+        group_id = request_data['id']
+
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'Group successfully deleted.'}), 200
 
         # query the group
         group = Group.objects(id=group_id)
@@ -424,7 +505,36 @@ def get_group(person):
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-        group_id = request_data.get('id')
+        group_id = request_data.get['id']
+
+        # TODO - remove this once dev is done
+        if debug:
+            group = {
+                'name': 'example group',
+                'desc': 'example group description.',
+                'admin': '1234abcd',
+                'members': ['1234abcd', 'laksdjfl2', 'i232kjhsx', 'ai232j22'],
+                'restricted': {
+                    'permissions': {
+                        'only_admin_remove_user': True,
+                        'only_owner_modify_transaction': True,
+                        'admin_overrule_modify_transaction': True,
+                        'user_delete_transaction': True,
+                        'only_owner_delete_transaction': True,
+                        'admin_overrule_delete_transaction': True
+                    },
+                    'balance': 0,
+                    'transactions': ['213lknsdf', 'klsj234kn', 'askldfj2n', 'kjlsju2'],
+                    'date': {
+                        'created': datetime.datetime.utcnow(),
+                        'updated': datetime.datetime.utcnow(),
+                        'last_refreshed': datetime.datetime.utcnow()
+                    }
+                },
+                'msg': 'An unexpected error occurred.'
+            }
+
+            return jsonify(group), 200
 
         # get the group
         group = Group(id=group_id)
@@ -459,6 +569,10 @@ def update_group(person):
         group_id = request_data.get('id')
         data = request_data.get('data')
 
+        # TODO - remove this once dev is done
+        if debug:
+            return jsonify({'msg': 'Group updated.'}), 200
+
         # get the group
         group = Group.objects(id=group_id)
         if len(group) == 0:
@@ -470,15 +584,19 @@ def update_group(person):
             return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
         # weed out bad fields
-        if not set(data.keys()).union({'name', 'description', 'permissions'}):
+        if not set(data.keys()).union({'name', 'description', 'restricted'}):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # iterate through all items
         for k, v in data.items():
             # if is join code check if authorized
-            if k == 'permissions':
+            if k == 'restricted':
                 for k2, v2 in v.items():
-                    person[k][k2] = v2
+                    if k2 == 'permissions':
+                        if person.sub != group.admin:
+                            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+                        for k3, v3 in v2.items():
+                            group[k][k3] = v3
             else:
                 group[k] = v
 
@@ -488,10 +606,11 @@ def update_group(person):
         group.save()
 
         # return the group
-        return jsonify({'msg': 'Group updated'}), 200
+        return jsonify({'msg': 'Group updated.'}), 200
 
     except Exception as exp:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
 
 ###############################################################################################################
 ## GROUP MEMBER ADD/REMOVE
@@ -511,6 +630,10 @@ def join_group(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
+
+        #TODO - remove after dev
+        if debug:
+            return jsonify({'msg': 'User joined group.'}), 200
 
         # query the group
         group = Group.objects(id=group_id)
@@ -560,6 +683,10 @@ def remove_member(person):
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
         sub = request_data.get('userid')
+
+        #TODO - remove after dev
+        if debug:
+            return jsonify({'msg': 'Member successfully removed.'}), 200
 
         # query the group
         group = Group.objects(id=group_id)
@@ -618,6 +745,10 @@ def refresh_id(person):
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
 
+        # TODO - remove after dev
+        if debug:
+            return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': 'akjlsjdflaksjdf'}), 200
+
         # query the group
         group = Group.objects(id=group_id)
         if len(group) == 0:
@@ -646,6 +777,7 @@ def refresh_id(person):
 
     except Exception:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -676,6 +808,10 @@ def create_transaction(person):
         desc = request_data.get('id', default='')
         vendor = request_data.get('vendor', default='')
         date = request_data.get('date', default=datetime.datetime.utcnow)
+
+        # TODO - remove after dev
+        if debug:
+            return jsonify({'id': 'aksdjjekr', 'msg': 'User added to group.'}), 200
 
         if group_id is None or title is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -857,6 +993,7 @@ def _delete_transaction(transaction):
     # delete the transaction
     transaction.delete()
 
+
 def _delete_item(item):
     """
     unlink an item and delete if necessary
@@ -899,7 +1036,7 @@ def add_item_to_transaction(person):
         unit_price = request_data.get('unit_price', default=None, type=float)
 
         if transaction_id is None or quantity is None or person_id is None or \
-            name is None or unit_price is None:
+                name is None or unit_price is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
@@ -1034,6 +1171,7 @@ def get_transaction(person):
     except Exception:
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
@@ -1100,6 +1238,7 @@ def get_item(_):
         return jsonify(item), 500
     except Exception as exp:
         return jsonify({'msg': exp}), 500
+
 
 ###############################################################################################################
 ###############################################################################################################

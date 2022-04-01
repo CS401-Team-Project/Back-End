@@ -40,8 +40,7 @@ db.init_app(app)
 # TEST API ENDPOINT
 # TODO - this should only be available in debug
 
-@app.route("/test", methods=['GET'])
-
+@app.route("/test_get", methods=['GET'])
 def test():
     """
     Just a test route to verify that the API is working.
@@ -50,6 +49,29 @@ def test():
     print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
 
+
+@app.route("/test_post", methods=['POST'])
+def test():
+    """
+    Just a test route to verify that the API is working.
+    :return: Smart Ledger API Endpoint: OK
+    """
+    print(f"ROUTE test_post: {request}")
+    request_data = request.get_json(force=True, silent=True)
+    n1 = request_data.get('n1')
+    n2 = request_data.get('n1')
+    op = request_data.get('n1')
+
+    if op == "add":
+        return str(n1 + n2), 200
+    elif op == "sub":
+        return str(n1 - n2), 200
+    elif op == "mul":
+        return str(n1 * n2), 200
+    elif op == "div":
+        return str(n1 / n2), 200
+    else:
+        return "Unsupported operation", 501
 
 ###############################################################################################################
 ###############################################################################################################

@@ -1,6 +1,7 @@
 """
 Main api request endpoint
 """
+
 import array
 import datetime
 import os
@@ -8,7 +9,7 @@ from copy import deepcopy
 from functools import wraps
 from google.oauth2 import id_token
 from google.auth.transport import requests
-
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 
@@ -16,6 +17,11 @@ from Models import Person, Group, Item, TransactionItem, Transaction
 
 # setup the Flask server
 app = Flask(__name__)
+
+# If on debug allow cross-origin resource sharing
+if bool(os.environ['DEBUG']):
+    CORS(app)
+
 app.config['MONGODB_SETTINGS'] = {
     'host': os.environ['MONGO_HOST'],
     'username': os.environ['API_USERNAME'],

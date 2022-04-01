@@ -43,7 +43,7 @@ db.init_app(app)
 # TODO - this should only be available in debug
 
 @app.route("/test_get", methods=['GET'])
-def test():
+def test_get():
     """
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
@@ -53,7 +53,7 @@ def test():
 
 
 @app.route("/test_post", methods=['POST'])
-def test():
+def test_post():
     """
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
@@ -61,8 +61,8 @@ def test():
     print(f"ROUTE test_post: {request}")
     request_data = request.get_json(force=True, silent=True)
     n1 = request_data.get('n1')
-    n2 = request_data.get('n1')
-    op = request_data.get('n1')
+    n2 = request_data.get('n2')
+    op = request_data.get('op')
 
     if op == "add":
         return str(n1 + n2), 200

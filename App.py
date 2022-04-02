@@ -59,10 +59,14 @@ def test_post():
     :return: Smart Ledger API Endpoint: OK
     """
     print(f"ROUTE test_post: {request}")
-    request_data = request.get_json(force=True, silent=True)
-    n1 = request_data.get('n1')
-    n2 = request_data.get('n2')
-    op = request_data.get('op')
+    request_data = request.get_json(force=True)
+
+    try:
+        n1 = float(request_data.get('n1'))
+        n2 = float(request_data.get('n2'))
+        op = request_data.get('op')
+    except ValueError:
+        return "Invalid data", 400
 
     if op == "add":
         return str(n1 + n2), 200

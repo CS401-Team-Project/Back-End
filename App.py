@@ -103,7 +103,7 @@ def verify_token(func):
             # get the request args depending on the type of request
             request_data = {}
             if request.method == "POST":
-                request_data = request.get_json(force=True, silent=True)
+                request_data = request.get_json(force=True)
             elif request.method == "GET":
                 request_data = request.args
 
@@ -146,8 +146,8 @@ def register():
         if debug:
             return jsonify({'msg': 'User profile successfully retrieved.'}), 200
         print('request\n', request)
-        request_data = request.get_json(force=True, silent=True)
-
+        request_data = request.get_json(force=True)
+        print(request_data)
         if request_data is None:
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
@@ -208,8 +208,9 @@ def user_profile(person):
     :return: returns json of
     """
     try:
-        print(request)
-        request_data = request.get_json(force=True, silent=True)
+        print('request', request)
+        request_data = request.get_json(force=True)
+        print('request_data', request_data)
 
         # TODO - remove this once dev is done
         if debug:
@@ -236,9 +237,9 @@ def user_profile(person):
                     'cashapp': '',
                     'paypal': '',
                     'preferred': 'venmo'
-                }
+                },
+                'msg': ' User profile successfully retrieved.'
             }
-            person.msg = 'User profile successfully retrieved.'
             return jsonify(person), 200
 
         # if sub was given to us
@@ -268,7 +269,8 @@ def user_profile(person):
 
         return jsonify(person), 200
 
-    except Exception:
+    except Exception as exp:
+        print(exp)
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 

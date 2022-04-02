@@ -167,6 +167,7 @@ def user_profile(person):
     :return: returns json of
     """
     try:
+        print(request)
         request_data = request.get_json(force=True, silent=True)
 
         # if sub was given to us
@@ -210,6 +211,8 @@ def update_profile(person):
     :return: returns json of
     """
     try:
+        print(request)
+
         # get fields
         request_data = request.get_json(force=True, silent=True)
         profile = request_data['data']

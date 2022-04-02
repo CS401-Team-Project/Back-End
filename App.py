@@ -214,7 +214,7 @@ def user_profile(person):
 
         # TODO - remove this once dev is done
         if debug:
-            if 'sub' in request_data or request_data['sub'] is None:
+            if 'sub' in request_data and request_data['sub'] is not None:
                 date = {
                     'created': datetime.datetime.utcnow(),
                 }

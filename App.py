@@ -214,7 +214,7 @@ def user_profile(person):
 
         # TODO - remove this once dev is done
         if debug:
-            if 'sub' in request_data:
+            if 'sub' in request_data or request_data['sub'] is None:
                 date = {
                     'created': datetime.datetime.utcnow(),
                 }
@@ -396,7 +396,7 @@ def create_group(person):
                         'last_refreshed': datetime.datetime.utcnow()
                     }
                 },
-                'msg': 'An unexpected error occurred.'
+                'msg': 'Created group.'
             }
 
             return jsonify(group), 200

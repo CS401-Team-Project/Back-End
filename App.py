@@ -5,6 +5,7 @@ Main api request endpoint
 import array
 import datetime
 import os
+import traceback
 from copy import deepcopy
 from functools import wraps
 from google.oauth2 import id_token
@@ -135,7 +136,7 @@ def register():
     used for logging in a user. creates an account if not already exists
     :return: status of the registration
     """
-    print(f"ROUTE register: {request}")
+    print(f"ROUTE /register: {request}")
     try:
 
         print('request\n', request)
@@ -186,6 +187,9 @@ def register():
         return jsonify({'msg': 'User profile successfully retrieved.'}), 200
 
     except Exception as exp:
+        # Print stack trace
+        print(f"ROUTE /register => Exception: {exp} @ {datetime.datetime.now()}")
+        traceback.print_exc()
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 

@@ -206,15 +206,11 @@ axios.post('/transaction/delete', {
 
 ### Request:
 
-| Field       | Type   | Required | Description                     |
-|-------------|--------|----------|---------------------------------|
-| token       | String | Yes      | Google OAuth Token              |
-| id          | String | Yes      | Transaction ID                  |
-| name        | String | Yes      | Item ID                         |
-| quantity    | Int    | Yes      | Quantity                        |
-| unit_price  | Float  | Yes      | Unit Price                      |
-| owed_by     | String | Yes      | User ID that owes for this item |
-| description | String | No       | Description                     |
+| Field       | Type   | Required | Description                    |
+|-------------|--------|----------|--------------------------------|
+| token       | String | Yes      | Google OAuth Token             |
+| id          | String | Yes      | Transaction ID                 |
+| items_list  | List   | Yes      | List of Items                  |
 
 ### Response:
 
@@ -223,10 +219,11 @@ axios.post('/transaction/delete', {
 
 ### Notes:
 
-- TODO
+items_list is an array of json objects each containing the following fields: name, quantity, 
+desc, unit_price, owed_by
 
 ### Examples:
-
+TODO - this need updated by idk how
 ```js
 axios.post('/transaction/add-item', {
     token: '<TOKEN>',

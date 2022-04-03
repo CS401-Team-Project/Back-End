@@ -857,7 +857,7 @@ def add_item_to_transaction(person):
                 - quantity
                 - desc: desc of item
                 - unit_price: unit price of item
-                - person: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
+                - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
             }, ...
         ]
     :param person: the person making the request
@@ -876,7 +876,7 @@ def add_item_to_transaction(person):
 
         for item in items:
             quantity = item.get('quantity', default=None, type=int)
-            person_id = item.get('person', default=None)
+            person_id = item.get('owed_by', default=None)
 
             # get the item data from the request
             name = item.get('name', default=None)

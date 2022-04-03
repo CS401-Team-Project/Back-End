@@ -36,7 +36,7 @@ class Person(Document):
     email_verified = BooleanField(default=False, required=True)
     picture = StringField(max_length=255)
     groups = ListField(default=[])
-    date = EmbeddedDocumentField(PersonDate)
+    date = EmbeddedDocumentField(PersonDate, default=PersonDate)
     pay_with = EmbeddedDocumentField(PayWith)
 
 

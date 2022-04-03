@@ -15,8 +15,6 @@ from flask_mongoengine import MongoEngine
 
 from Models import Person, Group, Item, TransactionItem, Transaction
 
-debug = os.environ['DEBUG']
-
 # setup the Flask server
 app = Flask(__name__)
 
@@ -96,10 +94,6 @@ def verify_token(func):
         wrap the given function
         """
         try:
-            # TODO - remove this once dev is done
-            if debug:
-                return func(None, *args, **kwargs)
-
             # get the request args depending on the type of request
             request_data = {}
             if request.method == "POST":
@@ -141,10 +135,9 @@ def register():
     used for logging in a user. creates an account if not already exists
     :return: status of the registration
     """
+    print(f"ROUTE register: {request}")
     try:
-        # TODO - remove this once dev is done
-        if debug:
-            return jsonify({'msg': 'User profile successfully retrieved.'}), 200
+
         print('request\n', request)
         request_data = request.get_json(force=True)
         print(request_data)
@@ -207,40 +200,11 @@ def user_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
+    print(f"ROUTE /user/info: {request}")
     try:
         print('request', request)
         request_data = request.get_json(force=True)
         print('request_data', request_data)
-
-        # TODO - remove this once dev is done
-        if debug:
-            if 'sub' in request_data and request_data['sub'] is not None:
-                date = {
-                    'created': datetime.datetime.utcnow(),
-                }
-            else:
-                date = {
-                    'created': datetime.datetime.utcnow(),
-                    'updated': datetime.datetime.utcnow(),
-                    'last_login': datetime.datetime.utcnow()
-                }
-            person = {
-                'sub': '1234abcd',
-                'first_name': 'John',
-                'last_name': 'Doe',
-                'email': 'johndoe@email.com',
-                'email_verified': True,
-                'picture': None,
-                'date': date,
-                'pay_with': {
-                    'venmo': '',
-                    'cashapp': '',
-                    'paypal': '',
-                    'preferred': 'venmo'
-                },
-                'msg': ' User profile successfully retrieved.'
-            }
-            return jsonify(person), 200
 
         # if sub was given to us
         if 'sub' in request_data:
@@ -283,16 +247,11 @@ def update_profile(person):
     :param data: json with key value pairs of things to set
     :return: returns json of
     """
+    print(f"ROUTE /user/update: {request}")
     try:
-        print(request)
-
         # get fields
         request_data = request.get_json(force=True, silent=True)
         profile = request_data['data']
-
-        # TODO - remove this once dev is done
-        if debug:
-            return jsonify({'msg': 'User account update.'}), 500
 
         # check for unallowed fields
         if set(profile.keys()).union({'email', 'sub', 'date_joined', 'picture', 'groups'}):
@@ -327,10 +286,8 @@ def delete_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
+    print(f"ROUTE /user/delete: {request}")
     try:
-        # TODO - remove this once dev is done
-        if debug:
-            return jsonify({'msg': 'User profile successfully deleted.'}), 500
 
         # unlink person from all groups
         # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
@@ -367,39 +324,10 @@ def create_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
-
+    print(f"ROUTE /group/create: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
-
-        # TODO - remove this once dev is done
-        if debug:
-            group = {
-                'name': 'example group',
-                'desc': 'example group description.',
-                'admin': '1234abcd',
-                'members': ['1234abcd', 'laksdjfl2', 'i232kjhsx', 'ai232j22'],
-                'restricted': {
-                    'permissions': {
-                        'only_admin_remove_user': True,
-                        'only_owner_modify_transaction': True,
-                        'admin_overrule_modify_transaction': True,
-                        'user_delete_transaction': True,
-                        'only_owner_delete_transaction': True,
-                        'admin_overrule_delete_transaction': True
-                    },
-                    'balance': 0,
-                    'transactions': ['213lknsdf', 'klsj234kn', 'askldfj2n', 'kjlsju2'],
-                    'date': {
-                        'created': datetime.datetime.utcnow(),
-                        'updated': datetime.datetime.utcnow(),
-                        'last_refreshed': datetime.datetime.utcnow()
-                    }
-                },
-                'msg': 'Created group.'
-            }
-
-            return jsonify(group), 200
 
         data = request_data.get('data', default=None)
         if 'name' not in data:
@@ -449,15 +377,12 @@ def delete_group(person):
         - id: group id
     :param person: the person making the request
     """
-
+    print(f"ROUTE /group/delete: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data['id']
 
-        # TODO - remove this once dev is done
-        if debug:
-            return jsonify({'msg': 'Group successfully deleted.'}), 200
 
         # query the group
         group = Group.objects(id=group_id)
@@ -509,40 +434,12 @@ def get_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
-
+    print(f"ROUTE /group/info: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get['id']
 
-        # TODO - remove this once dev is done
-        if debug:
-            group = {
-                'name': 'example group',
-                'desc': 'example group description.',
-                'admin': '1234abcd',
-                'members': ['1234abcd', 'laksdjfl2', 'i232kjhsx', 'ai232j22'],
-                'restricted': {
-                    'permissions': {
-                        'only_admin_remove_user': True,
-                        'only_owner_modify_transaction': True,
-                        'admin_overrule_modify_transaction': True,
-                        'user_delete_transaction': True,
-                        'only_owner_delete_transaction': True,
-                        'admin_overrule_delete_transaction': True
-                    },
-                    'balance': 0,
-                    'transactions': ['213lknsdf', 'klsj234kn', 'askldfj2n', 'kjlsju2'],
-                    'date': {
-                        'created': datetime.datetime.utcnow(),
-                        'updated': datetime.datetime.utcnow(),
-                        'last_refreshed': datetime.datetime.utcnow()
-                    }
-                },
-                'msg': 'An unexpected error occurred.'
-            }
-
-            return jsonify(group), 200
 
         # get the group
         group = Group(id=group_id)
@@ -570,6 +467,7 @@ def update_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
+    print(f"ROUTE /group/update: {request}")
 
     try:
         # get the request data
@@ -577,9 +475,7 @@ def update_group(person):
         group_id = request_data.get('id')
         data = request_data.get('data')
 
-        # TODO - remove this once dev is done
-        if debug:
-            return jsonify({'msg': 'Group updated.'}), 200
+
 
         # get the group
         group = Group.objects(id=group_id)
@@ -634,14 +530,13 @@ def join_group(person):
         - id: group id
     :param person: the person making the request
     """
+    print(f"ROUTE /group/join: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
 
-        #TODO - remove after dev
-        if debug:
-            return jsonify({'msg': 'User joined group.'}), 200
+
 
         # query the group
         group = Group.objects(id=group_id)
@@ -686,15 +581,14 @@ def remove_member(person):
         - userid: [optional] user to remove from the grou
     :param person: the person making the request
     """
+    print(f"ROUTE /group/remove-member: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
         sub = request_data.get('userid')
 
-        #TODO - remove after dev
-        if debug:
-            return jsonify({'msg': 'Member successfully removed.'}), 200
+
 
         # query the group
         group = Group.objects(id=group_id)
@@ -748,14 +642,12 @@ def refresh_id(person):
         - id: group id
     :param person: the person making the request
     """
+    print(f"ROUTE /group/refresh-id: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         group_id = request_data.get('id')
 
-        # TODO - remove after dev
-        if debug:
-            return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': 'akjlsjdflaksjdf'}), 200
 
         # query the group
         group = Group.objects(id=group_id)
@@ -808,6 +700,7 @@ def create_transaction(person):
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
+    print(f"ROUTE /transaction/create: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -817,9 +710,6 @@ def create_transaction(person):
         vendor = request_data.get('vendor', default='')
         date = request_data.get('date', default=datetime.datetime.utcnow)
 
-        # TODO - remove after dev
-        if debug:
-            return jsonify({'id': 'aksdjjekr', 'msg': 'User added to group.'}), 200
 
         if group_id is None or title is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -868,6 +758,7 @@ def update_transaction(person):
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
+    print(f"ROUTE /transaction/update: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -942,6 +833,7 @@ def delete_transaction(person):
         - id: transaction id
     :param person: the person making the request
     """
+    print(f"ROUTE /transaction/delete: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1035,6 +927,7 @@ def add_item_to_transaction(person):
         ]
     :param person: the person making the request
     """
+    print(f"ROUTE /transaction/add-item: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1122,6 +1015,7 @@ def remove_item_from_transaction(person):
         - data: transaction item to delete
     :param person: the person making the request
     """
+    print(f"ROUTE /transaction/remove-item: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1167,6 +1061,7 @@ def get_transaction(person):
         - id: transaction id
     :param person: the person making the request
     """
+    print(f"ROUTE /transaction/info: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1244,6 +1139,7 @@ def get_item(_):
         - id
     :return: returns an item
     """
+    print(f"ROUTE /item/info: {request}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)

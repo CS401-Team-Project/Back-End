@@ -38,7 +38,7 @@
 
 | status | statusText            | data.msg                                             |
 |--------|-----------------------|------------------------------------------------------|
-| 200    | OK                    | Successfully retrieved transaction info.             |
+| 200    | OK                    | Successfully retrieved the transaction's info.       |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s).        |
 | 404    | Not Found             | Token is unauthorized or transaction does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                        |
@@ -81,7 +81,7 @@ axios.post('/transaction/info', {
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | Successfully created transaction.             |
+| 200    | OK                    | Successfully created the transaction.         |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized.                        |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
@@ -127,7 +127,7 @@ axios.post('/transaction/create', {
 
 | status | statusText            | data.msg                                             |
 |--------|-----------------------|------------------------------------------------------|
-| 200    | OK                    | Successfully updated transaction.                    |
+| 200    | OK                    | Successfully updated the transaction.                |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s).        |
 | 404    | Not Found             | Token is unauthorized or transaction does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                        |
@@ -174,7 +174,7 @@ axios.post('/transaction/update', {
 
 | status | statusText  | data.msg                                             |
 |--------|-------------|------------------------------------------------------|
-| 200    | OK          | Successfully deleted transaction.                    |
+| 200    | OK          | Successfully deleted the transaction.                |
 | 400    | Bad Request | Missing required field(s) or invalid type(s).        |
 | 404    | Not Found   | Token is unauthorized or transaction does not exist. |
 | 500    | Internal    | An unexpected error occurred.                        |
@@ -219,11 +219,12 @@ axios.post('/transaction/delete', {
 
 ### Notes:
 
-items_list is an array of json objects each containing the following fields: name, quantity, 
-desc, unit_price, owed_by
+items_list is an array of json objects each containing the following fields: name, quantity, desc, unit_price, owed_by
 
 ### Examples:
+
 TODO - this need updated by idk how
+
 ```js
 axios.post('/transaction/add-item', {
     token: '<TOKEN>',
@@ -261,7 +262,7 @@ axios.post('/transaction/add-item', {
 
 | status | statusText  | data.msg                                                  |
 |--------|-------------|-----------------------------------------------------------|
-| 200    | OK          | Successfully removed item from transaction                |
+| 200    | OK          | Successfully removed the item from the transaction        |
 | 400    | Bad Request | Missing required field(s) or invalid type(s).             |
 | 404    | Not Found   | Token is unauthorized or transaction/item does not exist. |
 | 500    | Internal    | An unexpected error occurred.                             |
@@ -303,7 +304,7 @@ axios.post('/transaction/remove-item', {
 
 | status | statusText  | data.msg                                      |
 |--------|-------------|-----------------------------------------------|
-| 200    | OK          | Success                                       |
+| 200    | OK          | Successfully retrieved the item info.         |
 | 400    | Bad Request | Missing required field(s) or invalid type(s). |
 | 404    | Not Found   | Item does not exist.                          |
 | 500    | Internal    | An unexpected error occurred.                 |

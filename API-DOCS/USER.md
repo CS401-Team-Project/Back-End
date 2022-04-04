@@ -73,7 +73,7 @@ axios.post('/person/register', {
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | User profile successfully retrieved.          |
+| 200    | OK                    | Successfully retrieved the user profile.      |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
@@ -81,10 +81,10 @@ axios.post('/person/register', {
 #### Note:
 
 - If sub is not provided:
-    - Returns the current _user's private profile_ (all fields below)
+	- Returns the current _user's private profile_ (all fields below)
 
 - If sub is provided:
-    - Returns a **user's public profile** for the given sub (**only** bolded fields).
+	- Returns a **user's public profile** for the given sub (**only** bolded fields).
 
 ### Private & Public Profiles:
 
@@ -96,14 +96,14 @@ axios.post('/person/register', {
 - **picture**: The current user's profile picture URL.  [String]
 - _groups_: Group IDs that the user is a member of. [Array]
 - **date**: [JSON]
-    - **created**: The date & time the user joined the application. [String]
-    - _updated_: The date & time the user's profile was last updated. [String]
-    - _last_login_: The date & time the user last logged in. [String]
+	- **created**: The date & time the user joined the application. [String]
+	- _updated_: The date & time the user's profile was last updated. [String]
+	- _last_login_: The date & time the user last logged in. [String]
 - **pay_with**: [JSON]
-    - **venmo**: The user's venmo username. [String]
-    - **cashapp**: The user's cashapp username. [String]
-    - **paypal**: The user's paypal email address. [String]
-    - **preferred**: The user's preferred payment method (venmo, cashapp, or paypal). [String]
+	- **venmo**: The user's venmo username. [String]
+	- **cashapp**: The user's cashapp username. [String]
+	- **paypal**: The user's paypal email address. [String]
+	- **preferred**: The user's preferred payment method (venmo, cashapp, or paypal). [String]
 
 ### Examples:
 
@@ -155,29 +155,29 @@ axios.post('/user/info', {
 
 1. The data object **must** contain the _key-value_ pairs of fields to update.
 2. The data object can **only** contain the following fields:
-    - **first_name**: The user's first name [Optional] [String]
-    - **last_name**: The user's last name [Optional] [String]
-    - **picture**: The current user's profile picture URL Optional] [String]
-    - **pay_with**: [Optional] [JSON]
-        - **venmo**: The user's venmo username [Optional] [String]
-        - **cashapp**: The user's cashapp username [Optional] [String]
-        - **paypal**: The user's paypal email address [Optional] [String]
-        - **preferred**: The user's preferred payment method (venmo, cashapp, or paypal) [Optional] [String]
+	- **first_name**: The user's first name [Optional] [String]
+	- **last_name**: The user's last name [Optional] [String]
+	- **picture**: The current user's profile picture URL Optional] [String]
+	- **pay_with**: [Optional] [JSON]
+		- **venmo**: The user's venmo username [Optional] [String]
+		- **cashapp**: The user's cashapp username [Optional] [String]
+		- **paypal**: The user's paypal email address [Optional] [String]
+		- **preferred**: The user's preferred payment method (venmo, cashapp, or paypal) [Optional] [String]
 3. The data object **should not** contain the following fields:
-    - _sub_: The current user's [self] unique identifier [String]
-    - **email**: The user's email address [String]
-    - **email_verified**: Whether the user's email address has been verified [Boolean]
-    - _groups_: Group IDs that the user is a member of [Array]
-    - **date**: [JSON]
-        - **created**: The date & time the user joined the application [String]
-        - _updated_: The date & time the user's profile was last updated [String]
-        - _last_login_: The date & time the user last logged in [String]
+	- _sub_: The current user's [self] unique identifier [String]
+	- **email**: The user's email address [String]
+	- **email_verified**: Whether the user's email address has been verified [Boolean]
+	- _groups_: Group IDs that the user is a member of [Array]
+	- **date**: [JSON]
+		- **created**: The date & time the user joined the application [String]
+		- _updated_: The date & time the user's profile was last updated [String]
+		- _last_login_: The date & time the user last logged in [String]
 
 ### Response:
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | User profile successfully updated.            |
+| 200    | OK                    | Successfully updated the user profile.              |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
@@ -253,11 +253,11 @@ axios.post('/user/update', {
 
 ### Response:
 
-| status | statusText            | data.msg                                  |
-|--------|-----------------------|-------------------------------------------|
-| 200    | OK                    | User profile successfully deleted.        |
+| status | statusText            | data.msg                                      |
+|--------|-----------------------|-----------------------------------------------|
+| 200    | OK                    | Successfully deleted the user profile.        |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
-| 500    | Internal Server Error | An unexpected error occurred.             |
+| 500    | Internal Server Error | An unexpected error occurred.                 |
 
 ### Examples:
 

@@ -121,12 +121,12 @@ axios.post('/group/info', {
 
 ### Response:
 
-| status | statusText            | data.msg                                      |
-|--------|-----------------------|-----------------------------------------------|
-| 201    | Created               | Group successfully created.                   |
-| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
-| 401    | Unauthorized          | Token is unauthorized to perform the request. |
-| 500    | Internal Server Error | An unexpected error occurred.                 |
+| status | statusText            | data.msg                                       |
+|--------|-----------------------|------------------------------------------------|
+| 201    | Created               | Group successfully created.                    |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
+| 404    | Not Found             | Token is unauthorized to perform this request. |
+| 500    | Internal Server Error | An unexpected error occurred.                  |
 
 ### Examples:
 
@@ -283,13 +283,13 @@ axios.post('/group/delete', {
 
 ### Response:
 
-| status | statusText            | data.msg                                      |
-|--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | User joined group.                            |
-| 400    | Bad Request           | Missing required field(s) or invalid type(s). |
-| 401    | Unauthorized          | User is not invited or group does not exist.  |
-| 409    | Conflict              | User is already a member of the group.        |
-| 500    | Internal Server Error | An unexpected error occurred.                 |
+| status | statusText            | data.msg                                              |
+|--------|-----------------------|-------------------------------------------------------|
+| 200    | OK                    | User joined group.                                    |
+| 400    | Bad Request           | Missing required field(s) or invalid type(s).         |
+| 404    | Not Found             | Token is unauthorized or the resource does not exist. |
+| 409    | Conflict              | User is already a member of the group.                |
+| 500    | Internal Server Error | An unexpected error occurred.                         |
 
 ### Examples:
 
@@ -430,7 +430,7 @@ axios.post('/group/remove-member', {
 |--------|-----------------------|---------------------------------------------------|
 | 200    | OK                    | Group's unique identifier successfully refreshed. |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s).     |
-| 401    | Unauthorized          | Token is unauthorized or group does not exist.    |
+| 404    | Unauthorized          | Token is unauthorized or group does not exist.    |
 | 500    | Internal Server Error | An unexpected error occurred.                     |
 
 ### Examples:

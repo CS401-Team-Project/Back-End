@@ -119,7 +119,8 @@ def verify_token(func):
 
         except Exception as exp:
             # Invalid token
-            return 'Token is unauthorized or user does not exist.', 404
+            print(f"verify_token() => Exception: {exp} @ {datetime.datetime.now()}")
+            return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
 
     return wrap
 

@@ -83,6 +83,15 @@ def test_post():
 ###############################################################################################################
 # WRAPPERS
 
+def get_token(request):
+    headers = request.headers
+    # Get the authorization header
+    bearer = headers.get('Authorization')  # Bearer YourTokenHere
+    # Get the token from the authorization header
+    token = bearer.split()[1]  # YourTokenHere
+    return token
+
+
 def verify_token(func):
     """
     verify the given token
@@ -95,15 +104,17 @@ def verify_token(func):
         wrap the given function
         """
         try:
+            print("AUTH: verify_token")
+            # TODO: Remove this since token should be in the headers and not in the body
             # get the request args depending on the type of request
-            request_data = {}
-            if request.method == "POST":
-                request_data = request.get_json(force=True)
-            elif request.method == "GET":
-                request_data = request.args
+            # request_data = {}
+            # if request.method == "POST":
+            #     request_data = request.get_json(force=True)
+            # elif request.method == "GET":
+            #     request_data = request.args
 
-            # get the token from the request
-            token = request_data.get('token')
+            # Get the token from the authorization header
+            token = get_token(request)
 
             # verify the token
             token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
@@ -119,6 +130,9 @@ def verify_token(func):
 
         except Exception as exp:
             # Invalid token
+            print("AUTH: verify_token => Exception: ", exp)
+            # Print the stack trace
+            traceback.print_exc()
             return 'Token is unauthorized or user does not exist.', 404
 
     return wrap
@@ -138,17 +152,7 @@ def register():
     """
     print(f"ROUTE /register: {request}")
     try:
-
-        print('request\n', request)
-        request_data = request.get_json(force=True)
-        print(request_data)
-        if request_data is None:
-            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
-
-        # get token
-        token = request_data.get('token')
-        print('token', token)
-
+        token = get_token(request)
         # verify the token
         token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
         print('token_info', token_info)

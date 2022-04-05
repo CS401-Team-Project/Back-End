@@ -37,6 +37,4 @@ class Person(Document):
     picture = StringField(max_length=255)
     groups = ListField(default=[])
     date = EmbeddedDocumentField(PersonDate, default=PersonDate)
-    pay_with = EmbeddedDocumentField(PayWith)
-
-
+    pay_with = EmbeddedDocumentField(PayWith, default=PayWith)

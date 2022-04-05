@@ -41,10 +41,10 @@ class GroupRestricted(EmbeddedDocument):
     """
     TODO: Class Docstring
     """
-    permissions = EmbeddedDocumentField(GroupPermissions)
+    permissions = EmbeddedDocumentField(GroupPermissions, default=GroupPermissions)
     balance = FloatField(default=0)
     transactions = ListField(default=[])
-    date = EmbeddedDocumentField(GroupDate)
+    date = EmbeddedDocumentField(GroupDate, default=GroupDate)
 
 
 class Group(Document):
@@ -55,7 +55,7 @@ class Group(Document):
     desc = StringField(max_length=255, default='')
     admin = StringField(max_length=255, required=True)
     members = ListField(default=[])
-    restricted = EmbeddedDocumentField(GroupRestricted)
+    restricted = EmbeddedDocumentField(GroupRestricted, default=GroupRestricted)
 
 
     #

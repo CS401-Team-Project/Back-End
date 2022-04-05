@@ -104,7 +104,6 @@ def verify_token(func):
         wrap the given function
         """
         try:
-            print("AUTH: verify_token")
             # TODO: Remove this since token should be in the headers and not in the body
             # get the request args depending on the type of request
             # request_data = {}
@@ -130,11 +129,9 @@ def verify_token(func):
 
         except Exception as exp:
             # Invalid token
-            print("AUTH: verify_token => Exception: ", exp)
-            # Print the stack trace
-            traceback.print_exc()
-            return 'Token is unauthorized or user does not exist.', 404
-
+            print(f"verify_token() => Exception: {exp} @ {datetime.datetime.now()}")
+            return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
+        
     return wrap
 
 
@@ -242,7 +239,7 @@ def user_profile(person):
         return jsonify(person), 200
 
     except Exception as exp:
-        print(exp)
+        print(f"ROUTE /user/info => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -281,8 +278,9 @@ def update_profile(person):
         # save the person
         person.date.updated = datetime.datetime.utcnow()
         person.save()
-        return jsonify({'msg': 'User account update.'}), 500
-    except Exception:
+        return jsonify({'msg': 'User account update.'}), 200
+    except Exception as exp:
+        print(f"ROUTE /user/update => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -307,8 +305,9 @@ def delete_profile(person):
 
         # delete the person from the database
         person.delete()
-        return jsonify({'msg': 'User profile successfully deleted.'}), 500
+        return jsonify({'msg': 'User profile successfully deleted.'}), 200
     except Exception as exp:
+        print(f"ROUTE /user/delete => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': exp}), 500
 
 
@@ -369,9 +368,10 @@ def create_group(person):
                 pass
         group.save()
         group.msg = 'Created group.'
-        return jsonify(group), 201
+        return jsonify(group), 200
 
     except Exception as exp:
+        print(f"ROUTE /group/create => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -427,7 +427,8 @@ def delete_group(person):
 
         return jsonify({'msg': 'Group successfully deleted.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /group/delete => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -460,6 +461,7 @@ def get_group(person):
         return jsonify(group), 200
 
     except Exception as exp:
+        print(f"ROUTE /group/info => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': exp}), 500
 
 
@@ -521,6 +523,7 @@ def update_group(person):
         return jsonify({'msg': 'Group updated.'}), 200
 
     except Exception as exp:
+        print(f"ROUTE /group/update => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -574,7 +577,8 @@ def join_group(person):
 
         return jsonify({'msg': 'User joined group.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /group/join => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -636,7 +640,8 @@ def remove_member(person):
 
         return jsonify({'msg': 'Member successfully removed.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /group/remove-member => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -683,7 +688,8 @@ def refresh_id(person):
         old_group.delete()
         return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /group/refresh-id => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -749,7 +755,8 @@ def create_transaction(person):
 
         return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /transaction/create => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -828,6 +835,7 @@ def update_transaction(person):
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
+        print(f"ROUTE /transaction/update => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -879,7 +887,8 @@ def delete_transaction(person):
 
         return jsonify({'msg': 'Transaction deleted.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /transaction/delete => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -965,7 +974,8 @@ def add_item_to_transaction(person):
 
         return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /transaction/add-item => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -1056,6 +1066,7 @@ def remove_item_from_transaction(person):
         return jsonify({'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
+        print(f"ROUTE /transaction/remove-item => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -1088,7 +1099,8 @@ def get_transaction(person):
 
         return jsonify(transaction), 200
 
-    except Exception:
+    except Exception as exp:
+        print(f"ROUTE /transaction/info => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
@@ -1156,8 +1168,9 @@ def get_item(_):
         # get an item
         item = Item.objects.get(id=item_id)
 
-        return jsonify(item), 500
+        return jsonify(item), 200
     except Exception as exp:
+        print(f"ROUTE /item/info => Exception: {exp} @ {datetime.datetime.now()}")
         return jsonify({'msg': exp}), 500
 
 

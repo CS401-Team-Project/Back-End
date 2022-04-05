@@ -234,7 +234,7 @@ def user_profile(person):
             return jsonify(person), 200
 
         # else return the users info
-        person.msg = 'User profile successfully retrieved.'
+        person['msg'] = 'User profile successfully retrieved.'
 
         return jsonify(person), 200
 

@@ -367,8 +367,7 @@ def create_group(person):
             for member in members:
                 pass
         group.save()
-        group.msg = 'Created group.'
-        return jsonify(group), 200
+        return jsonify({'msg': 'Created group', 'data': group}), 200
 
     except Exception as exp:
         print(f"ROUTE /group/create => Exception: {exp} @ {datetime.datetime.now()}")

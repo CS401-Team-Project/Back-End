@@ -228,9 +228,9 @@ def user_profile(person):
                 'email_verified': person['email_verified'],
                 'picture': person['picture'],
                 'date': date,
-                'pay_with': person['pay_with']
+                'pay_with': person['pay_with'],
+                'msg': 'User profile successfully retrieved.'
             }
-            person.msg = 'User profile successfully retrieved.'
             return jsonify(person), 200
 
         # else return the users info

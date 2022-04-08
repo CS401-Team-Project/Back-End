@@ -229,14 +229,10 @@ def user_profile(person):
                 'picture': person['picture'],
                 'date': date,
                 'pay_with': person['pay_with'],
-                'msg': 'User profile successfully retrieved.'
             }
-            return jsonify(person), 200
 
-        # else return the users info
-        person['msg'] = 'User profile successfully retrieved.'
-
-        return jsonify(person), 200
+        # return the users info
+        return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
 
     except Exception as exp:
         print(f"ROUTE /user/info => Exception: {exp} @ {datetime.datetime.now()}")

@@ -28,7 +28,6 @@ class TransactionItem(EmbeddedDocument):
     person = ObjectIdField(required=True)
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
-    # TODO last modified and modified by
 
 
 class Transaction(Document):
@@ -42,7 +41,15 @@ class Transaction(Document):
     # linking
     group = ObjectIdField(required=True)
 
-    #
+    # who paid and who used stuff
+    who_paid = DictField(default={})
+    who_used = DictField(default={})
+
+    # balance keeping
+    ledger_deltas = DictField(default={})
+    balance_deltas = DictField(default={})
+
+    # keep track of when the purchase was made
     date_purchased = DateTimeField(default=datetime.datetime.utcnow)
 
     # keep track of when and who created it

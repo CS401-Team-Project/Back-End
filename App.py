@@ -299,6 +299,7 @@ def delete_profile(person):
         # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
         for group in person.groups:
             try:
+                # TODO - need to figure out how to unfuck the ledger and balances when an account is deleted
                 group.people.remove(person.sub)
             except Exception:
                 pass
@@ -328,6 +329,7 @@ def create_group(person):
         - token
         - name: group name
         - desc: [optional]
+        - members: [optional] array of userids
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -350,6 +352,12 @@ def create_group(person):
         # add the creating user to the group
         group.members.append(person.sub)
 
+        # add admin to the balances dict
+        group.restricted.balances[person.sub] = {}
+
+        # add admin to ledger
+        group.restricted.ledger[person.sub] = 0
+
         # save the group
         group.save()
 
@@ -362,10 +370,10 @@ def create_group(person):
 
         # TODO - finish this when invites are implemented
         if members is not None:
-            if type(members) is not array:
+            if not isinstance(members, list):
                 return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
             for member in members:
-                pass
+                group.restricted.invite_list.append(member)
         group.save()
         group.msg = 'Created group.'
         return jsonify(group), 200
@@ -600,7 +608,7 @@ def remove_member(person):
         group_id = request_data.get('id')
         sub = request_data.get('userid')
 
-
+        # TODO - need to figure out how to unfuck the ledger and balances when user leaves
 
         # query the group
         group = Group.objects(id=group_id)
@@ -711,6 +719,7 @@ def create_transaction(person):
         - desc: optional
         - vendor: optional
         - date: optional
+        - who_paid: [dictionary] contains key value pairs of who paid and how much
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
@@ -722,8 +731,8 @@ def create_transaction(person):
         title = request_data.get('title', default=None)
         desc = request_data.get('id', default='')
         vendor = request_data.get('vendor', default='')
+        who_paid = request_data.get('who_paid', default=None)
         date = request_data.get('date', default=datetime.datetime.utcnow)
-
 
         if group_id is None or title is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -743,6 +752,13 @@ def create_transaction(person):
                                   created_by=person.sub,
                                   modified_by=person.sub,
                                   date_purchased=date)
+
+        if who_paid is None:
+            # TODO - figure out when to calc this value
+            transaction.who_paid[person.sub] = 0
+        else:
+            for k, v in who_paid.items():
+                transaction.who_paid[person.sub] = v
 
         # save the transaction
         transaction.save()
@@ -778,13 +794,14 @@ def update_transaction(person):
         # get the request data
         request_data = request.get_json(force=True, silent=True)
         transaction_id = request_data.get('id', default=None)
-        transaction_new = request_data.get('data', default=None)
+        transaction_data = request_data.get('data', default=None)
 
-        if transaction_id is None or transaction_new is None:
+        if transaction_id is None or transaction_data is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
         # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
+        transaction_new = Transaction(**transaction)  # TODO - this may not work, may need to copy another way
         group_id = transaction.group
 
         # query the group to make sure it exists
@@ -799,40 +816,45 @@ def update_transaction(person):
             if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
                 return jsonify({'msg': 'Token is unauthorized.'}), 404
 
-        # update the transaction
-        for k, v in transaction_new.items():
+        # delete the previous transaction and save the new one
+        group.transactions.remove(transaction_id)
+        _delete_transaction(group, transaction)
+        transaction_new.save()
+        group.transactions.append(transaction_new.id)
+        group.save()
+
+        # create a new transaction
+        for k, v in transaction_data.items():
             # if the key is equal to items that should not be modified, ignore it
             if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price']:
                 continue
             # if user re-writing items
             elif k == 'items':
-                # clear all previous transaction items
-                for transaction_item in transaction.items:
-                    _delete_item(transaction_item.item_id)
-                transaction.items.clear()
 
                 # add the new transaction items
                 for transaction_item in v:
                     # TODO - probably find a better way
                     # this assumes the user will pass the item information in the item field rather than the id
-                    _add_item_to_transaction(person, transaction,
-                                             quantity=transaction_item.quantity,
-                                             person_id=transaction_item.person,
-                                             name=transaction_item.item.name,
-                                             desc=transaction_item.item.desc,
-                                             unit_price=transaction_item.item.unit_price)
+                    _add_item_to_transaction(person, transaction_new,
+                                             quantity=transaction_item['quantity'],
+                                             person_id=transaction_item['person'],
+                                             name=transaction_item['item']['name'],
+                                             desc=transaction_item['item']['desc'],
+                                             unit_price=transaction_item['item']['unit_price'])
+                    transaction_new.reload()
             # if normal string field
             else:
-                transaction[k] = v
+                # TODO - cross our fingers this will work
+                transaction_new[k] = v
 
         # update the last modified by
-        transaction.modified_by = person.sub
-        transaction.date_modified = datetime.datetime.utcnow()
+        transaction_new.modified_by = person.sub
+        transaction_new.date_modified = datetime.datetime.utcnow()
 
         # save the transaction
-        transaction.save()
+        transaction_new.save()
 
-        return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
+        return jsonify({'id': transaction_new.id, 'msg': 'Transaction updated.'}), 200
 
     except Exception as exp:
         print(f"ROUTE /transaction/update => Exception: {exp} @ {datetime.datetime.now()}")
@@ -883,7 +905,7 @@ def delete_transaction(person):
         group.transactions.remove(transaction_id)
 
         # delete the transaction
-        _delete_transaction(transaction)
+        _delete_transaction(group, transaction)
 
         return jsonify({'msg': 'Transaction deleted.'}), 200
 
@@ -892,10 +914,22 @@ def delete_transaction(person):
         return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 
-def _delete_transaction(transaction):
+def _delete_transaction(group, transaction):
     """
     helper to delete transaction from db
     """
+    # get data from the transaction
+    balance_deltas = transaction.balance_deltas
+    ledger_deltas = transaction.ledger_deltas
+    people_involved = balance_deltas.keys()
+
+    # revert ledger and balances
+    for p1 in people_involved:
+        for p2 in people_involved:
+            if p1 != p2:
+                group.balances[p1][p2] -= balance_deltas[p1][p2]
+        group.ledger[p1] -= ledger_deltas[p1]
+
     # iterate through all transaction items
     for transaction_item in transaction.items:
         # get the item id
@@ -907,6 +941,7 @@ def _delete_transaction(transaction):
         # delete the item
         _delete_item(item)
 
+    group.save()
     # delete the transaction
     transaction.delete()
 

@@ -228,7 +228,7 @@ def user_profile(person):
                 'email_verified': person['email_verified'],
                 'picture': person['picture'],
                 'date': date,
-                'pay_with': person['pay_with'],
+                'pay_with': person['pay_with']
             }
 
         # return the users info

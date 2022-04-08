@@ -28,7 +28,6 @@
 
 **Description**: Retrieve a Group's Information
 
-**TODO Back-End**: Change `/group/get` to `/group/info`
 
 ### Notes:
 
@@ -56,27 +55,29 @@
 - The user must be an admin/member of the group OR must have been invited to the group.
 
 #### If the user has joined the group:
-
-- `id`: The group's unique identifier. [String]
-- `name`: The group's name. [String]
-- `description`: The group's description. [String]
-- `admin`: The group's admin unique identifier [String]
-- `members`: The group members' unique identifiers. [Array of Strings]
-- `restricted`: The group's restricted items. [Array of Strings]
-	- `permissions`: The group's permission settings [JSON]
-	- `balance`: The group's balance. [Float]
-	- `transactions`: The transactions associated with the group [Array]
-	- `date`: [JSON]
-		- `created`: The group's creation date [String]
-		- `updated`: The group's last update date  [String]
+- `msg`: description of response
+- `data`: group data returned
+  - `id`: The group's unique identifier. [String]
+  - `name`: The group's name. [String]
+  - `description`: The group's description. [String]
+  - `admin`: The group's admin unique identifier [String]
+  - `members`: The group members' unique identifiers. [Array of Strings]
+  - `restricted`: The group's restricted items. [Array of Strings]
+      - `permissions`: The group's permission settings [JSON]
+      - `balance`: The group's balance. [Float]
+      - `transactions`: The transactions associated with the group [Array]
+      - `date`: [JSON]
+          - `created`: The group's creation date [String]
+          - `updated`: The group's last update date  [String]
 
 #### If the user has not yet joined the group, but has been invited:
-
-- `id`: The group's unique identifier. [String]
-- `name`: The group's name. [String]
-- `description`: The group's description. [String]
-- `admin`: The group's admin unique identifier [String]
-- `members`: The group members' unique identifiers. [Array of Strings]
+- `msg`: description of response
+- `data`: group data returned
+  - `id`: The group's unique identifier. [String]
+  - `name`: The group's name. [String]
+  - `description`: The group's description. [String]
+  - `admin`: The group's admin unique identifier [String]
+  - `members`: The group members' unique identifiers. [Array of Strings]
 
 ### Examples:
 

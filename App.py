@@ -230,13 +230,9 @@ def user_profile(person):
                 'date': date,
                 'pay_with': person['pay_with']
             }
-            person.msg = 'User profile successfully retrieved.'
-            return jsonify(person), 200
 
-        # else return the users info
-        person['msg'] = 'User profile successfully retrieved.'
-
-        return jsonify(person), 200
+        # return the users info
+        return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
 
     except Exception as exp:
         print(f"ROUTE /user/info => Exception: {exp} @ {datetime.datetime.now()}")
@@ -367,8 +363,7 @@ def create_group(person):
             for member in members:
                 pass
         group.save()
-        group.msg = 'Created group.'
-        return jsonify(group), 200
+        return jsonify({'msg': 'Created group', 'data': group}), 200
 
     except Exception as exp:
         print(f"ROUTE /group/create => Exception: {exp} @ {datetime.datetime.now()}")

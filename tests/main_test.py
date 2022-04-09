@@ -46,8 +46,3 @@ class Tests:
         content, status_code = response.json(), response.status_code
         return content, status_code
 
-# if __name__ == "__main__":
-#     tests = UnitTests()
-#     tests.test_register()
-#     tests.test_user_info()
-

@@ -576,11 +576,13 @@ def invite_group(person):
     request must contain:
         - token
         - id: group id
+        - email: 
     :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
+    email = request_data.get('email')
 
 
 
@@ -595,11 +597,11 @@ def invite_group(person):
         return jsonify({'msg': 'User is already a member of the group.'}), 409
 
     # TODO - need to verify if invited
-    if person.email in group.invite:
+    if email in group.invite:
         return jsonify({'msg': 'User is already a invited.'}), 409
 
     # add person to group invite list
-    group.invite.append(person.email)
+    group.invite.append(email)
     group.updated = datetime.datetime.utcnow()
 
     # save group

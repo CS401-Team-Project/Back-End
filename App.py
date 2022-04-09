@@ -73,7 +73,6 @@ def test_get():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
 
 
@@ -84,7 +83,6 @@ def test_post():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    print(f"ROUTE test_post: {request}")
     request_data = request.get_json(force=True)
 
     try:

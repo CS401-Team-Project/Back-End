@@ -185,7 +185,7 @@ def register():
         person.save()
 
         # return status message
-        return jsonify({'msg': 'User profile successfully retrieved.'}), 200
+        return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
 
     except Exception as exp:
         # Print stack trace
@@ -212,7 +212,7 @@ def user_profile(person):
         print('request_data', request_data)
 
         # if sub was given to us
-        if 'sub' in request_data:
+        if 'sub' in request_data and request_data.get('sub') != person.sub:
             # requesting another users info
             person = Person.objects.get(sub=request_data.get('sub'))
 

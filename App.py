@@ -327,6 +327,7 @@ def create_group(person):
         - token
         - name: group name
         - desc: [optional]
+        - invite: [optional] array of emails
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -341,6 +342,7 @@ def create_group(person):
     group_name = data['name']
     group_desc = data.get('desc', default='')
     members = data.get('members')
+    invite = data.get('invite')
 
     # create the group
     group = Group(name=group_name, desc=group_desc, admin=person.id)
@@ -357,6 +359,12 @@ def create_group(person):
     # save the person object
     person.date.updated = datetime.datetime.utcnow()
     person.save()
+
+    if invite is not None:
+        if type(invite) is not array:
+            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+        for email in invite:
+            group.invite.append(email);
 
     # TODO - finish this when invites are implemented
     if members is not None:
@@ -538,6 +546,8 @@ def join_group(person):
         return jsonify({'msg': 'User is already a member of the group.'}), 409
 
     # TODO - need to verify if invited
+    if person.email in group.invite:
+        group.invites.remove(person.email)
 
     # add person to group
     group.people.append(person.sub)
@@ -554,6 +564,50 @@ def join_group(person):
     person.save()
 
     return jsonify({'msg': 'User joined group.'}), 200
+
+
+
+@app.route('/group/invite', methods=['POST'])
+@verify_token
+@print_info
+def invite_group(person):
+    """
+    invite a member to the group
+    request must contain:
+        - token
+        - id: group id
+    :param person: the person making the request
+    """
+    # get the request data
+    request_data = request.get_json(force=True, silent=True)
+    group_id = request_data.get('id')
+
+
+
+    # query the group
+    group = Group.objects(id=group_id)
+    if len(group) == 0:
+        return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+    group = group.first()
+
+    # check if already a member
+    if person.sub in group.members:
+        return jsonify({'msg': 'User is already a member of the group.'}), 409
+
+    # TODO - need to verify if invited
+    if person.email in group.invite:
+        return jsonify({'msg': 'User is already a invited.'}), 409
+
+    # add person to group invite list
+    group.invite.append(person.email)
+    group.updated = datetime.datetime.utcnow()
+
+    # save group
+    group.save()
+
+
+    return jsonify({'msg': 'User invited to group.'}), 200
+
 
 
 

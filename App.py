@@ -576,7 +576,7 @@ def invite_group(person):
     request must contain:
         - token
         - id: group id
-        - email: 
+        - email: person to be invited
     :param person: the person making the request
     """
     # get the request data

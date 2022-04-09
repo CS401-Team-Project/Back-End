@@ -8,17 +8,22 @@ import os
 import traceback
 from copy import deepcopy
 from functools import wraps
+
+import flask_limiter.errors
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from flask_cors import CORS
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
-from pprint import pprint
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from Models import Person, Group, Item, TransactionItem, Transaction
 
 # setup the Flask server
 app = Flask(__name__)
-
+limiter = Limiter(app,
+                  key_func=get_remote_address,
+                  default_limits=['4 per second'])
 # If on debug allow cross-origin resource sharing
 if bool(os.environ['DEBUG']):
     CORS(app)
@@ -50,10 +55,15 @@ def print_info(func):
         else:
             ip = request.environ['HTTP_X_FORWARDED_FOR']
         path = request.path
+        print(request.headers)
         print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
         try:
             ret = func(*args, **kwargs)
             return ret
+        except flask_limiter.errors.RateLimitExceeded as exp:
+            print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
+            traceback.print_exc()
+            return jsonify({'msg': 'Rate limit exceeded.'}), 429
         except Exception as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
@@ -68,6 +78,7 @@ def print_info(func):
 
 @app.route("/test_get", methods=['GET'])
 @print_info
+@limiter.limit("1/second", override_defaults=False)
 def test_get():
     """
     Just a test route to verify that the API is working.

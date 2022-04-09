@@ -1,5 +1,5 @@
-# import pytest
 import requests
+import sys
 
 
 class Tests:
@@ -10,6 +10,8 @@ class Tests:
         """
 
         self.base_url = 'http://localhost:5000'
+        # self.base_url = 'http://ddns.absolutzero.org:5555'
+
         with open('token.txt') as f:
             token = f.readline()
         self.header = {
@@ -18,7 +20,7 @@ class Tests:
 
         # need to set up user stuff here for use later
         content, _ = self.do_post('/register', {})
-        self.user = content['data']
+        self.user = content
 
     @classmethod
     def teardown_class(self):
@@ -27,13 +29,23 @@ class Tests:
         """
         pass
 
+    def test_get(self):
+        response = requests.get(self.base_url + '/test_get')
+        print(response.content)
+        print(response.status_code)
+        cond = (response.content == b'Smart Ledger API Endpoint: OK')
+        if not cond:
+            print('API is currently down')
+            sys.exit()
+        assert cond
+
     def test_register(self):
         content, status_code = self.do_post('/register', {})
         assert status_code == 200
 
     def test_user_info(self):
         # test legitimate sub
-        content, status_code = self.do_post('/user/info', {'sub': self.user['sub']})
+        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
         assert status_code == 200
 
         # test fake sub
@@ -46,3 +58,11 @@ class Tests:
         content, status_code = response.json(), response.status_code
         return content, status_code
 
+if __name__ == "__main__":
+    test = Tests()
+    test.setup_class()
+    for _ in range(1000):
+        test.test_get()
+
+
+    test.teardown_class()

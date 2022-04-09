@@ -213,8 +213,11 @@ def user_profile(person):
 
         # if sub was given to us
         if 'sub' in request_data and request_data.get('sub') != person.sub:
-            # requesting another users info
-            person = Person.objects.get(sub=request_data.get('sub'))
+            try:
+                # requesting another users info
+                person = Person.objects.get(sub=request_data.get('sub'))
+            except:
+                return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
 
             # explicitly build the returned json
             date = {

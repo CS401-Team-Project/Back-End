@@ -34,6 +34,31 @@ app.config['MONGODB_SETTINGS'] = {
 db = MongoEngine()
 db.init_app(app)
 
+def print_info(func):
+    """
+    verify the given token
+    :return: return a dictionary of the persons info from google
+    """
+
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        """
+        wrap the given function
+        """
+        if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
+            ip = request.environ['REMOTE_ADDR']
+        else:
+            ip = request.environ['HTTP_X_FORWARDED_FOR']
+        path = request.path
+        print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
+        try:
+            ret = func(*args, **kwargs)
+            return ret
+        except Exception as exp:
+            print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
+            traceback.print_exc()
+            return jsonify({'msg': 'An unexpected error occurred.'}), 500
+    return wrap
 
 ###############################################################################################################
 ###############################################################################################################
@@ -42,6 +67,7 @@ db.init_app(app)
 # TODO - this should only be available in debug
 
 @app.route("/test_get", methods=['GET'])
+@print_info
 def test_get():
     """
     Just a test route to verify that the API is working.
@@ -52,6 +78,7 @@ def test_get():
 
 
 @app.route("/test_post", methods=['POST'])
+@print_info
 def test_post():
     """
     Just a test route to verify that the API is working.
@@ -94,31 +121,7 @@ def get_token(request):
     return token
 
 
-def print_info(func):
-    """
-    verify the given token
-    :return: return a dictionary of the persons info from google
-    """
 
-    @wraps(func)
-    def wrap(*args, **kwargs):
-        """
-        wrap the given function
-        """
-        if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
-            ip = request.environ['REMOTE_ADDR']
-        else:
-            ip = request.environ['HTTP_X_FORWARDED_FOR']
-        path = request.path
-        print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
-        try:
-            ret = func(*args, **kwargs)
-            return ret
-        except Exception as exp:
-            print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
-            traceback.print_exc()
-            return jsonify({'msg': 'An unexpected error occurred.'}), 500
-    return wrap
 
 
 def verify_token(func):

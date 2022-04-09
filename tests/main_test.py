@@ -31,8 +31,6 @@ class Tests:
 
     def test_get(self):
         response = requests.get(self.base_url + '/test_get')
-        print(response.content)
-        print(response.status_code)
         cond = (response.content == b'Smart Ledger API Endpoint: OK')
         if not cond:
             print('API is currently down')

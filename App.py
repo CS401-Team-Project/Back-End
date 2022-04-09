@@ -23,7 +23,7 @@ from Models import Person, Group, Item, TransactionItem, Transaction
 app = Flask(__name__)
 limiter = Limiter(app,
                   key_func=get_remote_address,
-                  default_limits=['4 per second'])
+                  default_limits=['4/second'])
 # If on debug allow cross-origin resource sharing
 if bool(os.environ['DEBUG']):
     CORS(app)
@@ -38,6 +38,7 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine()
 db.init_app(app)
+
 
 def print_info(func):
     """

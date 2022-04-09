@@ -147,7 +147,7 @@ def register():
     used for logging in a user. creates an account if not already exists
     :return: status of the registration
     """
-    print(f"ROUTE /register: {request}")
+    print(f"ROUTE /register: {request} @ {datetime.datetime.now()}")
     try:
         token = get_token(request)
         # verify the token
@@ -205,7 +205,7 @@ def user_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
-    print(f"ROUTE /user/info: {request}")
+    print(f"ROUTE /user/info: {request} @ {datetime.datetime.now()}")
     try:
         print('request', request)
         request_data = request.get_json(force=True)
@@ -230,13 +230,9 @@ def user_profile(person):
                 'date': date,
                 'pay_with': person['pay_with']
             }
-            person.msg = 'User profile successfully retrieved.'
-            return jsonify(person), 200
 
-        # else return the users info
-        person['msg'] = 'User profile successfully retrieved.'
-
-        return jsonify(person), 200
+        # return the users info
+        return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
 
     except Exception as exp:
         print(f"ROUTE /user/info => Exception: {exp} @ {datetime.datetime.now()}")
@@ -252,7 +248,7 @@ def update_profile(person):
     :param data: json with key value pairs of things to set
     :return: returns json of
     """
-    print(f"ROUTE /user/update: {request}")
+    print(f"ROUTE /user/update: {request} @ {datetime.datetime.now()}")
     try:
         # get fields
         request_data = request.get_json(force=True, silent=True)
@@ -292,7 +288,7 @@ def delete_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
-    print(f"ROUTE /user/delete: {request}")
+    print(f"ROUTE /user/delete: {request} @ {datetime.datetime.now()}")
     try:
 
         # unlink person from all groups
@@ -331,7 +327,7 @@ def create_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
-    print(f"ROUTE /group/create: {request}")
+    print(f"ROUTE /group/create: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -367,8 +363,7 @@ def create_group(person):
             for member in members:
                 pass
         group.save()
-        group.msg = 'Created group.'
-        return jsonify(group), 200
+        return jsonify({'msg': 'Created group', 'data': group}), 200
 
     except Exception as exp:
         print(f"ROUTE /group/create => Exception: {exp} @ {datetime.datetime.now()}")
@@ -385,7 +380,7 @@ def delete_group(person):
         - id: group id
     :param person: the person making the request
     """
-    print(f"ROUTE /group/delete: {request}")
+    print(f"ROUTE /group/delete: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -443,7 +438,7 @@ def get_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
-    print(f"ROUTE /group/info: {request}")
+    print(f"ROUTE /group/info: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -477,7 +472,7 @@ def update_group(person):
     :param person: the person making the request
     :return: returns json with group id and msg
     """
-    print(f"ROUTE /group/update: {request}")
+    print(f"ROUTE /group/update: {request} @ {datetime.datetime.now()}")
 
     try:
         # get the request data
@@ -541,7 +536,7 @@ def join_group(person):
         - id: group id
     :param person: the person making the request
     """
-    print(f"ROUTE /group/join: {request}")
+    print(f"ROUTE /group/join: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -593,7 +588,7 @@ def remove_member(person):
         - userid: [optional] user to remove from the grou
     :param person: the person making the request
     """
-    print(f"ROUTE /group/remove-member: {request}")
+    print(f"ROUTE /group/remove-member: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -655,7 +650,7 @@ def refresh_id(person):
         - id: group id
     :param person: the person making the request
     """
-    print(f"ROUTE /group/refresh-id: {request}")
+    print(f"ROUTE /group/refresh-id: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -714,7 +709,7 @@ def create_transaction(person):
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
-    print(f"ROUTE /transaction/create: {request}")
+    print(f"ROUTE /transaction/create: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -773,7 +768,7 @@ def update_transaction(person):
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
-    print(f"ROUTE /transaction/update: {request}")
+    print(f"ROUTE /transaction/update: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -849,7 +844,7 @@ def delete_transaction(person):
         - id: transaction id
     :param person: the person making the request
     """
-    print(f"ROUTE /transaction/delete: {request}")
+    print(f"ROUTE /transaction/delete: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -944,7 +939,7 @@ def add_item_to_transaction(person):
         ]
     :param person: the person making the request
     """
-    print(f"ROUTE /transaction/add-item: {request}")
+    print(f"ROUTE /transaction/add-item: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1033,7 +1028,7 @@ def remove_item_from_transaction(person):
         - data: transaction item to delete
     :param person: the person making the request
     """
-    print(f"ROUTE /transaction/remove-item: {request}")
+    print(f"ROUTE /transaction/remove-item: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1080,7 +1075,7 @@ def get_transaction(person):
         - id: transaction id
     :param person: the person making the request
     """
-    print(f"ROUTE /transaction/info: {request}")
+    print(f"ROUTE /transaction/info: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)
@@ -1159,7 +1154,7 @@ def get_item(_):
         - id
     :return: returns an item
     """
-    print(f"ROUTE /item/info: {request}")
+    print(f"ROUTE /item/info: {request} @ {datetime.datetime.now()}")
     try:
         # get the request data
         request_data = request.get_json(force=True, silent=True)

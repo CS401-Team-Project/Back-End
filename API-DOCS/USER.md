@@ -20,7 +20,6 @@
 
 **Description**: Create a new user account.
 
-**TODO Back-End**: Change `/person/register` to the new `/register`
 
 ### Request:
 
@@ -60,7 +59,6 @@ axios.post('/person/register', {
 
 **Description**: Retrieves a user's profile.
 
-**TODO Back-End**: Change `/user/info` to `/user/info`
 
 ### Request:
 
@@ -88,22 +86,24 @@ axios.post('/person/register', {
 
 ### Private & Public Profiles:
 
-- **sub**: The user's unique identifier. [String]
-- **first_name**: The user's first name. [String]
-- **last_name**: The user's last name. [String]
-- **email**: The user's email address. [String]
-- **email_verified**: Whether the user's email address has been verified. [Boolean]
-- **picture**: The current user's profile picture URL.  [String]
-- _groups_: Group IDs that the user is a member of. [Array]
-- **date**: [JSON]
-	- **created**: The date & time the user joined the application. [String]
-	- _updated_: The date & time the user's profile was last updated. [String]
-	- _last_login_: The date & time the user last logged in. [String]
-- **pay_with**: [JSON]
-	- **venmo**: The user's venmo username. [String]
-	- **cashapp**: The user's cashapp username. [String]
-	- **paypal**: The user's paypal email address. [String]
-	- **preferred**: The user's preferred payment method (venmo, cashapp, or paypal). [String]
+- **msg**: info about request [String]
+- **data**: person object [JSON]
+  - **sub**: The user's unique identifier. [String]
+  - **first_name**: The user's first name. [String]
+  - **last_name**: The user's last name. [String]
+  - **email**: The user's email address. [String]
+  - **email_verified**: Whether the user's email address has been verified. [Boolean]
+  - **picture**: The current user's profile picture URL.  [String]
+  - _groups_: Group IDs that the user is a member of. [Array]
+  - **date**: [JSON]
+      - **created**: The date & time the user joined the application. [String]
+      - _updated_: The date & time the user's profile was last updated. [String]
+      - _last_login_: The date & time the user last logged in. [String]
+  - **pay_with**: [JSON]
+      - **venmo**: The user's venmo username. [String]
+      - **cashapp**: The user's cashapp username. [String]
+      - **paypal**: The user's paypal email address. [String]
+      - **preferred**: The user's preferred payment method (venmo, cashapp, or paypal). [String]
 
 ### Examples:
 

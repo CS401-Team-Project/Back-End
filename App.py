@@ -8,17 +8,24 @@ import os
 import traceback
 from copy import deepcopy
 from functools import wraps
+from bson.objectid import ObjectId
+
+import flask_limiter.errors
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from flask_cors import CORS
 from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
-from pprint import pprint
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from Models import Person, Group, Item, TransactionItem, Transaction
+from mongoengine import *
 
 # setup the Flask server
 app = Flask(__name__)
-
+limiter = Limiter(app,
+                  key_func=get_remote_address,
+                  default_limits=['20/second'])
 # If on debug allow cross-origin resource sharing
 if bool(os.environ['DEBUG']):
     CORS(app)
@@ -33,6 +40,7 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine()
 db.init_app(app)
+
 
 def print_info(func):
     """
@@ -50,10 +58,15 @@ def print_info(func):
         else:
             ip = request.environ['HTTP_X_FORWARDED_FOR']
         path = request.path
+
         print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
         try:
             ret = func(*args, **kwargs)
             return ret
+        except flask_limiter.errors.RateLimitExceeded as exp:
+            print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
+            traceback.print_exc()
+            return jsonify({'msg': 'Rate limit exceeded.'}), 429
         except Exception as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
@@ -68,12 +81,12 @@ def print_info(func):
 
 @app.route("/test_get", methods=['GET'])
 @print_info
+@limiter.limit("1/second", override_defaults=False)
 def test_get():
     """
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    print(f"ROUTE test: {request}")
     return "Smart Ledger API Endpoint: OK", 200
 
 
@@ -84,7 +97,6 @@ def test_post():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    print(f"ROUTE test_post: {request}")
     request_data = request.get_json(force=True)
 
     try:
@@ -111,8 +123,7 @@ def test_post():
 # WRAPPERS
 
 def get_token(request):
-      # if behind a proxy
-
+    # if behind a proxy
     headers = request.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
@@ -334,18 +345,17 @@ def create_group(person):
 
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-
-    data = request_data.get('data', default=None)
+    data = request_data.get('data')
     if 'name' not in data:
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     group_name = data['name']
-    group_desc = data.get('desc', default='')
+    group_desc = data.get('desc')
     members = data.get('members')
     invite = data.get('invite')
 
     # create the group
-    group = Group(name=group_name, desc=group_desc, admin=person.id)
+    group = Group(name=group_name, desc=group_desc, admin=person.sub)
 
     # add the creating user to the group
     group.members.append(person.sub)
@@ -395,7 +405,7 @@ def delete_group(person):
 
     # query the group
     group = Group.objects(id=group_id)
-    if len(group) == 0 or person.sub != group.admin:
+    if len(group) == 0 or person.sub != group.first().admin:
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     group = group.first()
@@ -410,15 +420,12 @@ def delete_group(person):
             continue
 
         # try to remove person from group
-        try:
-            person.groups.remove(group_id)
-            person.date.updated = datetime.datetime.utcnow()
-            person.save()
-        except Exception:
-            continue
+        person.groups.remove(ObjectId(group_id))
+        person.date.updated = datetime.datetime.utcnow()
+        person.save()
 
     # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
-    for t_id in group.transactions:
+    for t_id in group.restricted.transactions:
         # try to get the transaction
         try:
             transaction = Transaction.objects.get(id=t_id)
@@ -443,11 +450,13 @@ def get_group(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    group_id = request_data.get['id']
+    group_id = request_data.get('id')
 
+    if group_id is None:
+        return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # get the group
-    group = Group(id=group_id)
+    group = Group.objects.get(id=group_id)
 
     # check if user is in group
     if person.sub not in group.members:

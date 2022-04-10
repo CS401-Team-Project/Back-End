@@ -71,6 +71,7 @@ class Tests:
         test
         :return:
         """
+        
         # create a group
         data = {
             'name': 'test group name',
@@ -90,6 +91,20 @@ class Tests:
         assert status_code == 200
         user = content['data']
         assert self.group['_id'] in user['groups']
+
+        # update normal group stuff
+        data = {
+            'name': 'test group update name',
+            'desc': 'test group update description'
+        }
+        content, status_code = self.do_post('/group/update', {'id': self.group['_id']['$oid'], 'data': data})
+        assert status_code == 200
+
+        # get the group
+        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+        assert content['name'] == 'test group update name'
+        assert content['desc'] == 'test group update description'
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

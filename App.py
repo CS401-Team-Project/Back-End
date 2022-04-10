@@ -477,8 +477,6 @@ def update_group(person):
     group_id = request_data.get('id')
     data = request_data.get('data')
 
-
-
     # get the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -486,7 +484,7 @@ def update_group(person):
     group = group.first()
 
     # check if user is in group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     # weed out bad fields
@@ -506,7 +504,7 @@ def update_group(person):
         else:
             group[k] = v
 
-    group.date.update = datetime.datetime.utcnow()
+    group.restricted.date.update = datetime.datetime.utcnow()
 
     # save the group
     group.save()

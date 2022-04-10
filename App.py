@@ -382,7 +382,6 @@ def create_group(person):
     return jsonify({'msg': 'Created group', 'data': group}), 200
 
 
-
 @app.route('/group/delete', methods=['POST'])
 @verify_token
 @print_info
@@ -536,8 +535,6 @@ def join_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -565,7 +562,6 @@ def join_group(person):
     person.save()
 
     return jsonify({'msg': 'User joined group.'}), 200
-
 
 
 @app.route('/group/remove-member', methods=['POST'])
@@ -624,7 +620,6 @@ def remove_member(person):
         person.save()
 
     return jsonify({'msg': 'Member successfully removed.'}), 200
-
 
 
 @app.route('/group/refresh-id', methods=['POST'])

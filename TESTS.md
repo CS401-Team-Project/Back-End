@@ -1,35 +1,34 @@
 ### [<= Back to `README.md`](./README.md)
 ## Running Unit Tests
+### **You will have to redo this process multiple times since auth tokens expire after a brief period of time.**
 ### Create `token.txt` in `~/Smart-Ledger/Back-End/tests/`
 ```shell
 touch tests/token.txt
 ```
 
-
-#### In `Smart-Ledger/Front-End/.env.development`, change endpoint:
+### Make Sure Git Repos are up to Date:
 ```shell
-//.env.development
-REACT_APP_API_ENDPOINT=http://ddns.absolutzero.org:5555/
+cd ~/Smart-Ledger/
+git checkout main
+git pull origin main
+
+cd ./Front-End/
+git checkout main
+git pull origin main
+
+cd ../Back-End/
+git checkout main
+git pull origin main
 ```
 
-### Start Front-End:
+### Start Full Application Stack:
 ```shell
-cd ../Front-End
-npm install (only required on first run)
-npm install react-scripts -g (only required on first run)
-npm start
+cd ~/Smart-Ledger/
+docker-compose up -d --build
 ```
 ### Login and Retrieve Token:
 Click 'API Client' under 'Other' on the left-hand side.
 Copy the Auth Token and paste in `token.txt`
-
-### Start Back-End 
-npm can be exited. Go back to `Smart-Ledger` and run `docker-compose up --build api`. 
-This will take a few seconds.
-```shell
-cd ~/Smart-Ledger/
-docker-compose up --build api
-```
 
 ### Run Tests in New Shell
 ```shell

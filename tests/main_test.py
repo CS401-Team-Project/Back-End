@@ -39,7 +39,8 @@ class Tests:
         :return:
         """
         response = requests.get(self.base_url + '/test_get')
-        cond = (response.content == b'{"msg":"Smart Ledger API Endpoint: OK"}\n')
+        data = response.json()
+        cond = (data['msg'] == "Smart Ledger API Endpoint: OK")
         if not cond:
             print('API is currently down')
             sys.exit()
@@ -108,6 +109,7 @@ class Tests:
             'bad': 'data'
         }
         content, status_code = self.do_post('/group/create', {'data': data})
+        assert content['msg'] == "Missing Required Field(s) / Invalid Type(s)."
         assert status_code == 400
 
     def test_create_group(self):

@@ -133,6 +133,47 @@ class Tests:
         assert status_code == 200
         assert self.group['_id'] not in content['data']['groups']
 
+    def test_invite(self):
+        # create a group with list of invites
+        invites = ['test1@email.com', 'test2@email.com', 'test3@email.com']
+        data = {
+            'name': 'test group name',
+            'desc': 'test group description',
+            'invites': invites
+        }
+        content, status_code = self.do_post('/group/create', {'data': data})
+        assert status_code == 200
+        self.group = content['data']
+
+        # check invites
+        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+        assert invites == content['invites']
+
+        # delete the group
+        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+
+        # create new group with no invites
+        invites = data.pop('invites')
+        content, status_code = self.do_post('/group/create', {'data': data})
+        assert status_code == 200
+        self.group = content['data']
+        assert len(self.group['invites']) == 0
+
+        # invite via the invite api call
+        content, status_code = self.do_post('/group/invite', {'id': self.group['_id']['$oid'], 'emails': invites})
+        assert status_code == 200
+
+        # check invites
+        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+        assert invites == content['invites']
+
+        # delete the group
+        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+
     @classmethod
     def do_post(cls, endpoint, data):
         """
@@ -149,5 +190,6 @@ if __name__ == "__main__":
     test.setup_class()
     test.test_register()
     test.test_user_info()
+    test.test_invite()
     # test.test_create_group()
     test.teardown_class()

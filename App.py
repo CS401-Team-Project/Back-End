@@ -8,6 +8,7 @@ import os
 import traceback
 from copy import deepcopy
 from functools import wraps
+from bson.objectid import ObjectId
 
 import flask_limiter.errors
 from google.oauth2 import id_token
@@ -18,6 +19,7 @@ from flask_mongoengine import MongoEngine
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from Models import Person, Group, Item, TransactionItem, Transaction
+from mongoengine import *
 
 # setup the Flask server
 app = Flask(__name__)
@@ -56,7 +58,7 @@ def print_info(func):
         else:
             ip = request.environ['HTTP_X_FORWARDED_FOR']
         path = request.path
-        print(request.headers)
+
         print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
         try:
             ret = func(*args, **kwargs)
@@ -121,8 +123,7 @@ def test_post():
 # WRAPPERS
 
 def get_token(request):
-      # if behind a proxy
-
+    # if behind a proxy
     headers = request.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
@@ -343,17 +344,16 @@ def create_group(person):
 
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-
-    data = request_data.get('data', default=None)
+    data = request_data.get('data')
     if 'name' not in data:
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     group_name = data['name']
-    group_desc = data.get('desc', default='')
+    group_desc = data.get('desc')
     members = data.get('members')
 
     # create the group
-    group = Group(name=group_name, desc=group_desc, admin=person.id)
+    group = Group(name=group_name, desc=group_desc, admin=person.sub)
 
     # add the creating user to the group
     group.members.append(person.sub)
@@ -397,7 +397,7 @@ def delete_group(person):
 
     # query the group
     group = Group.objects(id=group_id)
-    if len(group) == 0 or person.sub != group.admin:
+    if len(group) == 0 or person.sub != group.first().admin:
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     group = group.first()
@@ -412,15 +412,12 @@ def delete_group(person):
             continue
 
         # try to remove person from group
-        try:
-            person.groups.remove(group_id)
-            person.date.updated = datetime.datetime.utcnow()
-            person.save()
-        except Exception:
-            continue
+        person.groups.remove(ObjectId(group_id))
+        person.date.updated = datetime.datetime.utcnow()
+        person.save()
 
     # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
-    for t_id in group.transactions:
+    for t_id in group.restricted.transactions:
         # try to get the transaction
         try:
             transaction = Transaction.objects.get(id=t_id)
@@ -445,11 +442,13 @@ def get_group(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    group_id = request_data.get['id']
+    group_id = request_data.get('id')
 
+    if group_id is None:
+        return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # get the group
-    group = Group(id=group_id)
+    group = Group.objects.get(id=group_id)
 
     # check if user is in group
     if person.sub not in group.members:

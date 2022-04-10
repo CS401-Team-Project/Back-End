@@ -135,9 +135,6 @@ def get_token(request):
     return token
 
 
-
-
-
 def verify_token(func):
     """
     verify the given token
@@ -750,12 +747,11 @@ def create_transaction(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    group_id = request_data.get('group', default=None)
-    title = request_data.get('title', default=None)
-    desc = request_data.get('id', default='')
-    vendor = request_data.get('vendor', default='')
-    date = request_data.get('date', default=datetime.datetime.utcnow)
-
+    group_id = request_data.get('id')
+    title = request_data.get('title')
+    desc = request_data.get('desc')
+    vendor = request_data.get('vendor')
+    date = request_data.get('date')
 
     if group_id is None or title is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -785,7 +781,7 @@ def create_transaction(person):
     # save the group
     group.save()
 
-    return jsonify({'id': transaction.id, 'msg': 'User added to group.'}), 200
+    return jsonify({'id': transaction.id, 'msg': 'Transaction Created Successfully.'}), 200
 
 
 # TODO update to replace transaction items
@@ -805,8 +801,8 @@ def update_transaction(person):
 
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id', default=None)
-    transaction_new = request_data.get('data', default=None)
+    transaction_id = request_data.get('id')
+    transaction_new = request_data.get('data')
 
     if transaction_id is None or transaction_new is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -863,7 +859,6 @@ def update_transaction(person):
     return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
 
 
-
 @app.route('/transaction/delete', methods=['POST'])
 @verify_token
 @print_info
@@ -877,7 +872,7 @@ def delete_transaction(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id', default=None)
+    transaction_id = request_data.get('id')
 
     if transaction_id is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -960,15 +955,15 @@ def add_item_to_transaction(person):
                 - quantity
                 - desc: desc of item
                 - unit_price: unit price of item
-                - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed persons is)
+                - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed person's ID)
             }, ...
         ]
     :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id', default=None)
-    items = request_data.get('items', default=None, type=list)
+    transaction_id = request_data.get('id')
+    items = request_data.get('items', type=list)
 
     if transaction_id is None or items is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -977,13 +972,13 @@ def add_item_to_transaction(person):
     transaction = Transaction.objects.get(id=transaction_id)
 
     for item in items:
-        quantity = item.get('quantity', default=None, type=int)
-        person_id = item.get('owed_by', default=None)
+        quantity = item.get('quantity', type=int)
+        person_id = item.get('owed_by')
 
         # get the item data from the request
-        name = item.get('name', default=None)
-        desc = item.get('desc', default='')
-        unit_price = item.get('unit_price', default=None, type=float)
+        name = item.get('name')
+        desc = item.get('desc')
+        unit_price = item.get('unit_price', type=float)
 
         if quantity is None or person_id is None or name is None or unit_price is None:
             return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -992,7 +987,6 @@ def add_item_to_transaction(person):
         _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price)
 
     return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
-
 
 
 def _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price):
@@ -1053,8 +1047,8 @@ def remove_item_from_transaction(person):
 
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id', default=None)
-    transaction_item = request_data.get('data', default=None)
+    transaction_id = request_data.get('id')
+    transaction_item = request_data.get('data')
 
     if transaction_id is None or transaction_item is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -1089,7 +1083,6 @@ def get_transaction(person):
     """
     get a transaction in the group
     request must contain:
-        - token
         - id: transaction id
     :param person: the person making the request
     """

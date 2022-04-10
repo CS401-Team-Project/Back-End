@@ -39,7 +39,7 @@ class Tests:
         :return:
         """
         response = requests.get(self.base_url + '/test_get')
-        cond = (response.content == b'Smart Ledger API Endpoint: OK')
+        cond = (response.content == b'{"msg":"Smart Ledger API Endpoint: OK"}\n')
         if not cond:
             print('API is currently down')
             sys.exit()
@@ -63,7 +63,7 @@ class Tests:
         assert status_code == 200
 
         # test fake sub
-        _, status_code = self.do_post('/user/info', {'sub': 'abcdFAKEnews'})
+        _, status_code = self.do_post('/user/info', {'sub': 'baddatabaddatawhatchagonnado'})
         assert status_code == 404
 
         # test update pay with
@@ -83,13 +83,39 @@ class Tests:
         assert status_code == 200
         assert content['data']['pay_with'] == data['pay_with']
 
+    def test_group_no_desc(self):
+        """
+        test
+        :return:
+        """
+
+        # create a group
+        data = {
+            'name': 'test group name',
+        }
+        content, status_code = self.do_post('/group/create', {'data': data})
+        self.group = content['data']
+        assert status_code == 200
+
+    def test_bad_group(self):
+        """
+        test
+        :return:
+        """
+
+        # create a group with no data
+        data = {
+            'bad': 'data'
+        }
+        content, status_code = self.do_post('/group/create', {'data': data})
+        assert status_code == 400
 
     def test_create_group(self):
         """
         test
         :return:
         """
-        
+
         # create a group
         data = {
             'name': 'test group name',
@@ -174,6 +200,20 @@ class Tests:
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
         assert status_code == 200
 
+    # This test passed, DO NOT RUN unless you want your profile deleted for the tests.
+    # def test_delete_profile(self):
+    #     """
+    #     test
+    #     :return:
+    #     """
+    #     # delete
+    #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+    #     assert status_code == 200
+    #
+    #     # try to delete second time to ensure 404 is returned
+    #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+    #     assert status_code == 404
+
     @classmethod
     def do_post(cls, endpoint, data):
         """
@@ -191,5 +231,7 @@ if __name__ == "__main__":
     test.test_register()
     test.test_user_info()
     test.test_create_group()
+    test.test_group_no_desc()
+    test.test_bad_group()
     test.test_invite()
     test.teardown_class()

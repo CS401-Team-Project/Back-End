@@ -31,7 +31,6 @@
 
 | Field | Type   | Required | Description        |
 |-------|--------|----------|--------------------|
-| token | String | Yes      | Google OAuth Token |
 | id    | String | Yes      | Transaction ID     |
 
 ### Response:
@@ -45,13 +44,15 @@
 
 ### Notes:
 
-- TODO
+- If the user is part of the group that the transaction belongs to,
+returns transaction info and status code 200.
+- If the user is not part of the group that the transaction belongs to,
+returns 404 status code.
 
 ### Examples:
 
 ```js
 axios.post('/transaction/info', {
-    token: '<TOKEN>',
     id: '<TRANSACTION_ID>'
 }).then(response => {
     console.log(response.data);
@@ -70,10 +71,9 @@ axios.post('/transaction/info', {
 
 | Field       | Type   | Required | Default           | Description             |
 |-------------|--------|----------|-------------------|-------------------------|
-| token       | String | Yes      | -                 | Google OAuth Token      |
 | id          | String | Yes      | -                 | Group ID                |
 | title       | String | Yes      | -                 | Transaction Title       |
-| description | String | Yes      | -                 | Transaction Description |
+| desc        | String | Yes      | -                 | Transaction Description |
 | vendor      | String | Yes      | ""                | Transaction Vendor      |
 | date        | String | No       | Current Date-Time | Transaction Date        |
 
@@ -88,13 +88,13 @@ axios.post('/transaction/info', {
 
 ### Notes:
 
-- TODO
+- If successful, returns status code 200 and a JSON Object of the transaction ID and
+a message indicating that the transaction was created.
 
 ### Examples:
 
 ```js
 axios.post('/transaction/create', {
-    token: '<TOKEN>',
     id: '<GROUP_ID>',
     title: '<TRANSACTION_TITLE>',
     description: '<TRANSACTION_DESCRIPTION>',
@@ -119,7 +119,6 @@ axios.post('/transaction/create', {
 
 | Field | Type   | Required | Description                    |
 |-------|--------|----------|--------------------------------|
-| token | String | Yes      | Google OAuth Token             |
 | id    | String | Yes      | Transaction ID                 |
 | data  | Object | Yes      | Fields to update (JSON Object) |
 
@@ -134,13 +133,13 @@ axios.post('/transaction/create', {
 
 ### Notes:
 
-- TODO
+- If successful, returns status code 200 and a JSON Object of the transaction ID and
+a message indicating that the transaction was updated.
 
 ### Examples:
 
 ```js
 axios.post('/transaction/update', {
-    token: '<TOKEN>',
     id: '<TRANSACTION_ID>',
     data: {
         title: '<TRANSACTION_TITLE>',
@@ -167,7 +166,6 @@ axios.post('/transaction/update', {
 
 | Field | Type   | Required | Description        |
 |-------|--------|----------|--------------------|
-| token | String | Yes      | Google OAuth Token |
 | id    | String | Yes      | Transaction ID     |
 
 ### Response:
@@ -181,7 +179,7 @@ axios.post('/transaction/update', {
 
 ### Notes:
 
-- TODO
+- If successful, returns status code 200 and a message indicating that the transaction was deleted.
 
 ### Examples:
 
@@ -208,32 +206,43 @@ axios.post('/transaction/delete', {
 
 | Field       | Type   | Required | Description                    |
 |-------------|--------|----------|--------------------------------|
-| token       | String | Yes      | Google OAuth Token             |
 | id          | String | Yes      | Transaction ID                 |
-| items_list  | List   | Yes      | List of Items                  |
+| items       | List   | Yes      | List of Items                  |
 
 ### Response:
 
-| status | statusText | data.msg |
-|--------|------------|----------|
+| status | statusText  | data.msg                                             |
+|--------|-------------|------------------------------------------------------|
+| 200    | OK          | Successfully deleted the transaction.                |
+| 400    | Bad Request | Missing required field(s) or invalid type(s).        |
+| 404    | Not Found   | Token is unauthorized or transaction does not exist. |
+| 500    | Internal    | An unexpected error occurred.                        |
 
-### Notes:
+### `items` Fields:
 
-items_list is an array of json objects each containing the following fields: name, quantity, desc, unit_price, owed_by
+| Field       | Type   | Required | Default            | Description                            |
+|-------------|--------|----------|--------------------|----------------------------------------|
+| name        | String | Yes      | -                  | Name of the Group                      |
+| quantity    | Int    | Yes      | -                  | The user emails to invite to the group |
+| desc        | String | Yes      | -                  | The group's description                |
+| unit_price  | Float  | Yes      | -                  | The user emails to invite to the group |
+| owned_by    | String | Yes      | -                  | The user emails to invite to the group |
+
+- TODO: Make owned_by not required and defaultly pass user calling add-item
+- `items` is an array of json objects each containing the following fields: name, quantity, desc, unit_price, owed_by
 
 ### Examples:
 
-TODO - this need updated by idk how
-
 ```js
 axios.post('/transaction/add-item', {
-    token: '<TOKEN>',
     id: '<TRANSACTION_ID>',
-    name: '<ITEM_ID>',
-    quantity: '<QUANTITY>',
-    unit_price: '<UNIT_PRICE>',
-    owed_by: '<USER_ID>',
-    description: '<DESCRIPTION>'
+    items:{
+        name: '<ITEM_ID>',
+        quantity: '<QUANTITY>',
+        unit_price: '<UNIT_PRICE>',
+        owed_by: '<USER_ID>',
+        description: '<DESCRIPTION>'
+    }
 }).then(response => {
     console.log(response.data);
 }).catch(error => {
@@ -254,7 +263,6 @@ axios.post('/transaction/add-item', {
 
 | Field | Type   | Required | Description                    |
 |-------|--------|----------|--------------------------------|
-| token | String | Yes      | Google OAuth Token             |
 | id    | String | Yes      | Transaction ID                 |
 | data  | Object | Yes      | Transaction Item To Be Deleted |
 
@@ -269,13 +277,13 @@ axios.post('/transaction/add-item', {
 
 ### Notes:
 
-- TODO
+- If successful, returns status code 200 and a message indicating tha the transaction
+was updated.
 
 ### Examples:
-
+- TODO: Fix example - this is **not correct!**
 ```js
 axios.post('/transaction/remove-item', {
-    token: '<TOKEN>',
     id: '<TRANSACTION_ID>',
     item_id: '<ITEM_ID>'
 }).then(response => {
@@ -297,7 +305,6 @@ axios.post('/transaction/remove-item', {
 
 | Field | Type   | Required | Description        |
 |-------|--------|----------|--------------------|
-| token | String | Yes      | Google OAuth Token |
 | id    | String | Yes      | Item ID            |
 
 ### Response:
@@ -311,13 +318,12 @@ axios.post('/transaction/remove-item', {
 
 ### Notes:
 
-- TODO
+- If successful, returns status code 200 and a JSON Object of the item.
 
 ### Examples:
 
 ```js
 axios.post('/item/info', {
-    token: '<TOKEN>',
     id: '<ITEM_ID>'
 }).then(response => {
     console.log(response.data);

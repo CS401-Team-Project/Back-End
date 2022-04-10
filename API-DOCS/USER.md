@@ -20,13 +20,6 @@
 
 **Description**: Create a new user account.
 
-
-### Request:
-
-| Field | Type   | Required | Default | Description          |
-|-------|--------|----------|---------|----------------------|
-| token | String | Yes      | -       | Google OAuth Token   |
-
 ### Response:
 
 | status | statusText            | data.msg                                      |
@@ -42,9 +35,7 @@
 #### User logs in to their account:
 
 ```js
-axios.post('/person/register', {
-    token: '<Google OAuth Token>'
-}).then(function (response) {
+axios.post('/register', {}).then(function (response) {
     console.log(response);
 }).catch(function (error) {
     console.log(error);
@@ -64,7 +55,6 @@ axios.post('/person/register', {
 
 | Field | Type   | Required | Default | Description                  |
 |-------|--------|----------|---------|------------------------------|
-| token | String | Yes      | -       | Google OAuth Token           |
 | sub   | String | No       | -       | Unique identifier for person |
 
 ### Response:
@@ -110,9 +100,7 @@ axios.post('/person/register', {
 #### User gets their own private profile:
 
 ```js
-axios.post('/user/info', {
-    token: '<Google OAuth Token>',
-}).then(function (response) {
+axios.post('/user/info', {}).then(function (response) {
     console.log(response);
 }).catch(function (error) {
     console.log(error);
@@ -123,7 +111,6 @@ axios.post('/user/info', {
 
 ```js
 axios.post('/user/info', {
-    token: '<Google OAuth Token>',
     sub: '<Unique identifier for person>'
 }).then(function (response) {
     console.log(response);
@@ -142,13 +129,10 @@ axios.post('/user/info', {
 
 **Note**: This endpoint is only available to the current user
 
-**TODO Back-End**: Change `/person/set` to `/user/update`
-
 ### Request:
 
 | Field | Type   | Required | Default | Description                    |
 |-------|--------|----------|---------|--------------------------------|
-| token | String | Yes      | -       | Google OAuth Token             |
 | data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
 #### Note:
@@ -188,7 +172,6 @@ axios.post('/user/info', {
 
 ```js
 axios.post('/user/update', {
-    token: '<Google OAuth Token>',
     data: {
         first_name: 'John',
     }
@@ -203,7 +186,6 @@ axios.post('/user/update', {
 
 ```js
 axios.post('/user/update', {
-    token: '<Google OAuth Token>',
     data: {
         first_name: 'John',
         last_name: 'Doe',
@@ -219,7 +201,6 @@ axios.post('/user/update', {
 
 ```js
 axios.post('/user/update', {
-    token: '<Google OAuth Token>',
     data: {
         pay_with: {
             venmo: 'johndoe',
@@ -243,12 +224,6 @@ axios.post('/user/update', {
 
 **Note**: This endpoint is only available to the current user
 
-### Request:
-
-| Field | Type   | Required | Default | Description        |
-|-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
-
 ### Response:
 
 | status | statusText            | data.msg                                      |
@@ -262,9 +237,7 @@ axios.post('/user/update', {
 #### User deletes their account:
 
 ```js
-axios.post('/user/delete', {
-    token: '<Google OAuth Token>',
-}).then(function (response) {
+axios.post('/user/delete', {}).then(function (response) {
     console.log(response);
 }).catch(function (error) {
     console.log(error);

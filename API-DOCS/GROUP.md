@@ -38,7 +38,6 @@
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 ### Response:
@@ -83,7 +82,6 @@
 
 ```js
 axios.post('/group/info', {
-    token: '<TOKEN>',
     id: '<GROUP_ID>'
 }).then(function (response) {
     console.log(response.data);
@@ -233,7 +231,6 @@ axios.post('/group/update', {
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 #### Restrictions:
@@ -253,7 +250,6 @@ axios.post('/group/update', {
 
 ```js
 axios.post('/group/delete', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);
@@ -278,7 +274,6 @@ axios.post('/group/delete', {
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 #### Restrictions:
@@ -300,7 +295,6 @@ axios.post('/group/delete', {
 
 ```js
 axios.post('/group/join', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);
@@ -325,7 +319,6 @@ axios.post('/group/join', {
 
 | Field | Type   | Required | Default | Description            |
 |-------|--------|----------|---------|------------------------|
-| token | String | Yes      | -       | Google OAuth Token     |
 | id    | String | Yes      | -       | Group ID               |
 | email | String | Yes      | -       | Member Email to Invite |
 
@@ -347,7 +340,6 @@ axios.post('/group/join', {
 
 ```js
 axios.post('/group/invite-member', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>',
     email: '<Member Email>'
 }).then(function (response) {
@@ -373,7 +365,6 @@ axios.post('/group/invite-member', {
 
 | Field  | Type   | Required | Default | Description         |
 |--------|--------|----------|---------|---------------------|
-| token  | String | Yes      | -       | Google OAuth Token  |
 | id     | String | Yes      | -       | Group ID            |
 | userid | String | Yes      | -       | Member ID to Remove |
 
@@ -395,7 +386,6 @@ axios.post('/group/invite-member', {
 
 ```js
 axios.post('/group/remove-member', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>',
     userid: '<Member ID>'
 }).then(function (response) {
@@ -422,7 +412,6 @@ axios.post('/group/remove-member', {
 
 | Field | Type   | Required | Default | Description  |
 |-------|--------|----------|---------|--------------|
-| token | String | Yes      | -       | Google OAuth |
 | id    | String | Yes      | -       | Group ID     |
 
 #### Restrictions:
@@ -442,7 +431,6 @@ axios.post('/group/remove-member', {
 
 ```js
 axios.post('/group/refresh-id', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);

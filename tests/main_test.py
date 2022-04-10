@@ -190,6 +190,6 @@ if __name__ == "__main__":
     test.setup_class()
     test.test_register()
     test.test_user_info()
+    test.test_create_group()
     test.test_invite()
-    # test.test_create_group()
     test.teardown_class()

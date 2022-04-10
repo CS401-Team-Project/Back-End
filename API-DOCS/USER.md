@@ -243,8 +243,6 @@ axios.post('/user/update', {
 
 **Note**: This endpoint is only available to the current user
 
-**TODO Back-End**: Change `/person/delete` to `/user/delete`
-
 ### Request:
 
 | Field | Type   | Required | Default | Description        |

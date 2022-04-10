@@ -135,10 +135,11 @@ axios.post('/group/info', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
-    members: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    data:{
+        name: 'My Group', // Required
+        desc: 'This is my group.', // Optional
+        invites: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -150,9 +151,10 @@ axios.post('/group/create', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
+    data:{
+      name: 'My Group', // Required
+      desc: 'This is my group.', // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {

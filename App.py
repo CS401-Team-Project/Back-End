@@ -62,14 +62,17 @@ def print_info(func):
         print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
         try:
             ret = func(*args, **kwargs)
+            print(f"    |--> {ret[0]} : {ret[1]}")
             return ret
         except flask_limiter.errors.RateLimitExceeded as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
+            print(f"    |--> Rate limit exceeded. : 429")
             return jsonify({'msg': 'Rate limit exceeded.'}), 429
         except Exception as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
+            print(f"    |--> An unexpected error occurred. : 500")
             return jsonify({'msg': 'An unexpected error occurred.'}), 500
     return wrap
 

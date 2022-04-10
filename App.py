@@ -351,7 +351,6 @@ def create_group(person):
 
     group_name = data['name']
     group_desc = data.get('desc')
-    members = data.get('members')
     invite = data.get('invite')
 
     # create the group
@@ -374,17 +373,19 @@ def create_group(person):
         if type(invite) is not array:
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         for email in invite:
-            group.invite.append(email);
+            group.invites.append(email)
 
-    # TODO - finish this when invites are implemented
-    if members is not None:
-        if type(members) is not array:
-            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
-        for member in members:
-            pass
+            # save the invite in the person
+            p = Person.objects(email=email)
+            if len(p) == 0:
+                continue
+            p = p.first()
+            if group.id not in p.invites:
+                p.invites.append(group.id)
+            p.save()
+
     group.save()
     return jsonify({'msg': 'Created group', 'data': group}), 200
-
 
 
 @app.route('/group/delete', methods=['POST'])
@@ -466,7 +467,6 @@ def get_group(person):
     return jsonify(group), 200
 
 
-
 @app.route('/group/update', methods=['POST'])
 @verify_token
 @print_info
@@ -542,8 +542,6 @@ def join_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -555,7 +553,7 @@ def join_group(person):
         return jsonify({'msg': 'User is already a member of the group.'}), 409
 
     # TODO - need to verify if invited
-    if person.email in group.invite:
+    if person.email in group.invites:
         group.invites.remove(person.email)
 
     # add person to group
@@ -575,7 +573,6 @@ def join_group(person):
     return jsonify({'msg': 'User joined group.'}), 200
 
 
-
 @app.route('/group/invite', methods=['POST'])
 @verify_token
 @print_info
@@ -593,8 +590,6 @@ def invite_group(person):
     group_id = request_data.get('id')
     email = request_data.get('email')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -605,21 +600,25 @@ def invite_group(person):
     if person.sub in group.members:
         return jsonify({'msg': 'User is already a member of the group.'}), 409
 
-    # TODO - need to verify if invited
+    # check if already invited
     if email in group.invite:
         return jsonify({'msg': 'User is already a invited.'}), 409
 
     # add person to group invite list
-    group.invite.append(email)
-    group.updated = datetime.datetime.utcnow()
+    group.invites.append(email)
+    group.restricted.date.updated = datetime.datetime.utcnow()
+
+    # if person exists in the db add this to their invites
+    p = Person.objects(email=email)
+    if len(p) is not None:
+        p = p.first()
+        if group.id not in p.invites:
+            p.invites.append(group.id)
+        p.save()
 
     # save group
     group.save()
-
-
     return jsonify({'msg': 'User invited to group.'}), 200
-
-
 
 
 @app.route('/group/remove-member', methods=['POST'])
@@ -678,7 +677,6 @@ def remove_member(person):
         person.save()
 
     return jsonify({'msg': 'Member successfully removed.'}), 200
-
 
 
 @app.route('/group/refresh-id', methods=['POST'])

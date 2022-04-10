@@ -55,7 +55,7 @@ class Group(Document):
     desc = StringField(max_length=255, default='')
     admin = StringField(max_length=255, required=True)
     members = ListField(default=[])
-    invite = ListField(default=[])
+    invites = ListField(default=[])
     restricted = EmbeddedDocumentField(GroupRestricted, default=GroupRestricted)
 
 

@@ -111,11 +111,15 @@ axios.post('/group/info', {
 
 | Field       | Type   | Required | Default            | Description                            |
 |-------------|--------|----------|--------------------|----------------------------------------|
-| token       | String | Yes      | -                  | Google OAuth Token                     |
-| name        | String | Yes      | -                  | The group's name                       |
-| description | String | No       | ""                 | The group's description                |
-| members     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
+| data        | Object | Yes      | -                  | Fields to Create Group (JSON Object)   |
 
+### `data` Fields:
+
+| Field       | Type   | Required | Default            | Description                            |
+|-------------|--------|----------|--------------------|----------------------------------------|
+| name        | String | Yes      | -                  | Name of the Group                      |
+| desc        | String | No       | ""                 | The group's description                |
+| invites     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
 #### Restrictions:
 
 - Can only be called once every 5 minutes.
@@ -135,10 +139,11 @@ axios.post('/group/info', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
-    members: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    data:{
+        name: 'My Group', // Required
+        desc: 'This is my group.', // Optional
+        invites: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -150,9 +155,10 @@ axios.post('/group/create', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
+    data:{
+      name: 'My Group', // Required
+      desc: 'This is my group.', // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -176,7 +182,6 @@ axios.post('/group/create', {
 
 | Field | Type   | Required | Default | Description                    |
 |-------|--------|----------|---------|--------------------------------|
-| token | String | Yes      | -       | Google OAuth Token             |
 | id    | String | Yes      | -       | Group ID                       |
 | data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
@@ -203,7 +208,6 @@ axios.post('/group/create', {
 
 ```js
 axios.post('/group/update', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>', // Required
     data: {
         name: 'New Group Name'

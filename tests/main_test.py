@@ -102,7 +102,7 @@ class Tests:
         # get the group
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         assert status_code == 200
-        assert self.group == content
+        assert self.group == content['data']
 
         # check persons groups
         content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
@@ -121,8 +121,8 @@ class Tests:
         # get the group
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         assert status_code == 200
-        assert content['name'] == 'test group update name'
-        assert content['desc'] == 'test group update description'
+        assert content['data']['name'] == 'test group update name'
+        assert content['data']['desc'] == 'test group update description'
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
@@ -148,7 +148,7 @@ class Tests:
         # check invites
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         assert status_code == 200
-        assert invites == content['invites']
+        assert invites == content['data']['invites']
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
@@ -168,7 +168,7 @@ class Tests:
         # check invites
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         assert status_code == 200
-        assert invites == content['invites']
+        assert invites == content['data']['invites']
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

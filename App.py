@@ -62,7 +62,7 @@ def print_info(func):
         print(f"{ip} : {path} : {request} @ {datetime.datetime.now()}")
         try:
             ret = func(*args, **kwargs)
-            print(f"    |--> {ret[0]} : {ret[1]}")
+            print(f"    |--> {ret[0].get_json()['msg']} : {ret[1]}")
             return ret
         except flask_limiter.errors.RateLimitExceeded as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
@@ -90,7 +90,7 @@ def test_get():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    return "Smart Ledger API Endpoint: OK", 200
+    return jsonify({'msg':"Smart Ledger API Endpoint: OK"}), 200
 
 
 @app.route("/test_post", methods=['POST'])
@@ -107,7 +107,7 @@ def test_post():
         n2 = float(request_data.get('n2'))
         op = request_data.get('op')
     except ValueError:
-        return "Invalid data", 400
+        return jsonify({'msg':"Invalid data"}), 400
 
     if op == "add":
         return str(n1 + n2), 200
@@ -118,7 +118,7 @@ def test_post():
     elif op == "div":
         return str(n1 / n2), 200
     else:
-        return "Unsupported operation", 501
+        return jsonify({'msg':"Unsupported operation"}), 501
 
 ###############################################################################################################
 ###############################################################################################################
@@ -467,7 +467,7 @@ def get_group(person):
         group.restricted = None
 
     # return the group
-    return jsonify(group), 200
+    return jsonify({'msg': 'Retrieved group info', 'data': group}), 200
 
 
 @app.route('/group/update', methods=['POST'])

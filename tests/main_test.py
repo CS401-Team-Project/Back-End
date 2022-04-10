@@ -66,6 +66,24 @@ class Tests:
         _, status_code = self.do_post('/user/info', {'sub': 'abcdFAKEnews'})
         assert status_code == 404
 
+        # test update pay with
+        data = {
+            'pay_with': {
+                'venmo': 'test venmo',
+                'cashapp': 'test cashapp',
+                'paypal': 'test paypal',
+                'preferred': 'venmo',
+            }
+        }
+        content, status_code = self.do_post('/user/update', {'data': data})
+        assert status_code == 200
+
+        # check changes
+        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        assert status_code == 200
+        assert content['data']['pay_with'] == data['pay_with']
+
+
     def test_create_group(self):
         """
         test
@@ -131,5 +149,5 @@ if __name__ == "__main__":
     test.setup_class()
     test.test_register()
     test.test_user_info()
-    test.test_create_group()
+    # test.test_create_group()
     test.teardown_class()

@@ -268,7 +268,6 @@ def user_profile(person):
 def update_profile(person):
     """
     modify a users profile
-    :param person: current logged in user
     :param data: json with key value pairs of things to set
     :return: returns json of
     """
@@ -277,12 +276,17 @@ def update_profile(person):
     profile = request_data['data']
 
     # check for unallowed fields
-    if set(profile.keys()).union({'email', 'sub', 'date_joined', 'picture', 'groups'}):
+    print(set(profile.keys()))
+    print(set(profile.keys()).intersection({'email', 'sub', 'date_joined', 'picture', 'groups'}))
+    if set(profile.keys()).intersection({'email', 'sub', 'date_joined', 'picture', 'groups'}):
+        print('here1')
+
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # iterate through given fields
     for k, v in profile.items():
         if k not in person:
+            print('here2')
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
         # if key is pay_with must iterate through embedded dictionary
@@ -488,7 +492,7 @@ def update_group(person):
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     # weed out bad fields
-    if not set(data.keys()).union({'name', 'description', 'restricted'}):
+    if not set(data.keys()).intersection({'name', 'description', 'restricted'}):
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # iterate through all items

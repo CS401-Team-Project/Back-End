@@ -27,8 +27,9 @@ cd ~/Smart-Ledger/
 docker-compose up -d --build
 ```
 ### Login and Retrieve Token:
-Click 'API Client' under 'Other' on the left-hand side.
-Copy the Auth Token and paste in `token.txt`
+- Go to `localhost:3000` and log in with your Google account
+- Click 'API Client' under 'Other' on the left-hand side. (Click the hamburger in the top left if you don't see this option)
+- Copy the Auth Token and paste in `token.txt`
 
 ### Run Tests in New Shell
 ```shell

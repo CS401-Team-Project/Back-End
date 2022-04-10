@@ -82,6 +82,7 @@ def print_info(func):
 # TEST API ENDPOINT
 # TODO - this should only be available in debug
 
+
 @app.route("/test_get", methods=['GET'])
 @print_info
 @limiter.limit("1/second", override_defaults=False)
@@ -107,18 +108,18 @@ def test_post():
         n2 = float(request_data.get('n2'))
         op = request_data.get('op')
     except ValueError:
-        return jsonify({'msg':"Invalid data"}), 400
+        return jsonify({'msg': "Invalid data"}), 400
 
     if op == "add":
-        return str(n1 + n2), 200
+        return jsonify({'ans': str(n1 + n2), 'msg': 'Calculated Answer'}), 200
     elif op == "sub":
-        return str(n1 - n2), 200
+        return jsonify({'ans': str(n1 - n2), 'msg': 'Calculated Answer'}), 200
     elif op == "mul":
-        return str(n1 * n2), 200
+        return jsonify({'ans': str(n1 * n2), 'msg': 'Calculated Answer'}), 200
     elif op == "div":
-        return str(n1 / n2), 200
+        return jsonify({'ans': str(n1 / n2), 'msg': 'Calculated Answer'}), 200
     else:
-        return jsonify({'msg':"Unsupported operation"}), 501
+        return jsonify({'msg': "Unsupported operation"}), 501
 
 ###############################################################################################################
 ###############################################################################################################

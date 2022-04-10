@@ -135,9 +135,6 @@ def get_token(request):
     return token
 
 
-
-
-
 def verify_token(func):
     """
     verify the given token

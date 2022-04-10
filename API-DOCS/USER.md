@@ -35,7 +35,7 @@
 #### User logs in to their account:
 
 ```js
-axios.post('/person/register', {}).then(function (response) {
+axios.post('/register', {}).then(function (response) {
     console.log(response);
 }).catch(function (error) {
     console.log(error);

@@ -98,6 +98,20 @@ class Tests:
         self.group = content['data']
         assert status_code == 200
 
+        # get the group
+        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+        assert content['data']['name'] == 'test group name'
+
+        # delete the group
+        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+
+        # check persons groups
+        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        assert status_code == 200
+        assert self.group['_id'] not in content['data']['groups']
+
     def test_bad_group(self):
         """
         test

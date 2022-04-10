@@ -101,8 +101,7 @@ class Tests:
         # get the group
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         assert status_code == 200
-        assert content['data']['name'] == 'test group update name'
-        assert content['data']['desc'] == 'test group update description'
+        assert content['data']['name'] == 'test group name'
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

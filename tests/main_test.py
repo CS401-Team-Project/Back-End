@@ -1,36 +1,43 @@
 import requests
 import sys
-from dictdiffer import diff
 
 
 class Tests:
+    """
+    tests
+    """
     @classmethod
-    def setup_class(self):
+    def setup_class(cls):
         """setup any state specific to the execution of the given class (which
         usually contains tests).
         """
 
-        self.base_url = 'http://localhost:5000'
+        cls.base_url = 'http://localhost:5000'
         # self.base_url = 'http://ddns.absolutzero.org:5555'
 
-        with open('token.txt') as f:
-            token = f.readline()
-        self.header = {
+        with open('token.txt') as file:
+            token = file.readline()
+        cls.header = {
             'Authorization': f'Bearer {token}'
         }
 
         # need to set up user stuff here for use later
-        content, _ = self.do_post('/register', {})
-        self.user = content
+        content, _ = cls.do_post('/register', {})
+        cls.user = content
+        cls.group = None
 
     @classmethod
-    def teardown_class(self):
+    def teardown_class(cls):
         """teardown any state that was previously setup with a call to
         setup_class.
         """
         pass
 
     def test_get(self):
+        """
+        test
+        :return:
+        """
         response = requests.get(self.base_url + '/test_get')
         cond = (response.content == b'Smart Ledger API Endpoint: OK')
         if not cond:
@@ -39,19 +46,31 @@ class Tests:
         assert cond
 
     def test_register(self):
-        content, status_code = self.do_post('/register', {})
+        """
+        test
+        :return:
+        """
+        _, status_code = self.do_post('/register', {})
         assert status_code == 200
 
     def test_user_info(self):
+        """
+        test
+        :return:
+        """
         # test legitimate sub
-        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        _, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
         assert status_code == 200
 
         # test fake sub
-        content, status_code = self.do_post('/user/info', {'sub': 'abcdFAKEnews'})
+        _, status_code = self.do_post('/user/info', {'sub': 'abcdFAKEnews'})
         assert status_code == 404
 
     def test_create_group(self):
+        """
+        test
+        :return:
+        """
         # create a group
         data = {
             'name': 'test group name',
@@ -82,8 +101,12 @@ class Tests:
         assert self.group['_id'] not in content['data']['groups']
 
     @classmethod
-    def do_post(self, endpoint, data):
-        response = requests.post(f'{self.base_url}{endpoint}', json=data, headers=self.header)
+    def do_post(cls, endpoint, data):
+        """
+        test
+        :return:
+        """
+        response = requests.post(f'{cls.base_url}{endpoint}', json=data, headers=cls.header)
         content, status_code = response.json(), response.status_code
         return content, status_code
 

@@ -213,12 +213,17 @@ def register():
                         sub=token_info['sub'],
                         picture=token_info['picture'])
 
+        status_code = 201
+
+    else:
+        status_code = 200
+
     # save the person object
     person.date.last_login = datetime.datetime.utcnow()
     person.save()
 
     # return status message
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
+    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), status_code
 
 
 

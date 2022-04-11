@@ -230,6 +230,38 @@ class Tests:
     #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
     #     assert status_code == 404
 
+    def test_join(self):
+        # create a group with list of invites
+        invites = ['test1@email.com', 'test2@email.com', self.user['data']['email']]
+        data = {
+            'name': 'test group name',
+            'desc': 'test group description',
+            'invites': invites
+        }
+        content, status_code = self.do_post('/group/create', {'data': data})
+        assert status_code == 200
+        self.group = content['data']
+
+        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        assert status_code == 200
+        assert self.group == content['data']
+
+        # join group you created (you are already a member)
+        content, status_code = self.do_post('/group/join', {'id': self.group['_id']['$oid']})
+        assert status_code == 409
+       
+
+        # remove member that doesnt exist from group
+        content, status_code = self.do_post('/group/remove-member', {'id': self.group['_id']['$oid'], 'userid': 'KonkyDong'})
+        print(status_code)
+        assert status_code == 409
+
+        # delete the group
+        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        print(content)
+        assert status_code == 200
+
+
     @classmethod
     def do_post(cls, endpoint, data):
         """
@@ -240,7 +272,7 @@ class Tests:
         content, status_code = response.json(), response.status_code
         return content, status_code
 
-
+    
 if __name__ == "__main__":
     test = Tests()
     test.setup_class()

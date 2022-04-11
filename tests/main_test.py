@@ -51,8 +51,9 @@ class Tests:
         test
         :return:
         """
-        _, status_code = self.do_post('/register', {})
+        content, status_code = self.do_post('/register', {})
         assert status_code == 200
+        assert content['data']['sub'] == self.user['data']['sub']
 
     def test_delete_and_register(self):
         """
@@ -61,19 +62,23 @@ class Tests:
         """
 
         # delete
-        _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
         assert status_code == 200
+        assert content['msg'] == "User profile successfully deleted."
 
         # try to delete second time to ensure 404 is returned
-        _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
         assert status_code == 404
+        assert content['msg'] == "Token is unauthorized or user does not exist."
 
         # register new user for status_code 201
-        _, status_code = self.do_post('/register', {})
+        content, status_code = self.do_post('/register', {})
         assert status_code == 201
+        assert content['data']['sub'] == self.user['data']['sub']
 
         # try second register for status_code 200
-        _, status_code = self.do_post('/register', {})
+        content, status_code = self.do_post('/register', {})
+        assert content['data']['sub'] == self.user['data']['sub']
         assert status_code == 200
 
     def test_bad_payment(self):
@@ -192,6 +197,9 @@ class Tests:
         content, status_code = self.do_post('/group/create', {'data': data})
         self.group = content['data']
         assert status_code == 200
+
+        # check that admin is assigned correctly
+        assert content['data']['admin'] == self.user['data']['sub']
 
         # get the group
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})

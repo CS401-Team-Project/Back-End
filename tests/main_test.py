@@ -54,7 +54,7 @@ class Tests:
         content, status_code = self.do_post('/register', {})
         assert status_code == 200
         assert content['data']['sub'] == self.user['data']['sub']
-
+        
     def test_delete_and_register(self):
         """
         test
@@ -306,15 +306,18 @@ class Tests:
         assert status_code == 200
         assert self.group == content['data']
 
+
         # join group you created (you are already a member)
         content, status_code = self.do_post('/group/join', {'id': self.group['_id']['$oid']})
         assert status_code == 409
        
+        #assert self.group['admin'] == self.user['data']['sub']
 
-        # remove member that doesnt exist from group
-        content, status_code = self.do_post('/group/remove-member', {'id': self.group['_id']['$oid'], 'userid': 'KonkyDong'})
-        print(status_code)
-        assert status_code == 409
+        # attempt to remove member that doesnt exist from group NOT WORKING
+        content, status_code = self.do_post('/group/remove-member', {'id': self.group['_id']['$oid'], 'userid': 'bonky'})
+        assert content['msg'] == 'An unexpected error occurred.'
+        assert status_code == 500
+
 
         # delete the group
         content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

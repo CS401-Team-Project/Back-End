@@ -51,8 +51,65 @@ class Tests:
         test
         :return:
         """
-        _, status_code = self.do_post('/register', {})
+        content, status_code = self.do_post('/register', {})
         assert status_code == 200
+        assert content['data']['sub'] == self.user['data']['sub']
+
+    def test_delete_and_register(self):
+        """
+        test
+        :return:
+        """
+
+        # delete
+        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        assert status_code == 200
+        assert content['msg'] == "User profile successfully deleted."
+
+        # try to delete second time to ensure 404 is returned
+        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        assert status_code == 404
+        assert content['msg'] == "Token is unauthorized or user does not exist."
+
+        # register new user for status_code 201
+        content, status_code = self.do_post('/register', {})
+        assert status_code == 201
+        assert content['data']['sub'] == self.user['data']['sub']
+
+        # try second register for status_code 200
+        content, status_code = self.do_post('/register', {})
+        assert content['data']['sub'] == self.user['data']['sub']
+        assert status_code == 200
+
+    def test_bad_payment(self):
+        """
+        test
+        :return:
+        """
+        _, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        assert status_code == 200
+
+        # assign preferred value as an option that hasn't been set
+        data = {
+            'pay_with': {
+                'venmo': 'test venmo',
+                'paypal': 'test paypal',
+                'preferred': 'cashapp'
+            }
+        }
+        content, status_code = self.do_post('/user/update', {'data': data})
+        assert status_code == 200
+        # TODO Change App.py to prevent a preferred payment method when the username hasn't been saved for that method
+
+        # assign nonsense as 'pay_with' parameter
+        data = {
+            'pay_with': {
+                'bad': 'data'
+            }
+        }
+        content, status_code = self.do_post('/user/update', {'data': data})
+        assert content['msg'] == "An unexpected error occurred."
+        assert status_code == 500
 
     def test_user_info(self):
         """
@@ -140,6 +197,9 @@ class Tests:
         content, status_code = self.do_post('/group/create', {'data': data})
         self.group = content['data']
         assert status_code == 200
+
+        # check that admin is assigned correctly
+        assert content['data']['admin'] == self.user['data']['sub']
 
         # get the group
         content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
@@ -251,3 +311,5 @@ if __name__ == "__main__":
     test.test_bad_group()
     test.test_invite()
     test.teardown_class()
+    test.test_delete_and_register()
+    test.test_bad_payment()

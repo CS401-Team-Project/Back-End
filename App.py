@@ -751,6 +751,7 @@ def create_transaction(person):
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
     """
+
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')

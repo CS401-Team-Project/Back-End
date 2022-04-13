@@ -1,11 +1,14 @@
-import requests
+import os
 import sys
+
+import requests
 
 
 class Tests:
     """
-    tests
+    Unit tests for the Back-End.
     """
+
     @classmethod
     def setup_class(cls):
         """setup any state specific to the execution of the given class (which
@@ -15,11 +18,14 @@ class Tests:
         cls.base_url = 'http://localhost:5000'
         # self.base_url = 'http://ddns.absolutzero.org:5555'
 
+        token_file: str = 'token.txt'
+        assert os.path.isfile(token_file) == True, f'Token file not found ({token_file}). ' \
+                                                   f'Please create this file and fill it with your ' \
+                                                   f'OAuth token from Front-End.'
+
         with open('token.txt') as file:
             token = file.readline()
-        cls.header = {
-            'Authorization': f'Bearer {token}'
-        }
+            cls.header = {'Authorization': f'Bearer {token}'}
 
         # need to set up user stuff here for use later
         content, _ = cls.do_post('/register', {})

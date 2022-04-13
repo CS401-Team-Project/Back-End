@@ -2,38 +2,45 @@
 Main api request endpoint
 """
 
-import array
 import datetime
 import os
 import traceback
 from copy import deepcopy
 from functools import wraps
-from bson.objectid import ObjectId
 
 import flask_limiter.errors
-from google.oauth2 import id_token
-from google.auth.transport import requests
-from flask_cors import CORS
+from bson.objectid import ObjectId
 from flask import Flask, request, jsonify
-from flask_mongoengine import MongoEngine
+from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_mongoengine import MongoEngine
+from google.auth.transport import requests
+from google.oauth2 import id_token
+
 from Models import Person, Group, Item, TransactionItem, Transaction
-from mongoengine import *
 
 # setup the Flask server
 app = Flask(__name__)
 limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
+
+debug = os.environ.get('DEBUG', False)
+debug = bool(debug)
 # If on debug allow cross-origin resource sharing
-if bool(os.environ['DEBUG']):
+if debug:
     CORS(app)
 
+mongo_host = os.environ.get('MONGO_HOST', 'localhost')
+mongo_port = os.environ.get('MONGO_PORT', 27017)
+mongo_username = os.environ.get('API_USERNAME', None)
+mongo_password = os.environ.get('API_PASSWORD', None)
+
 app.config['MONGODB_SETTINGS'] = {
-    'host': os.environ['MONGO_HOST'],
-    'username': os.environ['API_USERNAME'],
-    'password': os.environ['API_PASSWORD'],
+    'host': mongo_host,
+    'username': mongo_username,
+    'password': mongo_password,
     'authSource': 'smart-ledger',
     'db': 'smart-ledger'
 }
@@ -74,7 +81,9 @@ def print_info(func):
             traceback.print_exc()
             print(f"    |--> An unexpected error occurred. : 500")
             return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
     return wrap
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -91,7 +100,7 @@ def test_get():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    return jsonify({'msg':"Smart Ledger API Endpoint: OK"}), 200
+    return jsonify({'msg': "Smart Ledger API Endpoint: OK"}), 200
 
 
 @app.route("/test_post", methods=['POST'])
@@ -120,6 +129,7 @@ def test_post():
         return jsonify({'ans': str(n1 / n2), 'msg': 'Calculated Answer'}), 200
     else:
         return jsonify({'msg': "Unsupported operation"}), 501
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -167,7 +177,7 @@ def verify_token(func):
             # Invalid token
             print(f"verify_token() => Exception: {exp} @ {datetime.datetime.now()}")
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
-        
+
     return wrap
 
 
@@ -224,7 +234,6 @@ def register():
 
     # return status message
     return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), status_code
-
 
 
 @app.route('/user/info', methods=['POST'])
@@ -325,6 +334,7 @@ def delete_profile(person):
     person.delete()
     return jsonify({'msg': 'User profile successfully deleted.'}), 200
 
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
@@ -408,7 +418,6 @@ def delete_group(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data['id']
-
 
     # query the group
     group = Group.objects(id=group_id)
@@ -644,8 +653,6 @@ def remove_member(person):
     group_id = request_data.get('id')
     sub = request_data.get('userid')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -700,7 +707,6 @@ def refresh_id(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -726,7 +732,6 @@ def refresh_id(person):
     group.save()
     old_group.delete()
     return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
-
 
 
 ###############################################################################################################
@@ -1176,12 +1181,14 @@ def get_item(_):
     return jsonify(item), 200
 
 
-
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
 ## MAIN
 
+def create_app():
+    return app
+
 
 if __name__ == "__main__":
-    app.run(debug=bool(os.environ['DEBUG']), port=5000)
+    app.run(debug=debug, port=5000)

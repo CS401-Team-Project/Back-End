@@ -652,14 +652,12 @@ def remove_member(person):
     group = group.first()
 
     # if the user is trying to delete another user in the group
-    if sub is not None:
-        # check if authorized to remove member
-        if (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
-            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
-
-    else:
+    if sub is None:
         # if person is trying to delete themselves from the group
         sub = person.sub
+
+    elif (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
+        return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     # check if the given sub is not in group
     if sub not in group.people:

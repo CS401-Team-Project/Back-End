@@ -18,7 +18,6 @@ from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from Models import Person, Group, Item, TransactionItem, Transaction
 from mongoengine import *
 
 from Models import Person, Group, Item, TransactionItem, Transaction

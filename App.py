@@ -896,10 +896,18 @@ def delete_transaction(person):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
-        if not group.settings.user_delete_transaction:
-            if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
-                return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if (
+        not (
+            group.settings.admin_overrule_delete_transaction
+            and group.admin == person.sub
+        )
+        and not group.settings.user_delete_transaction
+        and not (
+            group.settings.only_owner_delete_transaction
+            and transaction.created_by == person.sub
+        )
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # check if transaction is the group
     if transaction_id not in group.transactions:

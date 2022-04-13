@@ -126,9 +126,9 @@ def test_post():
 ###############################################################################################################
 # WRAPPERS
 
-def get_token(request):
+def get_token(req):
     # if behind a proxy
-    headers = request.headers
+    headers = req.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
     # Get the token from the authorization header
@@ -696,7 +696,6 @@ def refresh_id(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
-
 
     # query the group
     group = Group.objects(id=group_id)

@@ -1,283 +1,303 @@
 {
-    "folders": [],
-    "id": "87a2f352-c171-458f-9e6a-29526a6f9518",
+  "info": {
+    "_postman_id": "87a2f352-c171-458f-9e6a-29526a6f9518",
     "name": "Smart Ledger API",
-    "order": [
-        "9e952046-5625-4854-8bb3-bc59b59b4c5b",
-        "8375e652-3103-49fc-9516-744e6e22f150",
-        "f5fa8223-db02-4198-9be9-1e8cf33685c8",
-        "5e0bdde6-9207-4bcb-a31f-1eebe71107e1",
-        "b4037370-f2fb-4573-b3bc-53d56b16dc45",
-        "2d1ae8e7-ae81-459a-8fef-ae5262a42122",
-        "93654ad2-1079-4915-8941-652135a701b7",
-        "5dbe7546-d6df-443d-b99e-3e39562cb9ff",
-        "9680fb86-f265-42aa-9b2c-8ff3ffd39617",
-        "d9680e80-7f81-44ae-9739-1b050baf1094",
-        "07d668fa-9902-42de-99d8-eeba1cb3d780",
-        "1f3439b4-5b29-4dc8-979a-de0adade45e1",
-        "8bdcbbf7-62e1-40f7-a7cd-92b5786958b6",
-        "a41993c1-e4b4-406a-95fb-3cae44c105dc",
-        "a7958baf-9fe2-47d3-b50d-b778aba6e15e",
-        "4c398f6a-40d6-4187-8742-036bc7540fed",
-        "72a6558d-5224-4c07-b468-92f868a7a451",
-        "f1bc46b8-7665-4dd6-b0fe-521ef3c4a7ae",
-        "2149ccc2-1dd3-4bc3-a55d-b5e69788b6e7",
-        "787914c9-1b6d-40af-ab75-5904dcec49bc",
-        "c07d31bb-5614-44e3-98cf-37e2c64ff8ee"
-    ],
-    "requests": [
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK",
-            "headers": "",
-            "id": "9e952046-5625-4854-8bb3-bc59b59b4c5b",
-            "method": "GET",
-            "name": "get",
-            "time": 1649866783480,
-            "url": "127.0.0.1:5000/test_get"
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "get",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - data\n        - name: group name\n        - desc: [optional]\n        - invites: [optional] array of emails\n:param person: the person making the request\n:return: returns json with group id and msg",
-            "headers": "",
-            "id": "8375e652-3103-49fc-9516-744e6e22f150",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/create"
+        "url": "127.0.0.1:5000/test_get",
+        "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request",
-            "headers": "",
-            "id": "f5fa8223-db02-4198-9be9-1e8cf33685c8",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/delete"
+        "url": "127.0.0.1:5000/group/create",
+        "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - data\n        - name: group name\n        - desc: [optional]\n        - invites: [optional] array of emails\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n    - group: dictionary that holds all fields you want to change\n:param person: the person making the request\n:return: returns json with group id and msg",
-            "headers": "",
-            "id": "5e0bdde6-9207-4bcb-a31f-1eebe71107e1",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/update"
+        "url": "127.0.0.1:5000/group/delete",
+        "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "invite a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - emails: [list] person to be invited\n:param person: the person making the request",
-            "headers": "",
-            "id": "b4037370-f2fb-4573-b3bc-53d56b16dc45",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/invite"
+        "url": "127.0.0.1:5000/group/update",
+        "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n    - group: dictionary that holds all fields you want to change\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request\n:return: returns json with group id and msg",
-            "headers": "",
-            "id": "2d1ae8e7-ae81-459a-8fef-ae5262a42122",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/info"
+        "url": "127.0.0.1:5000/group/invite",
+        "description": "invite a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - emails: [list] person to be invited\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request",
-            "headers": "",
-            "id": "93654ad2-1079-4915-8941-652135a701b7",
-            "method": "POST",
-            "name": "group",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/join"
+        "url": "127.0.0.1:5000/group/info",
+        "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "refreshes the group id\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request",
-            "headers": "",
-            "id": "5dbe7546-d6df-443d-b99e-3e39562cb9ff",
-            "method": "POST",
-            "name": "id",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/refresh-id"
+        "url": "127.0.0.1:5000/group/join",
+        "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "id",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "get an item\nrequest must contain:\n    - token\n    - id\n:return: returns an item",
-            "headers": "",
-            "id": "9680fb86-f265-42aa-9b2c-8ff3ffd39617",
-            "method": "POST",
-            "name": "item",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/item/info"
+        "url": "127.0.0.1:5000/group/refresh-id",
+        "description": "refreshes the group id\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "item",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: transaction item to delete\n:param person: the person making the request",
-            "headers": "",
-            "id": "d9680e80-7f81-44ae-9739-1b050baf1094",
-            "method": "POST",
-            "name": "item from transaction",
-            "time": 1649866783478,
-            "url": "127.0.0.1:5000/transaction/remove-item"
+        "url": "127.0.0.1:5000/item/info",
+        "description": "get an item\nrequest must contain:\n    - token\n    - id\n:return: returns an item"
+      },
+      "response": []
+    },
+    {
+      "name": "item from transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - items: [\n        {\n            - name: name of item\n            - quantity\n            - desc: desc of item\n            - unit_price: unit price of item\n            - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed person's ID)\n        }, ...\n    ]\n:param person: the person making the request",
-            "headers": "",
-            "id": "07d668fa-9902-42de-99d8-eeba1cb3d780",
-            "method": "POST",
-            "name": "item to transaction",
-            "time": 1649866783478,
-            "url": "127.0.0.1:5000/transaction/add-item"
+        "url": "127.0.0.1:5000/transaction/remove-item",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: transaction item to delete\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "item to transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - userid: [optional] user to remove from the grou\n:param person: the person making the request",
-            "headers": "",
-            "id": "1f3439b4-5b29-4dc8-979a-de0adade45e1",
-            "method": "POST",
-            "name": "member",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/group/remove-member"
+        "url": "127.0.0.1:5000/transaction/add-item",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - items: [\n        {\n            - name: name of item\n            - quantity\n            - desc: desc of item\n            - unit_price: unit price of item\n            - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed person's ID)\n        }, ...\n    ]\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "member",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK",
-            "headers": "",
-            "id": "8bdcbbf7-62e1-40f7-a7cd-92b5786958b6",
-            "method": "POST",
-            "name": "post",
-            "time": 1649866783480,
-            "url": "127.0.0.1:5000/test_post"
+        "url": "127.0.0.1:5000/group/remove-member",
+        "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - userid: [optional] user to remove from the grou\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "modify a users profile\n:param data: json with key value pairs of things to set\n:return: returns json of",
-            "headers": "",
-            "id": "a41993c1-e4b4-406a-95fb-3cae44c105dc",
-            "method": "POST",
-            "name": "profile",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/user/update"
+        "url": "127.0.0.1:5000/test_post",
+        "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "delete a users profile\n:param person: current logged in user\n:return: returns json of",
-            "headers": "",
-            "id": "a7958baf-9fe2-47d3-b50d-b778aba6e15e",
-            "method": "POST",
-            "name": "profile",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/user/delete"
+        "url": "127.0.0.1:5000/user/update",
+        "description": "modify a users profile\n:param data: json with key value pairs of things to set\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "get a persons profile information.\nIf the sub param is NOT passed, will return the current users profile info\nIf the sub param is passed, will return the given sub profile info\n\n:param person: current logged in user\n:return: returns json of",
-            "headers": "",
-            "id": "4c398f6a-40d6-4187-8742-036bc7540fed",
-            "method": "POST",
-            "name": "profile",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/user/info"
+        "url": "127.0.0.1:5000/user/delete",
+        "description": "delete a users profile\n:param person: current logged in user\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "used for logging in a user. creates an account if not already exists\n:return: status of the registration",
-            "headers": "",
-            "id": "72a6558d-5224-4c07-b468-92f868a7a451",
-            "method": "POST",
-            "name": "register",
-            "time": 1649866783480,
-            "url": "127.0.0.1:5000/register"
+        "url": "127.0.0.1:5000/user/info",
+        "description": "get a persons profile information.\nIf the sub param is NOT passed, will return the current users profile info\nIf the sub param is passed, will return the given sub profile info\n\n:param person: current logged in user\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: group id\n    - title: transaction title required\n    - desc: optional\n    - vendor: optional\n    - date: optional\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction",
-            "headers": "",
-            "id": "f1bc46b8-7665-4dd6-b0fe-521ef3c4a7ae",
-            "method": "POST",
-            "name": "transaction",
-            "time": 1649866783478,
-            "url": "127.0.0.1:5000/transaction/create"
+        "url": "127.0.0.1:5000/register",
+        "description": "used for logging in a user. creates an account if not already exists\n:return: status of the registration"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: json containing fields to update\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction",
-            "headers": "",
-            "id": "2149ccc2-1dd3-4bc3-a55d-b5e69788b6e7",
-            "method": "POST",
-            "name": "transaction",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/transaction/update"
+        "url": "127.0.0.1:5000/transaction/create",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: group id\n    - title: transaction title required\n    - desc: optional\n    - vendor: optional\n    - date: optional\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n:param person: the person making the request",
-            "headers": "",
-            "id": "787914c9-1b6d-40af-ab75-5904dcec49bc",
-            "method": "POST",
-            "name": "transaction",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/transaction/delete"
+        "url": "127.0.0.1:5000/transaction/update",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: json containing fields to update\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
         },
-        {
-            "collectionId": "87a2f352-c171-458f-9e6a-29526a6f9518",
-            "data": [],
-            "dataMode": "params",
-            "description": "get a transaction in the group\nrequest must contain:\n    - id: transaction id\n:param person: the person making the request",
-            "headers": "",
-            "id": "c07d31bb-5614-44e3-98cf-37e2c64ff8ee",
-            "method": "POST",
-            "name": "transaction",
-            "time": 1649866783479,
-            "url": "127.0.0.1:5000/transaction/info"
-        }
-    ],
-    "timestamp": 1649866783478
+        "url": "127.0.0.1:5000/transaction/delete",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/info",
+        "description": "get a transaction in the group\nrequest must contain:\n    - id: transaction id\n:param person: the person making the request"
+      },
+      "response": []
+    }
+  ]
 }

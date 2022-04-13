@@ -44,7 +44,7 @@
 
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
-| 200    | OK                    | Successfully retrieved the group profile.      |
+| 200    | OK                    | Group successfully retrieved.                  |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                  |
@@ -330,7 +330,7 @@ axios.post('/group/join', {
 
 | status | statusText            | data.msg                                       |
 |--------|-----------------------|------------------------------------------------|
-| 200    | OK                    | Successfully invited the group member.         |
+| 200    | OK                    | Invitation(s) successfully created.            |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s).  |
 | 404    | Not Found             | Token is unauthorized or group does not exist. |
 | 409    | Conflict              | Member already exists in group.                |

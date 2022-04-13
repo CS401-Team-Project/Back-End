@@ -1,5 +1,4 @@
 import os
-import sys
 
 import requests
 
@@ -11,25 +10,37 @@ class Tests:
 
     @classmethod
     def setup_class(cls):
-        """setup any state specific to the execution of the given class (which
-        usually contains tests).
+        """
+        This method is run once before any of the class' test methods are run.
+        It sets up the environment for the tests, and checks that the token is provided and the API is up.
         """
 
         cls.base_url = 'http://localhost:5000'
         # self.base_url = 'http://ddns.absolutzero.org:5555'
+
+        # Verify that the API is up and running
+        try:
+            response = requests.get(f'{cls.base_url}/test_get')
+            is_api_ok = response.status_code == 200
+        except requests.exceptions.ConnectionError:
+            is_api_ok = False
+
+        assert is_api_ok, '/test_get endpoint reported a Connection Error. Is the API running?'
 
         token_file: str = 'token.txt'
         assert os.path.isfile(token_file) == True, f'Token file not found ({token_file}). ' \
                                                    f'Please create this file and fill it with your ' \
                                                    f'OAuth token from Front-End.'
 
-        with open('token.txt') as file:
+        # Read token from file and assign it to the header of the requests
+        with open(token_file, 'r') as file:
             token = file.readline()
             cls.header = {'Authorization': f'Bearer {token}'}
 
         # need to set up user stuff here for use later
-        content, _ = cls.do_post('/register', {})
-        cls.user = content
+        response = cls.do_post('/register', {})
+
+        cls.user = response.json()
         cls.group = None
 
     @classmethod
@@ -39,61 +50,50 @@ class Tests:
         """
         pass
 
+    def ensure_status_code_msg(self, response, correct_status_code, correct_msg):
+        data = response.json()
+        cond_1 = response.status_code == correct_status_code
+        cond_2 = data['msg'] == correct_msg
+        assert cond_1 and cond_2, f"Expected status code {correct_status_code} with msg `{correct_msg}`, " \
+                                  f"got {response.status_code} with msg `{data['msg']}`"
+
     def test_get(self):
         """
         test
         :return:
         """
-        response = requests.get(self.base_url + '/test_get')
-        data = response.json()
-        cond = (data['msg'] == "Smart Ledger API Endpoint: OK")
-        if not cond:
-            print('API is currently down')
-            sys.exit()
-        assert cond
-
-    def test_register(self):
-        """
-        test
-        :return:
-        """
-        content, status_code = self.do_post('/register', {})
-        assert status_code == 200
-        assert content['data']['sub'] == self.user['data']['sub']
+        response = requests.get(f'{self.base_url}/test_get')
+        self.ensure_status_code_msg(response, 200, "Smart Ledger API Endpoint: OK")
 
     def test_delete_and_register(self):
         """
         test
         :return:
         """
-
         # delete
-        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
-        assert status_code == 200
-        assert content['msg'] == "User profile successfully deleted."
+        response = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "Successfully deleted the user profile.")
 
         # try to delete second time to ensure 404 is returned
-        content, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
-        assert status_code == 404
-        assert content['msg'] == "Token is unauthorized or user does not exist."
-
+        response = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 404, "Token is unauthorized or user does not exist.")
+        
         # register new user for status_code 201
-        content, status_code = self.do_post('/register', {})
-        assert status_code == 201
-        assert content['data']['sub'] == self.user['data']['sub']
+        response = self.do_post('/register', {})
+        self.ensure_status_code_msg(response, 201, "User successfully retrieved.")
+        assert response.json()['data']['sub'] == self.user['data']['sub']
 
         # try second register for status_code 200
-        content, status_code = self.do_post('/register', {})
-        assert content['data']['sub'] == self.user['data']['sub']
-        assert status_code == 200
+        response = self.do_post('/register', {})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
 
     def test_bad_payment(self):
         """
         test
         :return:
         """
-        _, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
 
         # assign preferred value as an option that hasn't been set
         data = {
@@ -103,8 +103,8 @@ class Tests:
                 'preferred': 'cashapp'
             }
         }
-        content, status_code = self.do_post('/user/update', {'data': data})
-        assert status_code == 200
+        response = self.do_post('/user/update', {'data': data})
+        self.ensure_status_code_msg(response, 200, "Successfully updated the user profile.")
         # TODO Change App.py to prevent a preferred payment method when the username hasn't been saved for that method
 
         # assign nonsense as 'pay_with' parameter
@@ -113,9 +113,8 @@ class Tests:
                 'bad': 'data'
             }
         }
-        content, status_code = self.do_post('/user/update', {'data': data})
-        assert content['msg'] == "An unexpected error occurred."
-        assert status_code == 500
+        response = self.do_post('/user/update', {'data': data})
+        self.ensure_status_code_msg(response, 500, "An unexpected error occurred.")
 
     def test_user_info(self):
         """
@@ -123,12 +122,12 @@ class Tests:
         :return:
         """
         # test legitimate sub
-        _, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
 
         # test fake sub
-        _, status_code = self.do_post('/user/info', {'sub': 'baddatabaddatawhatchagonnado'})
-        assert status_code == 404
+        response = self.do_post('/user/info', {'sub': 'baddatabaddatawhatchagonnado'})
+        self.ensure_status_code_msg(response, 404, "Token is unauthorized or user does not exist.")
 
         # test update pay with
         data = {
@@ -139,14 +138,14 @@ class Tests:
                 'preferred': 'venmo',
             }
         }
-        content, status_code = self.do_post('/user/update', {'data': data})
-        assert status_code == 200
+        response = self.do_post('/user/update', {'data': data})
+        self.ensure_status_code_msg(response, 200, "Successfully updated the user profile.")
 
         # check changes
-        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
-        assert content['data']['pay_with'] == data['pay_with']
-
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
+        assert response.json()['data']['pay_with'] == data['pay_with']
+        
     def test_group_no_desc(self):
         """
         test
@@ -157,23 +156,23 @@ class Tests:
         data = {
             'name': 'test group name',
         }
-        content, status_code = self.do_post('/group/create', {'data': data})
-        self.group = content['data']
-        assert status_code == 200
+        response = self.do_post('/group/create', {'data': data})
+        self.group = response.json()['data']
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
 
         # get the group
-        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
-        assert content['data']['name'] == 'test group name'
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert response.json()['data']['name'] == 'test group name'
 
         # delete the group
-        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
+        response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
 
         # check persons groups
-        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
-        assert self.group['_id'] not in content['data']['groups']
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
+        assert self.group['_id'] not in response.json()['data']['groups']
 
     def test_bad_group(self):
         """
@@ -185,9 +184,8 @@ class Tests:
         data = {
             'bad': 'data'
         }
-        content, status_code = self.do_post('/group/create', {'data': data})
-        assert content['msg'] == "Missing Required Field(s) / Invalid Type(s)."
-        assert status_code == 400
+        response = self.do_post('/group/create', {'data': data})
+        self.ensure_status_code_msg(response, 400, "Missing Required Field(s) / Invalid Type(s).")
 
     def test_create_group(self):
         """
@@ -200,22 +198,23 @@ class Tests:
             'name': 'test group name',
             'desc': 'test group description'
         }
-        content, status_code = self.do_post('/group/create', {'data': data})
-        self.group = content['data']
-        assert status_code == 200
+        response = self.do_post('/group/create', {'data': data})
+        self.group = response.json()['data']
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
 
         # check that admin is assigned correctly
-        assert content['data']['admin'] == self.user['data']['sub']
+        assert response.json()['data']['admin'] == self.user['data']['sub']
 
         # get the group
-        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
-        assert self.group == content['data']
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert self.group == response.json()['data']
+
 
         # check persons groups
-        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
-        user = content['data']
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
+        user = response.json()['data']
         assert self.group['_id'] in user['groups']
 
         # update normal group stuff
@@ -223,23 +222,23 @@ class Tests:
             'name': 'test group update name',
             'desc': 'test group update description'
         }
-        content, status_code = self.do_post('/group/update', {'id': self.group['_id']['$oid'], 'data': data})
-        assert status_code == 200
+        response = self.do_post('/group/update', {'id': self.group['_id']['$oid'], 'data': data})
+        self.ensure_status_code_msg(response, 200, "Group successfully updated.")
 
         # get the group
-        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
-        assert content['data']['name'] == 'test group update name'
-        assert content['data']['desc'] == 'test group update description'
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert response.json()['data']['name'] == 'test group update name'
+        assert response.json()['data']['desc'] == 'test group update description'
 
         # delete the group
-        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
+        response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
 
         # check persons groups
-        content, status_code = self.do_post('/user/info', {'sub': self.user['data']['sub']})
-        assert status_code == 200
-        assert self.group['_id'] not in content['data']['groups']
+        response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
+        self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
+        assert self.group['_id'] not in response.json()['data']['groups']
 
     def test_invite(self):
         # create a group with list of invites
@@ -249,38 +248,38 @@ class Tests:
             'desc': 'test group description',
             'invites': invites
         }
-        content, status_code = self.do_post('/group/create', {'data': data})
-        assert status_code == 200
-        self.group = content['data']
+        response = self.do_post('/group/create', {'data': data})
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
+        self.group = response.json()['data']
 
         # check invites
-        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
-        assert invites == content['data']['invites']
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert invites == response.json()['data']['invites']
 
         # delete the group
-        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
+        response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
 
         # create new group with no invites
         invites = data.pop('invites')
-        content, status_code = self.do_post('/group/create', {'data': data})
-        assert status_code == 200
-        self.group = content['data']
+        response = self.do_post('/group/create', {'data': data})
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
+        self.group = response.json()['data']
         assert len(self.group['invites']) == 0
 
         # invite via the invite api call
-        content, status_code = self.do_post('/group/invite', {'id': self.group['_id']['$oid'], 'emails': invites})
-        assert status_code == 200
+        response = self.do_post('/group/invite', {'id': self.group['_id']['$oid'], 'emails': invites})
+        self.ensure_status_code_msg(response, 200, "Invitation(s) successfully created.")
 
         # check invites
-        content, status_code = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
-        assert invites == content['data']['invites']
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert invites == response.json()['data']['invites']
 
         # delete the group
-        content, status_code = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
-        assert status_code == 200
+        response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
 
     # This test passed, DO NOT RUN unless you want your profile deleted for the tests.
     # def test_delete_profile(self):
@@ -302,20 +301,6 @@ class Tests:
         test
         :return:
         """
-        response = requests.post(f'{cls.base_url}{endpoint}', json=data, headers=cls.header)
-        content, status_code = response.json(), response.status_code
-        return content, status_code
-
-
-if __name__ == "__main__":
-    test = Tests()
-    test.setup_class()
-    test.test_register()
-    test.test_user_info()
-    test.test_create_group()
-    test.test_group_no_desc()
-    test.test_bad_group()
-    test.test_invite()
-    test.teardown_class()
-    test.test_delete_and_register()
-    test.test_bad_payment()
+        return requests.post(
+            f'{cls.base_url}{endpoint}', json=data, headers=cls.header
+        )

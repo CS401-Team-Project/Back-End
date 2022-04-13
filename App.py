@@ -85,7 +85,7 @@ def print_info(func):
 
 @app.route("/test_get", methods=['GET'])
 @print_info
-@limiter.limit("1/second", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def test_get():
     """
     Just a test route to verify that the API is working.
@@ -214,7 +214,6 @@ def register():
                         picture=token_info['picture'])
 
         status_code = 201
-
     else:
         status_code = 200
 
@@ -223,7 +222,7 @@ def register():
     person.save()
 
     # return status message
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), status_code
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), status_code
 
 
 
@@ -265,7 +264,7 @@ def user_profile(person):
         }
 
     # return the users info
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), 200
 
 
 @app.route('/user/update', methods=['POST'])
@@ -301,7 +300,7 @@ def update_profile(person):
     # save the person
     person.date.updated = datetime.datetime.utcnow()
     person.save()
-    return jsonify({'msg': 'User account update.'}), 200
+    return jsonify({'msg': 'Successfully updated the user profile.'}), 200
 
 
 @app.route('/user/delete', methods=['POST'])
@@ -323,7 +322,7 @@ def delete_profile(person):
 
     # delete the person from the database
     person.delete()
-    return jsonify({'msg': 'User profile successfully deleted.'}), 200
+    return jsonify({'msg': 'Successfully deleted the user profile.'}), 200
 
 ###############################################################################################################
 ###############################################################################################################
@@ -391,7 +390,7 @@ def create_group(person):
             p.save()
 
     group.save()
-    return jsonify({'msg': 'Created group', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully created.', 'data': group}), 200
 
 
 @app.route('/group/delete', methods=['POST'])
@@ -470,7 +469,7 @@ def get_group(person):
         group.restricted = None
 
     # return the group
-    return jsonify({'msg': 'Retrieved group info', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully retrieved.', 'data': group}), 200
 
 
 @app.route('/group/update', methods=['POST'])
@@ -524,7 +523,7 @@ def update_group(person):
     group.save()
 
     # return the group
-    return jsonify({'msg': 'Group updated.'}), 200
+    return jsonify({'msg': 'Group successfully updated.'}), 200
 
 
 ###############################################################################################################
@@ -624,7 +623,7 @@ def invite_group(person):
     # save group
     group.restricted.date.updated = datetime.datetime.utcnow()
     group.save()
-    return jsonify({'msg': 'Users invited to group.'}), 200
+    return jsonify({'msg': 'Invitation(s) successfully created.'}), 200
 
 
 @app.route('/group/remove-member', methods=['POST'])

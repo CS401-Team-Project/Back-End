@@ -60,7 +60,7 @@ class Group(Document):
 
 
     #
-    # TODO - add time when person joined group ( embedded document or map )
+    # TODO: add time when person joined group ( embedded document or map )
     #   - date group was created
     #   - group settings
     #      - who can modify transactions (just creator or everyone, etc.)

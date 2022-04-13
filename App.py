@@ -80,7 +80,7 @@ def print_info(func):
 ###############################################################################################################
 ###############################################################################################################
 # TEST API ENDPOINT
-# TODO - this should only be available in debug
+# TODO: this should only be available in debug
 
 
 @app.route("/test_get", methods=['GET'])
@@ -204,7 +204,7 @@ def register():
 
     # if person not in DB create them
     if person is None:
-        # TODO - add email verified and handle it
+        # TODO: add email verified and handle it
 
         # create the person object
         person = Person(first_name=token_info['given_name'],
@@ -314,7 +314,7 @@ def delete_profile(person):
     :return: returns json of
     """
     # unlink person from all groups
-    # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
+    # TODO: we need to figure out a policy to show users past transactions after their account has been deleted
     for group in person.groups:
         try:
             group.people.remove(person.sub)
@@ -714,7 +714,7 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO - need to update all links in person and Transaction DB
+    # TODO: need to update all links in person and Transaction DB
 
     # update times
     time = datetime.datetime.utcnow()
@@ -846,7 +846,7 @@ def update_transaction(person):
 
             # add the new transaction items
             for transaction_item in v:
-                # TODO - probably find a better way
+                # TODO: probably find a better way
                 # this assumes the user will pass the item information in the item field rather than the id
                 _add_item_to_transaction(person, transaction,
                                          quantity=transaction_item.quantity,

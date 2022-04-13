@@ -32,7 +32,7 @@ class Person(Document):
     first_name = StringField(max_length=60, required=True)
     last_name = StringField(max_length=60, required=True)
     email = EmailField(max_length=100, required=True)
-    # TODO - can add email verified: https://developers.google.com/identity/sign-in/web/backend-auth
+    # TODO: can add email verified: https://developers.google.com/identity/sign-in/web/backend-auth
     email_verified = BooleanField(default=False, required=True)
     picture = StringField(max_length=255)
     groups = ListField(default=[])

@@ -28,7 +28,7 @@ class TransactionItem(EmbeddedDocument):
     person = ObjectIdField(required=True)
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
-    # TODO last modified and modified by
+    # TODO: last modified and modified by
 
 
 class Transaction(Document):
@@ -59,5 +59,5 @@ class Transaction(Document):
 
     # optional meta data
     vendor = StringField(default='', required=False)
-    # TODO - have this as its own collection and have it hold the id to the receipt document
+    # TODO: have this as its own collection and have it hold the id to the receipt document
     # receipt         = ImageField(required=False)

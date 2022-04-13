@@ -578,14 +578,13 @@ def join_group(person):
 @app.route('/group/invite', methods=['POST'])
 @verify_token
 @print_info
-def invite_group(person):
+def invite_group():
     """
     invite a member to the group
     request must contain:
         - token
         - id: group id
         - emails: [list] person to be invited
-    :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)

@@ -274,7 +274,6 @@ def user_profile(person):
 def update_profile(person):
     """
     modify a users profile
-    :param data: json with key value pairs of things to set
     :return: returns json of
     """
     # get fields
@@ -825,9 +824,13 @@ def update_transaction(person):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
-        if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
-            return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if not (
+        group.settings.admin_overrule_transaction and group.admin == person.sub
+    ) and not (
+        group.settings.only_owner_modify_transaction
+        and transaction.created_by == person.sub
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # update the transaction
     for k, v in transaction_new.items():

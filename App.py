@@ -26,21 +26,38 @@ app = Flask(__name__)
 limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
+
+debug = os.environ.get('DEBUG', False)
+debug = bool(debug)
+
+print(f"# DEBUG: {debug}")
 # If on debug allow cross-origin resource sharing
-if bool(os.environ['DEBUG']):
+if debug:
     CORS(app)
 
+mongo_host = os.environ.get('MONGO_HOST', 'localhost')
+mongo_port = os.environ.get('MONGO_PORT', 27017)
+mongo_username = os.environ.get('API_USERNAME', None)
+mongo_password = os.environ.get('API_PASSWORD', None)
+
+# If Mongo Username is None, print warning
+if mongo_username is None:
+    print("WARNING: MongoDB username is None!!")
+
+# If Mongo Password is None, print warning
+if mongo_password is None:
+    print("WARNING: MongoDB password is None!!")
+
 app.config['MONGODB_SETTINGS'] = {
-    'host': os.environ['MONGO_HOST'],
-    'username': os.environ['API_USERNAME'],
-    'password': os.environ['API_PASSWORD'],
+    'host': mongo_host,
+    'username': mongo_username,
+    'password': mongo_password,
     'authSource': 'smart-ledger',
     'db': 'smart-ledger'
 }
 
 db = MongoEngine()
 db.init_app(app)
-
 
 def print_info(func):
     """
@@ -83,7 +100,7 @@ def print_info(func):
 
 @app.route("/test_get", methods=['GET'])
 @print_info
-@limiter.limit("1/second", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def test_get():
     """
     Just a test route to verify that the API is working.
@@ -212,7 +229,6 @@ def register():
                         picture=token_info['picture'])
 
         status_code = 201
-
     else:
         status_code = 200
 
@@ -221,7 +237,7 @@ def register():
     person.save()
 
     # return status message
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), status_code
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), status_code
 
 
 
@@ -264,7 +280,7 @@ def user_profile(person):
         }
 
     # return the users info
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), 200
 
 
 @app.route('/user/update', methods=['POST'])
@@ -299,7 +315,7 @@ def update_profile(person):
     # save the person
     person.date.updated = datetime.datetime.utcnow()
     person.save()
-    return jsonify({'msg': 'User account update.'}), 200
+    return jsonify({'msg': 'Successfully updated the user profile.'}), 200
 
 
 @app.route('/user/delete', methods=['POST'])
@@ -322,7 +338,7 @@ def delete_profile(person):
 
     # delete the person from the database
     person.delete()
-    return jsonify({'msg': 'User profile successfully deleted.'}), 200
+    return jsonify({'msg': 'Successfully deleted the user profile.'}), 200
 
 ###############################################################################################################
 ###############################################################################################################
@@ -390,7 +406,7 @@ def create_group(person):
             p.save()
 
     group.save()
-    return jsonify({'msg': 'Created group', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully created.', 'data': group}), 200
 
 
 @app.route('/group/delete', methods=['POST'])
@@ -471,7 +487,7 @@ def get_group(person):
         group.restricted = None
 
     # return the group
-    return jsonify({'msg': 'Retrieved group info', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully retrieved.', 'data': group}), 200
 
 
 @app.route('/group/update', methods=['POST'])
@@ -525,7 +541,7 @@ def update_group(person):
     group.save()
 
     # return the group
-    return jsonify({'msg': 'Group updated.'}), 200
+    return jsonify({'msg': 'Group successfully updated.'}), 200
 
 
 ###############################################################################################################
@@ -624,7 +640,7 @@ def invite_group():
     # save group
     group.restricted.date.updated = datetime.datetime.utcnow()
     group.save()
-    return jsonify({'msg': 'Users invited to group.'}), 200
+    return jsonify({'msg': 'Invitation(s) successfully created.'}), 200
 
 
 @app.route('/group/remove-member', methods=['POST'])

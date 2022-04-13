@@ -56,6 +56,8 @@ app.config['MONGODB_SETTINGS'] = {
     'db': 'smart-ledger'
 }
 
+db = MongoEngine()
+db.init_app(app)
 
 def print_info(func):
     """

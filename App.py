@@ -2,23 +2,21 @@
 Main api request endpoint
 """
 
-import array
 import datetime
 import os
 import traceback
 from copy import deepcopy
 from functools import wraps
-from bson.objectid import ObjectId
 
 import flask_limiter.errors
-from google.oauth2 import id_token
-from google.auth.transport import requests
-from flask_cors import CORS
+from bson.objectid import ObjectId
 from flask import Flask, request, jsonify
-from flask_mongoengine import MongoEngine
+from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from mongoengine import *
+from flask_mongoengine import MongoEngine
+from google.auth.transport import requests
+from google.oauth2 import id_token
 
 from Models import Person, Group, Item, TransactionItem, Transaction
 
@@ -28,21 +26,14 @@ limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
 
-debug = os.environ.get('DEBUG', False)
-debug = bool(debug)
 # If on debug allow cross-origin resource sharing
-if debug:
+if bool(os.environ['DEBUG']):
     CORS(app)
 
-mongo_host = os.environ.get('MONGO_HOST', 'localhost')
-mongo_port = os.environ.get('MONGO_PORT', 27017)
-mongo_username = os.environ.get('API_USERNAME', None)
-mongo_password = os.environ.get('API_PASSWORD', None)
-
 app.config['MONGODB_SETTINGS'] = {
-    'host': mongo_host,
-    'username': mongo_username,
-    'password': mongo_password,
+    'host': os.environ['MONGO_HOST'],
+    'username': os.environ['API_USERNAME'],
+    'password': os.environ['API_PASSWORD'],
     'authSource': 'smart-ledger',
     'db': 'smart-ledger'
 }

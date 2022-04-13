@@ -1,5 +1,5 @@
 """
-TODO: Module docstring
+EmbeddedDocuments for the Person model.
 """
 import datetime
 from mongoengine import *
@@ -7,7 +7,7 @@ from mongoengine import *
 
 class PersonDate(EmbeddedDocument):
     """
-    TODO: Class docstring
+    EmbeddedDocument storing dates related to a person.
     """
     created = DateTimeField(default=datetime.datetime.utcnow)
     updated = DateTimeField(default=datetime.datetime.utcnow)
@@ -16,7 +16,7 @@ class PersonDate(EmbeddedDocument):
 
 class PayWith(EmbeddedDocument):
     """
-    TODO: Class docstring
+    EmbeddedDocument storing the usernames for various payment methods.
     """
     venmo = StringField(default='')
     cashapp = StringField(default='')
@@ -26,7 +26,7 @@ class PayWith(EmbeddedDocument):
 
 class Person(Document):
     """
-    TODO: Class docstring
+    Document storing a person's information.
     """
     sub = StringField(max_length=255, unique=True)
     first_name = StringField(max_length=60, required=True)

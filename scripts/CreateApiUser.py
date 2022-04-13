@@ -1,5 +1,5 @@
 """
-TODO: Module Docstring
+Python script to create a new API user.
 """
 import os
 import sys

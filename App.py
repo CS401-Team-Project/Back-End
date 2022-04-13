@@ -67,12 +67,12 @@ def print_info(func):
         except flask_limiter.errors.RateLimitExceeded as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
-            print(f"    |--> Rate limit exceeded. : 429")
+            print("    |--> Rate limit exceeded. : 429")
             return jsonify({'msg': 'Rate limit exceeded.'}), 429
         except Exception as exp:
             print(f"{ip} : {path} => Exception: {exp} @ {datetime.datetime.now()}")
             traceback.print_exc()
-            print(f"    |--> An unexpected error occurred. : 500")
+            print("    |--> An unexpected error occurred. : 500")
             return jsonify({'msg': 'An unexpected error occurred.'}), 500
     return wrap
 
@@ -131,9 +131,7 @@ def get_token(request):
     headers = request.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
-    # Get the token from the authorization header
-    token = bearer.split()[1]  # YourTokenHere
-    return token
+    return bearer.split()[1]
 
 
 def verify_token(func):
@@ -219,7 +217,7 @@ def register():
         status_code = 200
 
     # save the person object
-    person.date.last_login = datetime.datetime.utcnow()
+    person.date.last_login = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     # return status message
@@ -299,7 +297,7 @@ def update_profile(person):
             person[k] = v
 
     # save the person
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
     return jsonify({'msg': 'User account update.'}), 200
 
@@ -372,7 +370,7 @@ def create_group(person):
     person.groups.append(group.id)
 
     # save the person object
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     if invite is not None:
@@ -428,7 +426,7 @@ def delete_group(person):
 
         # try to remove person from group
         person.groups.remove(ObjectId(group_id))
-        person.date.updated = datetime.datetime.utcnow()
+        person.date.updated = datetime.datetime.now(datetime.timezone.utc)
         person.save()
 
     # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
@@ -518,7 +516,7 @@ def update_group(person):
         else:
             group[k] = v
 
-    group.restricted.date.update = datetime.datetime.utcnow()
+    group.restricted.date.update = datetime.datetime.now(datetime.timezone.utc)
 
     # save the group
     group.save()
@@ -561,7 +559,7 @@ def join_group(person):
 
     # add person to group
     group.people.append(person.sub)
-    group.updated = datetime.datetime.utcnow()
+    group.updated = datetime.datetime.now(datetime.timezone.utc)
 
     # save group
     group.save()
@@ -570,7 +568,7 @@ def join_group(person):
     person.groups.append(group.id)
 
     # save person
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     return jsonify({'msg': 'User joined group.'}), 200
@@ -622,7 +620,7 @@ def invite_group(person):
                 p.save()
 
     # save group
-    group.restricted.date.updated = datetime.datetime.utcnow()
+    group.restricted.date.updated = datetime.datetime.now(datetime.timezone.utc)
     group.save()
     return jsonify({'msg': 'Users invited to group.'}), 200
 
@@ -670,7 +668,7 @@ def remove_member(person):
     group.people.remove(sub)
 
     # save the group
-    group.updated = datetime.datetime.utcnow()
+    group.updated = datetime.datetime.now(datetime.timezone.utc)
     group.save()
 
     # if group is tied to person object
@@ -679,7 +677,7 @@ def remove_member(person):
         person.groups.remove(group_id)
 
         # save person
-        person.date.updated = datetime.datetime.utcnow()
+        person.date.updated = datetime.datetime.now(datetime.timezone.utc)
         person.save()
 
     return jsonify({'msg': 'Member successfully removed.'}), 200
@@ -718,7 +716,7 @@ def refresh_id(person):
     # TODO - need to update all links in person and Transaction DB
 
     # update times
-    time = datetime.datetime.utcnow()
+    time = datetime.datetime.now(datetime.timezone.utc)
     group.updated = time
     group.last_refreshed = time
 
@@ -857,7 +855,7 @@ def update_transaction(person):
 
     # update the last modified by
     transaction.modified_by = person.sub
-    transaction.date_modified = datetime.datetime.utcnow()
+    transaction.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
     # save the transaction
     transaction.save()
@@ -1074,7 +1072,7 @@ def remove_item_from_transaction(person):
 
     # update the last modified by
     transaction.modified_by = person.sub
-    transaction.date_modified = datetime.datetime.utcnow()
+    transaction.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
     # save transaction
     transaction.save()

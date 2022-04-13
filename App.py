@@ -26,21 +26,38 @@ app = Flask(__name__)
 limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
+
+debug = os.environ.get('DEBUG', False)
+debug = bool(debug)
+
+print(f"# DEBUG: {debug}")
 # If on debug allow cross-origin resource sharing
-if bool(os.environ['DEBUG']):
+if debug:
     CORS(app)
 
+mongo_host = os.environ.get('MONGO_HOST', 'localhost')
+mongo_port = os.environ.get('MONGO_PORT', 27017)
+mongo_username = os.environ.get('API_USERNAME', None)
+mongo_password = os.environ.get('API_PASSWORD', None)
+
+# If Mongo Username is None, print warning
+if mongo_username is None:
+    print("WARNING: MongoDB username is None!!")
+
+# If Mongo Password is None, print warning
+if mongo_password is None:
+    print("WARNING: MongoDB password is None!!")
+
 app.config['MONGODB_SETTINGS'] = {
-    'host': os.environ['MONGO_HOST'],
-    'username': os.environ['API_USERNAME'],
-    'password': os.environ['API_PASSWORD'],
+    'host': mongo_host,
+    'username': mongo_username,
+    'password': mongo_password,
     'authSource': 'smart-ledger',
     'db': 'smart-ledger'
 }
 
 db = MongoEngine()
 db.init_app(app)
-
 
 def print_info(func):
     """

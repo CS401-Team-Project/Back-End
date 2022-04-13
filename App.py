@@ -247,6 +247,7 @@ def user_profile(person):
             # requesting another users info
             person = Person.objects.get(sub=request_data.get('sub'))
         except:
+            # TODO: [user/info] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
 
         # explicitly build the returned json
@@ -318,6 +319,7 @@ def delete_profile(person):
         try:
             group.people.remove(person.sub)
         except Exception:
+            # TODO: [user/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             pass
 
     # delete the person from the database
@@ -423,6 +425,7 @@ def delete_group(person):
         try:
             person = Person.objects.get(sub=p_sub)
         except Exception:
+            # TODO: [group/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             continue
 
         # try to remove person from group
@@ -437,6 +440,7 @@ def delete_group(person):
             transaction = Transaction.objects.get(id=t_id)
             _delete_transaction(transaction)
         except Exception:
+            # TODO: [group/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             continue
 
     return jsonify({'msg': 'Group successfully deleted.'}), 200
@@ -1147,6 +1151,7 @@ def _create_item(name: str, desc: str, unit_price: float):
                                 desc=desc,
                                 unit_price=unit_price)
     except Exception:
+        # TODO: [_create_item] Fix too broad exception clause and verify what hapens if the item does not exist
         pass
 
     # if the item does not exist

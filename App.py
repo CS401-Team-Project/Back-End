@@ -26,21 +26,38 @@ app = Flask(__name__)
 limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
+
+debug = os.environ.get('DEBUG', False)
+debug = bool(debug)
+
+print(f"# DEBUG: {debug}")
 # If on debug allow cross-origin resource sharing
-if bool(os.environ['DEBUG']):
+if debug:
     CORS(app)
 
+mongo_host = os.environ.get('MONGO_HOST', 'localhost')
+mongo_port = os.environ.get('MONGO_PORT', 27017)
+mongo_username = os.environ.get('API_USERNAME', None)
+mongo_password = os.environ.get('API_PASSWORD', None)
+
+# If Mongo Username is None, print warning
+if mongo_username is None:
+    print("WARNING: MongoDB username is None!!")
+
+# If Mongo Password is None, print warning
+if mongo_password is None:
+    print("WARNING: MongoDB password is None!!")
+
 app.config['MONGODB_SETTINGS'] = {
-    'host': os.environ['MONGO_HOST'],
-    'username': os.environ['API_USERNAME'],
-    'password': os.environ['API_PASSWORD'],
+    'host': mongo_host,
+    'username': mongo_username,
+    'password': mongo_password,
     'authSource': 'smart-ledger',
     'db': 'smart-ledger'
 }
 
 db = MongoEngine()
 db.init_app(app)
-
 
 def print_info(func):
     """
@@ -85,7 +102,7 @@ def print_info(func):
 
 @app.route("/test_get", methods=['GET'])
 @print_info
-@limiter.limit("1/second", override_defaults=False)
+@limiter.limit("10/second", override_defaults=False)
 def test_get():
     """
     Just a test route to verify that the API is working.
@@ -214,7 +231,6 @@ def register():
                         picture=token_info['picture'])
 
         status_code = 201
-
     else:
         status_code = 200
 
@@ -223,7 +239,7 @@ def register():
     person.save()
 
     # return status message
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), status_code
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), status_code
 
 
 
@@ -265,7 +281,7 @@ def user_profile(person):
         }
 
     # return the users info
-    return jsonify({'msg': 'User profile successfully retrieved.', 'data': person}), 200
+    return jsonify({'msg': 'User successfully retrieved.', 'data': person}), 200
 
 
 @app.route('/user/update', methods=['POST'])
@@ -301,7 +317,7 @@ def update_profile(person):
     # save the person
     person.date.updated = datetime.datetime.utcnow()
     person.save()
-    return jsonify({'msg': 'User account update.'}), 200
+    return jsonify({'msg': 'Successfully updated the user profile.'}), 200
 
 
 @app.route('/user/delete', methods=['POST'])
@@ -317,13 +333,13 @@ def delete_profile(person):
     # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
     for group in person.groups:
         try:
-            group.people.remove(person.sub)
+            group.members.remove(person.sub)
         except Exception:
             pass
 
     # delete the person from the database
     person.delete()
-    return jsonify({'msg': 'User profile successfully deleted.'}), 200
+    return jsonify({'msg': 'Successfully deleted the user profile.'}), 200
 
 ###############################################################################################################
 ###############################################################################################################
@@ -399,7 +415,7 @@ def create_group(person):
 
     # save the group
     group.save()
-    return jsonify({'msg': 'Created group', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully created.', 'data': group}), 200
 
 
 
@@ -479,7 +495,7 @@ def get_group(person):
         group.restricted = None
 
     # return the group
-    return jsonify({'msg': 'Retrieved group info', 'data': group}), 200
+    return jsonify({'msg': 'Group successfully retrieved.', 'data': group}), 200
 
 
 @app.route('/group/update', methods=['POST'])
@@ -533,7 +549,7 @@ def update_group(person):
     group.save()
 
     # return the group
-    return jsonify({'msg': 'Group updated.'}), 200
+    return jsonify({'msg': 'Group successfully updated.'}), 200
 
 
 ###############################################################################################################
@@ -569,7 +585,7 @@ def join_group(person):
         group.invites.remove(person.email)
 
     # add person to group
-    group.people.append(person.sub)
+    group.members.append(person.sub)
     group.updated = datetime.datetime.utcnow()
 
     # add person to the balances dict
@@ -646,7 +662,7 @@ def invite_group(person):
     # save group
     group.restricted.date.updated = datetime.datetime.utcnow()
     group.save()
-    return jsonify({'msg': 'Users invited to group.'}), 200
+    return jsonify({'msg': 'Invitation(s) successfully created.'}), 200
 
 
 @app.route('/group/remove-member', methods=['POST'])
@@ -677,7 +693,7 @@ def remove_member(person):
     # if the user is trying to delete another user in the group
     if sub is not None:
         # check if authorized to remove member
-        if (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
+        if (group.restricted.permissions.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
             return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     else:
@@ -685,11 +701,11 @@ def remove_member(person):
         sub = person.sub
 
     # check if the given sub is not in group
-    if sub not in group.people:
+    if sub not in group.members:
         return jsonify({'msg': 'User is not a member of the group.'}), 409
 
     # remove the person from the group
-    group.people.remove(sub)
+    group.members.remove(sub)
 
     # save the group
     group.updated = datetime.datetime.utcnow()
@@ -796,7 +812,7 @@ def create_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # create the transaction
@@ -940,12 +956,12 @@ def update_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
-        if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
+    if not (group.restricted.permissions.admin_overrule_transaction and group.admin == person.sub):
+        if not (group.restricted.permissions.only_owner_modify_transaction and transaction.created_by == person.sub):
             return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # delete the previous transaction and unlink it from the group
@@ -1040,13 +1056,13 @@ def delete_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
-        if not group.settings.user_delete_transaction:
-            if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
+    if not (group.restricted.permissions.admin_overrule_delete_transaction and group.admin == person.sub):
+        if not group.restricted.permissions.user_delete_transaction:
+            if not (group.restricted.permissions.only_owner_delete_transaction and transaction.created_by == person.sub):
                 return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # check if transaction is the group
@@ -1171,7 +1187,7 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     sub = person_id if person_id is not None else person.sub
 
     # make sure the user belongs to the group
-    if person.sub not in group.people or sub not in group.people:
+    if person.sub not in group.members or sub not in group.members:
         raise Exception('Person does not belong to group')
 
     # check quantity for proper value

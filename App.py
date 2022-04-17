@@ -27,10 +27,12 @@ limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
 
+
 debug = os.environ.get('DEBUG', False)
 debug = bool(debug)
 
 print(f"# DEBUG: {debug}")
+
 # If on debug allow cross-origin resource sharing
 if debug:
     CORS(app)
@@ -91,14 +93,14 @@ def print_info(func):
             traceback.print_exc()
             print(f"    |--> An unexpected error occurred. : 500")
             return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
     return wrap
 
-###############################################################################################################
-###############################################################################################################
-###############################################################################################################
-# TEST API ENDPOINT
-# TODO - this should only be available in debug
 
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+# TEST API ENDPOINTS
 
 @app.route("/test_get", methods=['GET'])
 @print_info
@@ -108,7 +110,7 @@ def test_get():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    return jsonify({'msg':"Smart Ledger API Endpoint: OK"}), 200
+    return jsonify({'msg': "Smart Ledger API Endpoint: OK"}), 200
 
 
 @app.route("/test_post", methods=['POST'])
@@ -138,14 +140,15 @@ def test_post():
     else:
         return jsonify({'msg': "Unsupported operation"}), 501
 
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
 # WRAPPERS
 
-def get_token(request):
+def get_token(req):
     # if behind a proxy
-    headers = request.headers
+    headers = req.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
     # Get the token from the authorization header
@@ -184,7 +187,7 @@ def verify_token(func):
             # Invalid token
             print(f"verify_token() => Exception: {exp} @ {datetime.datetime.now()}")
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
-        
+
     return wrap
 
 
@@ -240,7 +243,6 @@ def register():
     return jsonify({'msg': 'User successfully retrieved.', 'data': person}), status_code
 
 
-
 @app.route('/user/info', methods=['POST'])
 @verify_token
 @print_info
@@ -287,7 +289,6 @@ def user_profile(person):
 def update_profile(person):
     """
     modify a users profile
-    :param data: json with key value pairs of things to set
     :return: returns json of
     """
     # get fields
@@ -326,6 +327,7 @@ def delete_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
+
     # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
 
     # unlink person from all groups
@@ -338,6 +340,7 @@ def delete_profile(person):
     # delete the person from the database
     person.delete()
     return jsonify({'msg': 'Successfully deleted the user profile.'}), 200
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -423,7 +426,6 @@ def delete_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data['id']
 
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0 or person.sub != group.first().admin:
@@ -449,7 +451,6 @@ def delete_group(person):
     for t_id in group.restricted.transactions:
         # try to get the transaction
         transaction = Transaction.objects(id=t_id)
-
         if len(transaction) == 0:
             continue
         transaction = transaction.first()
@@ -575,7 +576,7 @@ def join_group(person):
         group.invites.remove(person.email)
 
     # add person to group
-    group.people.append(person.sub)
+    group.members.append(person.sub)
     group.updated = datetime.datetime.utcnow()
 
     # save group
@@ -594,14 +595,13 @@ def join_group(person):
 @app.route('/group/invite', methods=['POST'])
 @verify_token
 @print_info
-def invite_group(person):
+def invite_group():
     """
     invite a member to the group
     request must contain:
         - token
         - id: group id
         - emails: [list] person to be invited
-    :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
@@ -659,8 +659,6 @@ def remove_member(person):
     group_id = request_data.get('id')
     sub = request_data.get('userid')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -668,21 +666,19 @@ def remove_member(person):
     group = group.first()
 
     # if the user is trying to delete another user in the group
-    if sub is not None:
-        # check if authorized to remove member
-        if (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
-            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
-
-    else:
+    if sub is None:
         # if person is trying to delete themselves from the group
         sub = person.sub
 
+    elif (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
+        return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
+
     # check if the given sub is not in group
-    if sub not in group.people:
+    if sub not in group.members:
         return jsonify({'msg': 'User is not a member of the group.'}), 409
 
     # remove the person from the group
-    group.people.remove(sub)
+    group.members.remove(sub)
 
     # save the group
     group.updated = datetime.datetime.utcnow()
@@ -715,7 +711,6 @@ def refresh_id(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -730,7 +725,7 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO - need to update all links in person and Transaction DB
+    # TODO: need to update all links in person and Transaction DB
 
     # update times
     time = datetime.datetime.utcnow()
@@ -741,7 +736,6 @@ def refresh_id(person):
     group.save()
     old_group.delete()
     return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
-
 
 
 ###############################################################################################################
@@ -781,7 +775,7 @@ def create_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # create the transaction
@@ -835,13 +829,17 @@ def update_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_transaction and group.admin == person.sub):
-        if not (group.settings.only_owner_modify_transaction and transaction.created_by == person.sub):
-            return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if not (
+        group.settings.admin_overrule_transaction and group.admin == person.sub
+    ) and not (
+        group.settings.only_owner_modify_transaction
+        and transaction.created_by == person.sub
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # update the transaction
     for k, v in transaction_new.items():
@@ -904,14 +902,22 @@ def delete_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.settings.admin_overrule_delete_transaction and group.admin == person.sub):
-        if not group.settings.user_delete_transaction:
-            if not (group.settings.only_owner_delete_transaction and transaction.created_by == person.sub):
-                return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if (
+        not (
+            group.settings.admin_overrule_delete_transaction
+            and group.admin == person.sub
+        )
+        and not group.settings.user_delete_transaction
+        and not (
+            group.settings.only_owner_delete_transaction
+            and transaction.created_by == person.sub
+        )
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # check if transaction is the group
     if transaction_id not in group.transactions:
@@ -1025,7 +1031,7 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     sub = person_id if person_id is not None else person.sub
 
     # make sure the user belongs to the group
-    if person.sub not in group.people or sub not in group.people:
+    if person.sub not in group.members or sub not in group.members:
         raise Exception('Person does not belong to group')
 
     # check quantity for proper value
@@ -1154,6 +1160,7 @@ def _create_item(name: str, desc: str, unit_price: float):
     item = Item.objects(name=name,
                             desc=desc,
                             unit_price=unit_price)
+
     # if the item does not exist
     if len(item) == 0:
         # create the item
@@ -1190,11 +1197,13 @@ def get_item(_):
     return jsonify(item), 200
 
 
-
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
 ## MAIN
+
+def create_app():
+    return app
 
 
 if __name__ == "__main__":

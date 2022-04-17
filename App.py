@@ -18,7 +18,7 @@ from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from Models import Person, Group, Item, TransactionItem, Transaction
+from Models import Person, Group, Item, TransactionItem, Transaction, Receipt
 from mongoengine import *
 
 # setup the Flask server
@@ -1125,6 +1125,86 @@ def get_transaction(person):
 
     return jsonify(transaction), 200
 
+
+
+@app.route('/receipt/add', methods=['POST'])
+@verify_token
+def add_receipt(person):
+    """
+    Create a receipt item and attach to transaction
+    request must contain:
+        - token
+        - id: transaction id
+    :param person: the person making the request
+    """
+    # need token, transactionID, receipt
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['id']
+        receipt = request_data['receipt']
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+        group_id = transaction.group
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+
+        receipt = Receipt(receipt=receipt)
+        receipt.save()
+
+        # attach receipt id to transaction and update transaction modification
+        transaction.receipt = receipt.id
+        transaction.modified_by = person.sub
+        transaction.date_modified = datetime.datetime.utcnow()
+        transaction.save()
+
+        return jsonify({'msg': 'Receipt was successfully added.'}), 200
+
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
+
+@app.route('/receipt/get', methods=['POST'])
+@verify_token
+def get_receipt(person):
+    """
+    Get receipt item and return jsonified image id
+    request must contain:
+        - token
+        - id: transaction id
+    :param person: the person making the request
+    """
+    # need token, transactionID, receipt
+
+    try:
+        # get the request data
+        request_data = request.get_json(force=True, silent=True)
+        transaction_id = request_data['id']
+
+        # query the transaction
+        transaction = Transaction.objects.get(id=transaction_id)
+        group_id = transaction.group
+
+        # query the group to make sure it exists
+        group = Group.objects.get(id=group_id)
+
+        # make sure the user belongs to the group
+        if person.sub not in group.people:
+            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+
+        receipt = Receipt.objects.get(id=transaction.receipt)
+
+        return jsonify(receipt), 200
+
+    except Exception:
+        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
 ###############################################################################################################

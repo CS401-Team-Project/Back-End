@@ -1,0 +1,303 @@
+{
+  "info": {
+    "_postman_id": "87a2f352-c171-458f-9e6a-29526a6f9518",
+    "name": "Smart Ledger API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "get",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/test_get",
+        "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/create",
+        "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - data\n        - name: group name\n        - desc: [optional]\n        - invites: [optional] array of emails\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/delete",
+        "description": "Create a group add the creator to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/update",
+        "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n    - group: dictionary that holds all fields you want to change\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/invite",
+        "description": "invite a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - emails: [list] person to be invited\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/info",
+        "description": "Return a group the user is in\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request\n:return: returns json with group id and msg"
+      },
+      "response": []
+    },
+    {
+      "name": "group",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/join",
+        "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "id",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/refresh-id",
+        "description": "refreshes the group id\nrequest must contain:\n    - token\n    - id: group id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "item",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/item/info",
+        "description": "get an item\nrequest must contain:\n    - token\n    - id\n:return: returns an item"
+      },
+      "response": []
+    },
+    {
+      "name": "item from transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/remove-item",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: transaction item to delete\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "item to transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/add-item",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - items: [\n        {\n            - name: name of item\n            - quantity\n            - desc: desc of item\n            - unit_price: unit price of item\n            - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed person's ID)\n        }, ...\n    ]\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "member",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/group/remove-member",
+        "description": "Add a member to the group\nrequest must contain:\n    - token\n    - id: group id\n    - userid: [optional] user to remove from the grou\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "post",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/test_post",
+        "description": "Just a test route to verify that the API is working.\n:return: Smart Ledger API Endpoint: OK"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/user/update",
+        "description": "modify a users profile\n:param data: json with key value pairs of things to set\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/user/delete",
+        "description": "delete a users profile\n:param person: current logged in user\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "profile",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/user/info",
+        "description": "get a persons profile information.\nIf the sub param is NOT passed, will return the current users profile info\nIf the sub param is passed, will return the given sub profile info\n\n:param person: current logged in user\n:return: returns json of"
+      },
+      "response": []
+    },
+    {
+      "name": "register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/register",
+        "description": "used for logging in a user. creates an account if not already exists\n:return: status of the registration"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/create",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: group id\n    - title: transaction title required\n    - desc: optional\n    - vendor: optional\n    - date: optional\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/update",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n    - data: json containing fields to update\n:param person: the person making the request\n:return: returns a transaction id used to link items to the transaction"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/delete",
+        "description": "Create a transaction in the group\nrequest must contain:\n    - token\n    - id: transaction id\n:param person: the person making the request"
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": []
+        },
+        "url": "127.0.0.1:5000/transaction/info",
+        "description": "get a transaction in the group\nrequest must contain:\n    - id: transaction id\n:param person: the person making the request"
+      },
+      "response": []
+    }
+  ]
+}

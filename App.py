@@ -27,10 +27,12 @@ limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
 
+
 debug = os.environ.get('DEBUG', False)
 debug = bool(debug)
 
 print(f"# DEBUG: {debug}")
+
 # If on debug allow cross-origin resource sharing
 if debug:
     CORS(app)
@@ -91,7 +93,9 @@ def print_info(func):
             traceback.print_exc()
             print(f"    |--> An unexpected error occurred. : 500")
             return jsonify({'msg': 'An unexpected error occurred.'}), 500
+
     return wrap
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -106,7 +110,7 @@ def test_get():
     Just a test route to verify that the API is working.
     :return: Smart Ledger API Endpoint: OK
     """
-    return jsonify({'msg':"Smart Ledger API Endpoint: OK"}), 200
+    return jsonify({'msg': "Smart Ledger API Endpoint: OK"}), 200
 
 
 @app.route("/test_post", methods=['POST'])
@@ -135,6 +139,7 @@ def test_post():
         return jsonify({'ans': str(n1 / n2), 'msg': 'Calculated Answer'}), 200
     else:
         return jsonify({'msg': "Unsupported operation"}), 501
+
 
 ###############################################################################################################
 ###############################################################################################################
@@ -182,7 +187,7 @@ def verify_token(func):
             # Invalid token
             print(f"verify_token() => Exception: {exp} @ {datetime.datetime.now()}")
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
-        
+
     return wrap
 
 
@@ -238,7 +243,6 @@ def register():
 
     # return status message
     return jsonify({'msg': 'User successfully retrieved.', 'data': person}), status_code
-
 
 
 @app.route('/user/info', methods=['POST'])
@@ -340,6 +344,7 @@ def delete_profile(person):
     person.delete()
     return jsonify({'msg': 'Successfully deleted the user profile.'}), 200
 
+
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
@@ -423,7 +428,6 @@ def delete_group(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data['id']
-
 
     # query the group
     group = Group.objects(id=group_id)
@@ -660,8 +664,6 @@ def remove_member(person):
     group_id = request_data.get('id')
     sub = request_data.get('userid')
 
-
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -739,7 +741,6 @@ def refresh_id(person):
     group.save()
     old_group.delete()
     return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
-
 
 
 ###############################################################################################################
@@ -1202,11 +1203,13 @@ def get_item(_):
     return jsonify(item), 200
 
 
-
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
 ## MAIN
+
+def create_app():
+    return app
 
 
 if __name__ == "__main__":

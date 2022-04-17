@@ -331,7 +331,7 @@ def delete_profile(person):
     # TODO: we need to figure out a policy to show users past transactions after their account has been deleted
     for group in person.groups:
         try:
-            group.people.remove(person.sub)
+            group.members.remove(person.sub)
         except Exception:
             # TODO: [user/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             pass
@@ -577,7 +577,7 @@ def join_group(person):
         group.invites.remove(person.email)
 
     # add person to group
-    group.people.append(person.sub)
+    group.members.append(person.sub)
     group.updated = datetime.datetime.utcnow()
 
     # save group
@@ -677,11 +677,11 @@ def remove_member(person):
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     # check if the given sub is not in group
-    if sub not in group.people:
+    if sub not in group.members:
         return jsonify({'msg': 'User is not a member of the group.'}), 409
 
     # remove the person from the group
-    group.people.remove(sub)
+    group.members.remove(sub)
 
     # save the group
     group.updated = datetime.datetime.utcnow()
@@ -779,7 +779,7 @@ def create_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # create the transaction
@@ -834,7 +834,7 @@ def update_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
@@ -908,7 +908,7 @@ def delete_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
@@ -1034,7 +1034,7 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     sub = person_id if person_id is not None else person.sub
 
     # make sure the user belongs to the group
-    if person.sub not in group.people or sub not in group.people:
+    if person.sub not in group.members or sub not in group.members:
         raise Exception('Person does not belong to group')
 
     # check quantity for proper value

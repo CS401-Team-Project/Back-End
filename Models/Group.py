@@ -9,6 +9,9 @@ class GroupPermissions(EmbeddedDocument):
     """
     TODO: Class docstring
     """
+    # only the admin can invite people
+    only_admin_invite = BooleanField(default=True)
+
     # can only the admin modify transactions
     only_admin_remove_user = BooleanField(default=True)
 
@@ -56,6 +59,7 @@ class Group(Document):
     desc = StringField(max_length=255, default='')
     admin = StringField(max_length=255, required=True)
     members = ListField(default=[])
+    invites = ListField(default=[])
     restricted = EmbeddedDocumentField(GroupRestricted, default=GroupRestricted)
 
 

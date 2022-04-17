@@ -28,7 +28,6 @@
 
 **Description**: Retrieve a Group's Information
 
-**TODO Back-End**: Change `/group/get` to `/group/info`
 
 ### Notes:
 
@@ -39,7 +38,6 @@
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 ### Response:
@@ -56,33 +54,34 @@
 - The user must be an admin/member of the group OR must have been invited to the group.
 
 #### If the user has joined the group:
-
-- `id`: The group's unique identifier. [String]
-- `name`: The group's name. [String]
-- `description`: The group's description. [String]
-- `admin`: The group's admin unique identifier [String]
-- `members`: The group members' unique identifiers. [Array of Strings]
-- `restricted`: The group's restricted items. [Array of Strings]
-	- `permissions`: The group's permission settings [JSON]
-	- `balance`: The group's balance. [Float]
-	- `transactions`: The transactions associated with the group [Array]
-	- `date`: [JSON]
-		- `created`: The group's creation date [String]
-		- `updated`: The group's last update date  [String]
+- `msg`: description of response
+- `data`: group data returned
+  - `id`: The group's unique identifier. [String]
+  - `name`: The group's name. [String]
+  - `description`: The group's description. [String]
+  - `admin`: The group's admin unique identifier [String]
+  - `members`: The group members' unique identifiers. [Array of Strings]
+  - `restricted`: The group's restricted items. [Array of Strings]
+      - `permissions`: The group's permission settings [JSON]
+      - `balance`: The group's balance. [Float]
+      - `transactions`: The transactions associated with the group [Array]
+      - `date`: [JSON]
+          - `created`: The group's creation date [String]
+          - `updated`: The group's last update date  [String]
 
 #### If the user has not yet joined the group, but has been invited:
-
-- `id`: The group's unique identifier. [String]
-- `name`: The group's name. [String]
-- `description`: The group's description. [String]
-- `admin`: The group's admin unique identifier [String]
-- `members`: The group members' unique identifiers. [Array of Strings]
+- `msg`: description of response
+- `data`: group data returned
+  - `id`: The group's unique identifier. [String]
+  - `name`: The group's name. [String]
+  - `description`: The group's description. [String]
+  - `admin`: The group's admin unique identifier [String]
+  - `members`: The group members' unique identifiers. [Array of Strings]
 
 ### Examples:
 
 ```js
 axios.post('/group/info', {
-    token: '<TOKEN>',
     id: '<GROUP_ID>'
 }).then(function (response) {
     console.log(response.data);
@@ -110,11 +109,15 @@ axios.post('/group/info', {
 
 | Field       | Type   | Required | Default            | Description                            |
 |-------------|--------|----------|--------------------|----------------------------------------|
-| token       | String | Yes      | -                  | Google OAuth Token                     |
-| name        | String | Yes      | -                  | The group's name                       |
-| description | String | No       | ""                 | The group's description                |
-| members     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
+| data        | Object | Yes      | -                  | Fields to Create Group (JSON Object)   |
 
+### `data` Fields:
+
+| Field       | Type   | Required | Default            | Description                            |
+|-------------|--------|----------|--------------------|----------------------------------------|
+| name        | String | Yes      | -                  | Name of the Group                      |
+| desc        | String | No       | ""                 | The group's description                |
+| invites     | Array  | No       | [ <admin> ]        | The user emails to invite to the group |
 #### Restrictions:
 
 - Can only be called once every 5 minutes.
@@ -134,10 +137,11 @@ axios.post('/group/info', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
-    members: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    data:{
+        name: 'My Group', // Required
+        desc: 'This is my group.', // Optional
+        invites: ['<User 1 Email>', '<User 2 Email>'], // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -149,9 +153,10 @@ axios.post('/group/create', {
 
 ```js
 axios.post('/group/create', {
-    token: '<Google OAuth Token>',
-    name: 'My Group', // Required
-    description: 'This is my group.', // Optional
+    data:{
+      name: 'My Group', // Required
+      desc: 'This is my group.', // Optional
+    }
 }).then(function (response) {
     console.log(response);
 }).catch(function (error) {
@@ -175,7 +180,6 @@ axios.post('/group/create', {
 
 | Field | Type   | Required | Default | Description                    |
 |-------|--------|----------|---------|--------------------------------|
-| token | String | Yes      | -       | Google OAuth Token             |
 | id    | String | Yes      | -       | Group ID                       |
 | data  | Object | Yes      | -       | Fields to update (JSON Object) |
 
@@ -202,7 +206,6 @@ axios.post('/group/create', {
 
 ```js
 axios.post('/group/update', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>', // Required
     data: {
         name: 'New Group Name'
@@ -228,7 +231,6 @@ axios.post('/group/update', {
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 #### Restrictions:
@@ -248,7 +250,6 @@ axios.post('/group/update', {
 
 ```js
 axios.post('/group/delete', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);
@@ -273,7 +274,6 @@ axios.post('/group/delete', {
 
 | Field | Type   | Required | Default | Description        |
 |-------|--------|----------|---------|--------------------|
-| token | String | Yes      | -       | Google OAuth Token |
 | id    | String | Yes      | -       | Group ID           |
 
 #### Restrictions:
@@ -295,7 +295,6 @@ axios.post('/group/delete', {
 
 ```js
 axios.post('/group/join', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);
@@ -320,7 +319,6 @@ axios.post('/group/join', {
 
 | Field | Type   | Required | Default | Description            |
 |-------|--------|----------|---------|------------------------|
-| token | String | Yes      | -       | Google OAuth Token     |
 | id    | String | Yes      | -       | Group ID               |
 | email | String | Yes      | -       | Member Email to Invite |
 
@@ -342,7 +340,6 @@ axios.post('/group/join', {
 
 ```js
 axios.post('/group/invite-member', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>',
     email: '<Member Email>'
 }).then(function (response) {
@@ -368,7 +365,6 @@ axios.post('/group/invite-member', {
 
 | Field  | Type   | Required | Default | Description         |
 |--------|--------|----------|---------|---------------------|
-| token  | String | Yes      | -       | Google OAuth Token  |
 | id     | String | Yes      | -       | Group ID            |
 | userid | String | Yes      | -       | Member ID to Remove |
 
@@ -390,7 +386,6 @@ axios.post('/group/invite-member', {
 
 ```js
 axios.post('/group/remove-member', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>',
     userid: '<Member ID>'
 }).then(function (response) {
@@ -417,7 +412,6 @@ axios.post('/group/remove-member', {
 
 | Field | Type   | Required | Default | Description  |
 |-------|--------|----------|---------|--------------|
-| token | String | Yes      | -       | Google OAuth |
 | id    | String | Yes      | -       | Group ID     |
 
 #### Restrictions:
@@ -437,7 +431,6 @@ axios.post('/group/remove-member', {
 
 ```js
 axios.post('/group/refresh-id', {
-    token: '<Google OAuth Token>',
     id: '<Group ID>'
 }).then(function (response) {
     console.log(response);

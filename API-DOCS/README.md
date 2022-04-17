@@ -9,6 +9,10 @@
 ### [/transaction](./TRANSACTION.md)
 
 ---
+# Header Requirements
+### **Every API call needs the authentication token passed via headers.**
+### Header: `Authentication`
+### Value: `"Bearer <tokenId>"`
 
 # HTTP Spec:
 

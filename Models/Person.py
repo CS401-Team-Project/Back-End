@@ -36,5 +36,6 @@ class Person(Document):
     email_verified = BooleanField(default=False, required=True)
     picture = StringField(max_length=255)
     groups = ListField(default=[])
+    invites = ListField(default=[])
     date = EmbeddedDocumentField(PersonDate, default=PersonDate)
     pay_with = EmbeddedDocumentField(PayWith, default=PayWith)

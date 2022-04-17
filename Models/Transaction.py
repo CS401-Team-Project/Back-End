@@ -24,8 +24,8 @@ class TransactionItem(EmbeddedDocument):
     TODO: Class docstring
     """
     # general info
-    item_id = ObjectIdField(required=True)
-    person = ObjectIdField(required=True)
+    item_id = StringField(required=True)
+    person = StringField(required=True)
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
 
@@ -54,11 +54,11 @@ class Transaction(Document):
 
     # keep track of when and who created it
     date_created = DateTimeField(default=datetime.datetime.utcnow)
-    created_by = ObjectIdField(required=True)
+    created_by = StringField(required=True)
 
     # keep track of when and who last modified it
     date_modified = DateTimeField(default=datetime.datetime.utcnow)
-    modified_by = ObjectIdField(required=True)
+    modified_by = StringField(required=True)
 
     # required meta data
     total_price = FloatField(default=0.0)

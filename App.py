@@ -573,6 +573,7 @@ def join_group(person):
 
     # query the group
     group = Group.objects(id=group_id)
+
     if len(group) == 0:
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
     group = group.first()
@@ -591,8 +592,9 @@ def join_group(person):
     # add person to the balances dict
     group.restricted.balances[person.sub] = {}
     for p in group.members:
-        group.restricted.balances[person.sub][p] = 0
-        group.restricted.balances[p][person.sub] = 0
+        if p != person.sub:
+            group.restricted.balances[person.sub][p] = 0
+            group.restricted.balances[p][person.sub] = 0
 
     # add person to ledger
     group.restricted.ledger[person.sub] = 0
@@ -780,7 +782,6 @@ def create_transaction(person):
     """
     Create a transaction in the group
     request must contain:
-        - token
         - id: group id
         - title: transaction title required
         - desc: optional
@@ -815,6 +816,10 @@ def create_transaction(person):
     if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
+    # can't calculate who_paid later on
+    if items is None and who_paid is None:
+        return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+
     # create the transaction
     transaction = Transaction(title=title,
                               group=group_id,
@@ -822,16 +827,11 @@ def create_transaction(person):
                               vendor=vendor,
                               created_by=person.sub,
                               modified_by=person.sub,
-                              date_purchased=date)
+                              date_purchased=date,
+                              who_paid=who_paid)
 
     # save the transaction
     transaction.save()
-
-
-
-    # can't calculate who_paid later on
-    if items is None and who_paid is None:
-        return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
     # init transaction deltas
     balance_deltas = {}
@@ -845,10 +845,11 @@ def create_transaction(person):
 
     # init the ledger deltas
     for p in group.members:
-        if p in transaction.who_paid:
-            transaction.ledger_deltas[p] = transaction.who_paid[p]
+        if p in who_paid:
+            transaction.ledger_deltas[p] = who_paid[p]
         else:
             transaction.ledger_deltas[p] = 0
+    print(transaction.ledger_deltas)
     transaction.save()
 
     # add all give items
@@ -901,8 +902,6 @@ def create_transaction(person):
         _delete_transaction(group, transaction)
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
-
-
     # update the ledger
     for k, v in transaction.ledger_deltas.items():
         group.restricted.ledger[k] += v
@@ -913,12 +912,12 @@ def create_transaction(person):
     transaction.save()
 
     # append the transaction to the group
-    group.transactions.append(transaction.id)
+    group.restricted.transactions.append(transaction.id)
 
     # save the group
     group.save()
-
-    return jsonify({'id': transaction.id, 'msg': 'Transaction Created Successfully.'}), 200
+    print(transaction.id,)
+    return jsonify({'id': str(transaction.id), 'msg': 'Transaction Created Successfully.'}), 200
 
 
 # TODO update to replace transaction items
@@ -948,8 +947,6 @@ def update_transaction(person):
 
     # perform a deep copy of the old transaction
     transaction_new = Transaction(**transaction)  # TODO - this may not work, may need to copy another way
-
-
 
     # query the group to make sure it exists
     group_id = transaction.group
@@ -1199,7 +1196,7 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     item_cost = item.unit_price * quantity
 
     # create the transaction item
-    transaction_item = TransactionItem(item_id=item.id,
+    transaction_item = TransactionItem(item_id=str(item.id),
                                        person=sub,
                                        quantity=quantity,
                                        item_cost=item_cost)
@@ -1247,7 +1244,7 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     transaction.ledger_deltas = ledger_deltas
     transaction.balance_deltas = balance_deltas
     transaction.save()
-
+    print(ledger_deltas)
     # update group with the ledger deltas
     for k, v in ledger_deltas.items():
         group.restricted.ledger[k] += v
@@ -1256,6 +1253,9 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     for p1, d in balance_deltas.items():
         for p2, v in d.items():
             group.restricted.balances[p1][p2] += v
+    # group.restricted.save()
+
+    group.save()
 
 
 @app.route('/transaction/remove-item', methods=['POST'])
@@ -1324,10 +1324,10 @@ def get_transaction(person):
     group = Group.objects.get(id=group_id)
 
     # make sure the user belongs to the group
-    if person.sub not in group.people:
+    if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
-    return jsonify(transaction), 200
+    return jsonify({'msg': 'Retrieved transaction.', 'data': transaction}), 200
 
 
 ###############################################################################################################

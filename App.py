@@ -96,9 +96,7 @@ def print_info(func):
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
-# TEST API ENDPOINT
-# TODO - this should only be available in debug
-
+# TEST API ENDPOINTS
 
 @app.route("/test_get", methods=['GET'])
 @print_info
@@ -143,9 +141,9 @@ def test_post():
 ###############################################################################################################
 # WRAPPERS
 
-def get_token(request):
+def get_token(req):
     # if behind a proxy
-    headers = request.headers
+    headers = req.headers
     # Get the authorization header
     bearer = headers.get('Authorization')  # Bearer YourTokenHere
     # Get the token from the authorization header
@@ -221,7 +219,7 @@ def register():
 
     # if person not in DB create them
     if person is None:
-        # TODO - add email verified and handle it
+        # TODO: add email verified and handle it
 
         # create the person object
         person = Person(first_name=token_info['given_name'],
@@ -263,6 +261,7 @@ def user_profile(person):
             # requesting another users info
             person = Person.objects.get(sub=request_data.get('sub'))
         except:
+            # TODO: [user/info] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
 
         # explicitly build the returned json
@@ -290,7 +289,6 @@ def user_profile(person):
 def update_profile(person):
     """
     modify a users profile
-    :param data: json with key value pairs of things to set
     :return: returns json of
     """
     # get fields
@@ -330,11 +328,12 @@ def delete_profile(person):
     :return: returns json of
     """
     # unlink person from all groups
-    # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
+    # TODO: we need to figure out a policy to show users past transactions after their account has been deleted
     for group in person.groups:
         try:
             group.members.remove(person.sub)
         except Exception:
+            # TODO: [user/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             pass
 
     # delete the person from the database
@@ -440,6 +439,7 @@ def delete_group(person):
         try:
             person = Person.objects.get(sub=p_sub)
         except Exception:
+            # TODO: [group/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             continue
 
         # try to remove person from group
@@ -454,6 +454,7 @@ def delete_group(person):
             transaction = Transaction.objects.get(id=t_id)
             _delete_transaction(transaction)
         except Exception:
+            # TODO: [group/delete] fix too broad exception clause & add logging or see if this would be caught by the wrapper instead
             continue
 
     return jsonify({'msg': 'Group successfully deleted.'}), 200
@@ -595,14 +596,13 @@ def join_group(person):
 @app.route('/group/invite', methods=['POST'])
 @verify_token
 @print_info
-def invite_group(person):
+def invite_group():
     """
     invite a member to the group
     request must contain:
         - token
         - id: group id
         - emails: [list] person to be invited
-    :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
@@ -669,14 +669,12 @@ def remove_member(person):
     group = group.first()
 
     # if the user is trying to delete another user in the group
-    if sub is not None:
-        # check if authorized to remove member
-        if (group.restricted.permissions.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
-            return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
-
-    else:
+    if sub is None:
         # if person is trying to delete themselves from the group
         sub = person.sub
+
+    elif (group.settings.only_admin_remove_user and group.admin != person.sub) or sub == group.admin:
+        return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     # check if the given sub is not in group
     if sub not in group.members:
@@ -716,7 +714,6 @@ def refresh_id(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
-
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -731,7 +728,7 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO - need to update all links in person and Transaction DB
+    # TODO: need to update all links in person and Transaction DB
 
     # update times
     time = datetime.datetime.utcnow()
@@ -841,9 +838,13 @@ def update_transaction(person):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.restricted.permissions.admin_overrule_transaction and group.admin == person.sub):
-        if not (group.restricted.permissions.only_owner_modify_transaction and transaction.created_by == person.sub):
-            return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if not (
+        group.settings.admin_overrule_transaction and group.admin == person.sub
+    ) and not (
+        group.settings.only_owner_modify_transaction
+        and transaction.created_by == person.sub
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # update the transaction
     for k, v in transaction_new.items():
@@ -859,7 +860,7 @@ def update_transaction(person):
 
             # add the new transaction items
             for transaction_item in v:
-                # TODO - probably find a better way
+                # TODO: probably find a better way
                 # this assumes the user will pass the item information in the item field rather than the id
                 _add_item_to_transaction(person, transaction,
                                          quantity=transaction_item.quantity,
@@ -911,10 +912,18 @@ def delete_transaction(person):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # make sure user is authorized
-    if not (group.restricted.permissions.admin_overrule_delete_transaction and group.admin == person.sub):
-        if not group.restricted.permissions.user_delete_transaction:
-            if not (group.restricted.permissions.only_owner_delete_transaction and transaction.created_by == person.sub):
-                return jsonify({'msg': 'Token is unauthorized.'}), 404
+    if (
+        not (
+            group.settings.admin_overrule_delete_transaction
+            and group.admin == person.sub
+        )
+        and not group.settings.user_delete_transaction
+        and not (
+            group.settings.only_owner_delete_transaction
+            and transaction.created_by == person.sub
+        )
+    ):
+        return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # check if transaction is the group
     if transaction_id not in group.transactions:
@@ -1156,6 +1165,7 @@ def _create_item(name: str, desc: str, unit_price: float):
                                 desc=desc,
                                 unit_price=unit_price)
     except Exception:
+        # TODO: [_create_item] Fix too broad exception clause and verify what hapens if the item does not exist
         pass
 
     # if the item does not exist

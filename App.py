@@ -221,8 +221,6 @@ def register():
 
     # if person not in DB create them
     if person is None:
-        # TODO - add email verified and handle it
-
         # create the person object
         person = Person(first_name=token_info['given_name'],
                         last_name=token_info['family_name'],
@@ -259,11 +257,10 @@ def user_profile(person):
 
     # if sub was given to us
     if 'sub' in request_data and request_data.get('sub') != person.sub:
-        try:
-            # requesting another users info
-            person = Person.objects.get(sub=request_data.get('sub'))
-        except:
+        person = Person.objects(sub=request_data.get('sub'))
+        if len(person) == 0:
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
+        person = person.first()
 
         # explicitly build the returned json
         date = {
@@ -329,13 +326,14 @@ def delete_profile(person):
     :param person: current logged in user
     :return: returns json of
     """
-    # unlink person from all groups
     # TODO - we need to figure out a policy to show users past transactions after their account has been deleted
-    for group in person.groups:
-        try:
-            group.people.remove(person.sub)
-        except Exception:
-            pass
+
+    # unlink person from all groups
+    for g_id in person.groups:
+        Group.objects(id=g_id).update_one(pull_members=person.sub)
+        # group = Group.objects(id=g_id)
+        # group.update_one(pull_members=person.sub)
+        # group.save()
 
     # delete the person from the database
     person.delete()
@@ -437,10 +435,10 @@ def delete_group(person):
     for p_sub in group.members:
 
         # try to get the person from the DB
-        try:
-            person = Person.objects.get(sub=p_sub)
-        except Exception:
+        person = Person.objects(sub=p_sub)
+        if len(person) == 0:
             continue
+        person = person.first()
 
         # try to remove person from group
         person.groups.remove(ObjectId(group_id))
@@ -450,11 +448,12 @@ def delete_group(person):
     # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
     for t_id in group.restricted.transactions:
         # try to get the transaction
-        try:
-            transaction = Transaction.objects.get(id=t_id)
-            _delete_transaction(transaction)
-        except Exception:
+        transaction = Transaction.objects(id=t_id)
+
+        if len(transaction) == 0:
             continue
+        transaction = transaction.first()
+        _delete_transaction(transaction)
 
     return jsonify({'msg': 'Group successfully deleted.'}), 200
 
@@ -806,7 +805,6 @@ def create_transaction(person):
     return jsonify({'id': transaction.id, 'msg': 'Transaction Created Successfully.'}), 200
 
 
-# TODO update to replace transaction items
 @app.route('/transaction/update', methods=['POST'])
 @verify_token
 @print_info
@@ -859,7 +857,6 @@ def update_transaction(person):
 
             # add the new transaction items
             for transaction_item in v:
-                # TODO - probably find a better way
                 # this assumes the user will pass the item information in the item field rather than the id
                 _add_item_to_transaction(person, transaction,
                                          quantity=transaction_item.quantity,
@@ -940,6 +937,9 @@ def _delete_transaction(transaction):
 
         # try to get the item
         item = Item.objects.get(id=item_id)
+        if len(item) == 0:
+            continue
+        item = item.first()
 
         # delete the item
         _delete_item(item)
@@ -1151,19 +1151,17 @@ def _create_item(name: str, desc: str, unit_price: float):
     item = None
 
     # try to get the item if exists
-    try:
-        item = Item.objects.get(name=name,
-                                desc=desc,
-                                unit_price=unit_price)
-    except Exception:
-        pass
-
+    item = Item.objects(name=name,
+                            desc=desc,
+                            unit_price=unit_price)
     # if the item does not exist
-    if item is None:
+    if len(item) == 0:
         # create the item
         item = Item(name=name,
                     desc=desc,
                     unit_price=unit_price)
+    else:
+        item = item.first()
 
     # save item
     item.save()

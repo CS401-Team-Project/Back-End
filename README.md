@@ -2,14 +2,6 @@
 
 [![Pylint](https://github.com/CS401-Team-Project/Back-End/actions/workflows/pylint.yml/badge.svg)](https://github.com/CS401-Team-Project/Back-End/actions/workflows/pylint.yml)
 
-<<<<<<< BE-73
-## Peeking at MongoDB
-### TODO: Remove this section?
-1. `docker exec -it mongo bash`
-2. `mongo -u admin -p `
-3. `mongo -u apiuser -p apipassword --authenticationDatabase smart-ledger`
-4. `use smart-ledger`
-=======
 ## Description:
 - TODO: Add a description of the Back-End project here.
 
@@ -32,7 +24,6 @@
 2. mongo -u admin -p 
 3. mongo -u apiuser -p apipassword --authenticationDatabase smart-ledger
 4. use smart-ledger
->>>>>>> main
 
 ## [Unit Tests](./TESTS.md)
 - TODO: Integrate TESTS.md into this main README file.

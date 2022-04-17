@@ -24,8 +24,8 @@
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 201    | Created               | User account created.                         |
-| 200    | OK                    | User account already exists.                  |
+| 201    | Created               | User successfully retrieved.                  |
+| 200    | OK                    | User successfully retrieved.                  |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. | 
 | 500    | Internal Server Error | An unexpected error occurred.                 |
@@ -61,7 +61,7 @@ axios.post('/register', {}).then(function (response) {
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | Successfully retrieved the user profile.      |
+| 200    | OK                    | User successfully retrieved.      |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |
@@ -161,7 +161,7 @@ axios.post('/user/info', {
 
 | status | statusText            | data.msg                                      |
 |--------|-----------------------|-----------------------------------------------|
-| 200    | OK                    | Successfully updated the user profile.              |
+| 200    | OK                    | Successfully updated the user profile.        |
 | 400    | Bad Request           | Missing required field(s) or invalid type(s). |
 | 404    | Not Found             | Token is unauthorized or user does not exist. |
 | 500    | Internal Server Error | An unexpected error occurred.                 |

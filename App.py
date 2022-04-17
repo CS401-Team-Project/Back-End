@@ -849,7 +849,6 @@ def create_transaction(person):
             transaction.ledger_deltas[p] = who_paid[p]
         else:
             transaction.ledger_deltas[p] = 0
-    print(transaction.ledger_deltas)
     transaction.save()
 
     # add all give items
@@ -902,11 +901,26 @@ def create_transaction(person):
         _delete_transaction(group, transaction)
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
-    # update the ledger
+    # # update the ledger
+    # for k, v in transaction.ledger_deltas.items():
+    #     group.restricted.ledger[k] += v
+
+    # update group with the ledger deltas
     for k, v in transaction.ledger_deltas.items():
         group.restricted.ledger[k] += v
 
+    # update group with the balance deltas
+    for p1, d in transaction.balance_deltas.items():
+        for p2, v in d.items():
+            group.restricted.balances[p1][p2] += v
     # update the balance deltas
+    print('='*30)
+    print(transaction.ledger_deltas)
+    print(transaction.balance_deltas)
+    print('-'*30)
+    print(group.restricted.ledger)
+    print(group.restricted.balances)
+    print('='*30)
 
     # save the transaction
     transaction.save()
@@ -916,7 +930,6 @@ def create_transaction(person):
 
     # save the group
     group.save()
-    print(transaction.id,)
     return jsonify({'id': str(transaction.id), 'msg': 'Transaction Created Successfully.'}), 200
 
 
@@ -1002,7 +1015,6 @@ def update_transaction(person):
         elif k == 'items':
             # add the new transaction items
             for transaction_item in v:
-                # TODO - probably find a better way
                 # this assumes the user will pass the item information in the item field rather than the id
                 _add_item_to_transaction(person, transaction_new,
                                          quantity=transaction_item['quantity'],
@@ -1121,55 +1133,6 @@ def _delete_item(item):
         item.save()
 
 
-@app.route('/transaction/add-item', methods=['POST'])
-@verify_token
-@print_info
-def add_item_to_transaction(person):
-    """
-    Create a transaction in the group
-    request must contain:
-        - token
-        - id: transaction id
-        - items: [
-            {
-                - name: name of item
-                - quantity
-                - desc: desc of item
-                - unit_price: unit price of item
-                - owed_by: sub of the person this transaction item belongs to (if absent it will use the passed person's ID)
-            }, ...
-        ]
-    :param person: the person making the request
-    """
-    # get the request data
-    request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id')
-    items = request_data.get('items', type=list)
-
-    if transaction_id is None or items is None:
-        return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
-
-    # query the transaction
-    transaction = Transaction.objects.get(id=transaction_id)
-
-    for item in items:
-        quantity = item.get('quantity', type=int)
-        person_id = item.get('owed_by')
-
-        # get the item data from the request
-        name = item.get('name')
-        desc = item.get('desc')
-        unit_price = item.get('unit_price', type=float)
-
-        if quantity is None or person_id is None or name is None or unit_price is None:
-            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
-
-        # add the item to the transaction
-        _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price)
-        transaction.reload()
-    return jsonify({'id': transaction.id, 'msg': 'Transaction updated.'}), 200
-
-
 def _add_item_to_transaction(person, transaction, quantity, person_id, name, desc, unit_price):
     """
     helper function to add item to transaction
@@ -1244,18 +1207,17 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     transaction.ledger_deltas = ledger_deltas
     transaction.balance_deltas = balance_deltas
     transaction.save()
-    print(ledger_deltas)
-    # update group with the ledger deltas
-    for k, v in ledger_deltas.items():
-        group.restricted.ledger[k] += v
 
-    # update group with the balance deltas
-    for p1, d in balance_deltas.items():
-        for p2, v in d.items():
-            group.restricted.balances[p1][p2] += v
-    # group.restricted.save()
+    # # update group with the ledger deltas
+    # for k, v in ledger_deltas.items():
+    #     group.restricted.ledger[k] += v
+    #
+    # # update group with the balance deltas
+    # for p1, d in balance_deltas.items():
+    #     for p2, v in d.items():
+    #         group.restricted.balances[p1][p2] += v
 
-    group.save()
+    # group.save()
 
 
 @app.route('/transaction/remove-item', methods=['POST'])

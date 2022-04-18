@@ -166,4 +166,5 @@ cython_debug/
 
 # Unit Test - Token file
 token.txt
+token2.txt
 # End of https://www.toptal.com/developers/gitignore/api/python

@@ -1135,6 +1135,7 @@ def add_receipt(person):
     request must contain:
         - token
         - id: transaction id
+        - receipt: receipt id
     :param person: the person making the request
     """
     # need token, transactionID, receipt

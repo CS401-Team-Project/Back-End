@@ -1,5 +1,5 @@
 import os
-
+import base64
 import requests
 
 
@@ -56,6 +56,9 @@ class Tests:
         cond_2 = data['msg'] == correct_msg
         assert cond_1 and cond_2, f"Expected status code {correct_status_code} with msg `{correct_msg}`, " \
                                   f"got {response.status_code} with msg `{data['msg']}`"
+
+    def create_group(self, data):
+        return self.do_post('/group/create', {'data': data})
 
     def test_get(self):
         """
@@ -156,7 +159,7 @@ class Tests:
         data = {
             'name': 'test group name',
         }
-        response = self.do_post('/group/create', {'data': data})
+        response = self.create_group(data)
         self.group = response.json()['data']
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
 
@@ -184,7 +187,7 @@ class Tests:
         data = {
             'bad': 'data'
         }
-        response = self.do_post('/group/create', {'data': data})
+        response = self.create_group(data)
         self.ensure_status_code_msg(response, 400, "Missing Required Field(s) / Invalid Type(s).")
 
     def test_create_group(self):
@@ -198,7 +201,7 @@ class Tests:
             'name': 'test group name',
             'desc': 'test group description'
         }
-        response = self.do_post('/group/create', {'data': data})
+        response = self.create_group(data)
         self.group = response.json()['data']
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
 
@@ -209,7 +212,6 @@ class Tests:
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
         assert self.group == response.json()['data']
-
 
         # check persons groups
         response = self.do_post('/user/info', {'sub': self.user['data']['sub']})
@@ -240,6 +242,55 @@ class Tests:
         self.ensure_status_code_msg(response, 200, "User successfully retrieved.")
         assert self.group['_id'] not in response.json()['data']['groups']
 
+    def test_add_receipt(self):
+        # create group
+        group_data = {
+            'name': 'Test Receipt Group',
+        }
+        response = self.create_group(group_data)
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
+
+        # attach user to group
+        self.group = response.json()['data']
+
+        # check that admin is assigned correctly
+        assert response.json()['data']['admin'] == self.user['data']['sub']
+
+        # get the group
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        assert self.group == response.json()['data']
+
+        # create transaction
+        transaction_data = {
+            'id': self.group['_id']['$oid'],
+            'title': 'Test Receipt Transaction'
+        }
+        response = self.do_post('/transaction/create', transaction_data)
+
+        print("response: ", response.json())
+        assert False
+        #assert response.json()['id'] == self.group['_id']['$oid']
+
+        group_id = response.json()['id']
+
+        # create receipt
+        receipt = base64.b64encode(requests.get("https://www.nj.com/resizer/ycNpwLnxkoNI4sX-iTfKuOKAt44=/1280x0/smart/advancelocal-adapter-image-uploads.s3.amazonaws.com/image.nj.com/home/njo-media/width2048/img/somerset_impact/photo/sm0429petjpg-c4f705b7c265effc.jpg").content)
+        response = self.do_post('/receipt/add', {'id': group_id, 'receipt': receipt})
+        self.ensure_status_code_msg(response, 200, "Receipt successfully added.")
+
+    # def test_get_receipt(self):
+    #     response = self.do_post('/receipt/get')
+    #
+    #     # delete the transaction
+    #     response = self.do_post('/transaction/delete', )
+    #     self.ensure_status_code_msg(response, 200, "Transaction successfully deleted.")
+    #
+    #     # delete the group
+    #     response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
+    #     self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
+
+
     def test_invite(self):
         # create a group with list of invites
         invites = ['test1@email.com', 'test2@email.com', 'test3@email.com']
@@ -248,7 +299,7 @@ class Tests:
             'desc': 'test group description',
             'invites': invites
         }
-        response = self.do_post('/group/create', {'data': data})
+        response = self.create_group(data)
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
         self.group = response.json()['data']
 
@@ -263,7 +314,7 @@ class Tests:
 
         # create new group with no invites
         invites = data.pop('invites')
-        response = self.do_post('/group/create', {'data': data})
+        response = self.create_group(data)
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
         self.group = response.json()['data']
         assert len(self.group['invites']) == 0
@@ -280,20 +331,6 @@ class Tests:
         # delete the group
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
-
-    # This test passed, DO NOT RUN unless you want your profile deleted for the tests.
-    # def test_delete_profile(self):
-    #     """
-    #     test
-    #     :return:
-    #     """
-    #     # delete
-    #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
-    #     assert status_code == 200
-    #
-    #     # try to delete second time to ensure 404 is returned
-    #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
-    #     assert status_code == 404
 
     @classmethod
     def do_post(cls, endpoint, data):

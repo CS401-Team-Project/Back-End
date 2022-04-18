@@ -27,7 +27,6 @@ limiter = Limiter(app,
                   key_func=get_remote_address,
                   default_limits=['20/second'])
 
-
 debug = os.environ.get('DEBUG', False)
 debug = bool(debug)
 
@@ -60,6 +59,7 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine()
 db.init_app(app)
+
 
 def print_info(func):
     """
@@ -417,7 +417,6 @@ def create_group(person):
     # save the group
     group.save()
     return jsonify({'msg': 'Group successfully created.', 'data': group}), 200
-
 
 
 @app.route('/group/delete', methods=['POST'])
@@ -907,13 +906,13 @@ def create_transaction(person):
         for p2, v in d.items():
             group.restricted.balances[p1][p2] += v
     # update the balance deltas
-    print('='*30)
+    print('=' * 30)
     print(transaction.ledger_deltas)
     print(transaction.balance_deltas)
-    print('-'*30)
+    print('-' * 30)
     print(group.restricted.ledger)
     print(group.restricted.balances)
-    print('='*30)
+    print('=' * 30)
 
     # save the transaction
     transaction.save()
@@ -963,10 +962,10 @@ def update_transaction(person):
 
     # make sure user is authorized
     if not (
-        group.settings.admin_overrule_transaction and group.admin == person.sub
+            group.settings.admin_overrule_transaction and group.admin == person.sub
     ) and not (
-        group.settings.only_owner_modify_transaction
-        and transaction.created_by == person.sub
+            group.settings.only_owner_modify_transaction
+            and transaction.created_by == person.sub
     ):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
@@ -1066,15 +1065,15 @@ def delete_transaction(person):
 
     # make sure user is authorized
     if (
-        not (
-            group.settings.admin_overrule_delete_transaction
-            and group.admin == person.sub
-        )
-        and not group.settings.user_delete_transaction
-        and not (
+            not (
+                    group.settings.admin_overrule_delete_transaction
+                    and group.admin == person.sub
+            )
+            and not group.settings.user_delete_transaction
+            and not (
             group.settings.only_owner_delete_transaction
             and transaction.created_by == person.sub
-        )
+    )
     ):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
@@ -1325,8 +1324,8 @@ def _create_item(name: str, desc: str, unit_price: float):
 
     # try to get the item if exists
     item = Item.objects(name=name,
-                            desc=desc,
-                            unit_price=unit_price)
+                        desc=desc,
+                        unit_price=unit_price)
 
     # if the item does not exist
     if len(item) == 0:

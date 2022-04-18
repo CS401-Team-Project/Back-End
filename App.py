@@ -402,7 +402,7 @@ def create_group(person):
         if not isinstance(invite, list):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         for email in invite:
-            group.invites.append(email)
+            group.restricted.invite_list.append(email)
 
             # save the invite in the person
             p = Person.objects(email=email)
@@ -582,8 +582,8 @@ def join_group(person):
     if person.sub in group.members:
         return jsonify({'msg': 'User is already a member of the group.'}), 409
 
-    if person.email in group.invites:
-        group.invites.remove(person.email)
+    if person.email in group.restricted.invite_list:
+        group.restricted.invite_list.remove(person.email)
 
     # add person to group
     group.members.append(person.sub)
@@ -640,7 +640,7 @@ def invite_group(person):
 
     for email in emails:
         # check if already invited
-        if email in group.invites:
+        if email in group.restricted.invite_list:
             return jsonify({'msg': 'User is already a invited.'}), 409
 
         # check if already in the group
@@ -650,7 +650,7 @@ def invite_group(person):
                 continue
 
         # add person to group invite list
-        group.invites.append(email)
+        group.restricted.invite_list.append(email)
 
         # if person exists in the db add this to their invites
         p = Person.objects(email=email)

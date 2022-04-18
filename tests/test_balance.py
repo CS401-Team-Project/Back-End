@@ -84,7 +84,7 @@ class BalanceTests:
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']}, self.header1)
         assert response.status_code == 200
         assert len(response.json()['data']['members']) == 2
-        assert len(response.json()['data']['invites']) == 0
+        assert len(response.json()['data']['restricted']['invite_list']) == 0
 
         ####################################################################################
         ## Transaction 1

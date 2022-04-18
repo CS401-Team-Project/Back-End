@@ -295,10 +295,6 @@ class Tests:
     #     _, status_code = self.do_post('/user/delete', {'sub': self.user['data']['sub']})
     #     assert status_code == 404
 
-    def test_create_transaction(self):
-        pass
-
-
     @classmethod
     def do_post(cls, endpoint, data):
         """

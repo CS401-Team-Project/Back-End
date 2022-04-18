@@ -783,7 +783,7 @@ def create_transaction(person):
         - vendor: optional
         - date: optional
         - who_paid: [dictionary] contains key value pairs of who paid and how much
-        - items: [optional] array containing jsons of items to add to the transaction
+        - items: array containing jsons of items to add to the transaction
             - item: can have optional total price
     :param person: the person making the request
     :return: returns a transaction id used to link items to the transaction
@@ -798,7 +798,7 @@ def create_transaction(person):
     date = request_data.get('date')
     items = request_data.get('items')
 
-    if group_id is None or title is None:
+    if group_id is None or title is None or items is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
     if date is None:
@@ -856,7 +856,7 @@ def create_transaction(person):
             name = item.get('name')
             desc = item.get('desc')
 
-            total_price = item.get('desc')
+            total_price = item.get('total_price')
             quantity = item.get('quantity')
             unit_price = item.get('unit_price')
 
@@ -1227,50 +1227,50 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     #         group.restricted.balances[p1][p2] += v
 
     # group.save()
-
-
-@app.route('/transaction/remove-item', methods=['POST'])
-@verify_token
-@print_info
-def remove_item_from_transaction(person):
-    """
-    Create a transaction in the group
-    request must contain:
-        - token
-        - id: transaction id
-        - data: transaction item to delete
-    :param person: the person making the request
-    """
-
-    # get the request data
-    request_data = request.get_json(force=True, silent=True)
-    transaction_id = request_data.get('id')
-    transaction_item = request_data.get('data')
-
-    if transaction_id is None or transaction_item is None:
-        return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
-
-    # query the transaction
-    transaction = Transaction.objects.get(id=transaction_id)
-
-    # get the transaction item and delete it
-    transaction_item = transaction.items.objects.get(**transaction_item)
-
-    # delete the item or decrement its count
-    item = Item(id=transaction_item.item_id)
-    _delete_item(item)
-
-    # delete the transaction item
-    transaction_item.delete()
-
-    # update the last modified by
-    transaction.modified_by = person.sub
-    transaction.date_modified = datetime.datetime.now(datetime.timezone.utc)
-
-    # save transaction
-    transaction.save()
-
-    return jsonify({'msg': 'Transaction updated.'}), 200
+#
+#
+# @app.route('/transaction/remove-item', methods=['POST'])
+# @verify_token
+# @print_info
+# def remove_item_from_transaction(person):
+#     """
+#     Create a transaction in the group
+#     request must contain:
+#         - token
+#         - id: transaction id
+#         - data: transaction item to delete
+#     :param person: the person making the request
+#     """
+#
+#     # get the request data
+#     request_data = request.get_json(force=True, silent=True)
+#     transaction_id = request_data.get('id')
+#     transaction_item = request_data.get('data')
+#
+#     if transaction_id is None or transaction_item is None:
+#         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+#
+#     # query the transaction
+#     transaction = Transaction.objects.get(id=transaction_id)
+#
+#     # get the transaction item and delete it
+#     transaction_item = transaction.items.objects.get(**transaction_item)
+#
+#     # delete the item or decrement its count
+#     item = Item(id=transaction_item.item_id)
+#     _delete_item(item)
+#
+#     # delete the transaction item
+#     transaction_item.delete()
+#
+#     # update the last modified by
+#     transaction.modified_by = person.sub
+#     transaction.date_modified = datetime.datetime.now(datetime.timezone.utc)
+#
+#     # save transaction
+#     transaction.save()
+#
+#     return jsonify({'msg': 'Transaction updated.'}), 200
 
 
 @app.route('/transaction/info', methods=['POST'])

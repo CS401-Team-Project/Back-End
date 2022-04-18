@@ -332,10 +332,17 @@ def delete_profile(person):
 
     # unlink person from all groups
     for g_id in person.groups:
-        Group.objects(id=g_id).update_one(pull_members=person.sub)
-        # group = Group.objects(id=g_id)
-        # group.update_one(pull_members=person.sub)
-        # group.save()
+        print(g_id)
+        group = Group.objects.get(id=g_id)
+        print(group)
+        print(type(group))
+        print(len(group))
+        if len(group) == 0:
+            continue
+        group = group.first()
+        if person.sub in group.members:
+            group.members.remove(person.sub)
+
 
     # delete the person from the database
     person.delete()
@@ -462,7 +469,7 @@ def delete_group(person):
         if len(transaction) == 0:
             continue
         transaction = transaction.first()
-        _delete_transaction(transaction)
+        _delete_transaction(group, transaction)
 
     return jsonify({'msg': 'Group successfully deleted.'}), 200
 
@@ -634,7 +641,7 @@ def invite_group(person):
     group = group.first()
 
     # if the user is not an admin then cannot invite
-    if group.restricted.only_admin_invite and person.sub != group.admin:
+    if group.restricted.permissions.only_admin_invite and person.sub != group.admin:
         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
 
     for email in emails:

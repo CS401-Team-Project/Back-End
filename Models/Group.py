@@ -51,6 +51,7 @@ class GroupRestricted(EmbeddedDocument):
     date = EmbeddedDocumentField(GroupDate, default=GroupDate)
     invite_list = ListField(default=[])
 
+
 class Group(Document):
     """
     Document for the Group model.
@@ -60,7 +61,6 @@ class Group(Document):
     admin = StringField(max_length=255, required=True)
     members = ListField(default=[])
     restricted = EmbeddedDocumentField(GroupRestricted, default=GroupRestricted)
-
     # TODO: add time when person joined group ( embedded document or map )
     #   - date group was created
     #   - group settings

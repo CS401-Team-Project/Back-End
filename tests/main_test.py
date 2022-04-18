@@ -264,10 +264,14 @@ class Tests:
         # create transaction
         transaction_data = {
             'id': self.group['_id']['$oid'],
-            'title': 'Test Receipt Transaction'
+            'title': 'Test Receipt Transaction',
+            'desc': 'Test Receipt Description',
+            'vendor': 'Test Receipt Vendor',
+            'items': ['Borger']
         }
         response = self.do_post('/transaction/create', transaction_data)
 
+        print(self.group)
         print("response: ", response.json())
         assert False
         #assert response.json()['id'] == self.group['_id']['$oid']
@@ -306,8 +310,7 @@ class Tests:
         # check invites
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
-        print(invites, response.json())
-        assert invites == response.json()['data']['invites']
+        assert invites == response.json()['data']['restricted']['invite_list']
 
         # delete the group
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
@@ -318,7 +321,7 @@ class Tests:
         response = self.create_group(data)
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
         self.group = response.json()['data']
-        assert len(self.group['invites']) == 0
+        assert len(self.group['restricted']['invite_list']) == 0
 
         # invite via the invite api call
         response = self.do_post('/group/invite', {'id': self.group['_id']['$oid'], 'emails': invites})
@@ -327,7 +330,7 @@ class Tests:
         # check invites
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
-        assert invites == response.json()['data']['invites']
+        assert invites == response.json()['data']['restricted']['invite_list']
 
         # delete the group
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

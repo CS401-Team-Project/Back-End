@@ -25,5 +25,4 @@
 3. mongo -u apiuser -p apipassword --authenticationDatabase smart-ledger
 4. use smart-ledger
 
-## [Unit Tests](./TESTS.md)
-- TODO: Integrate TESTS.md into this main README file.
+## [Running Tests](tests/TESTS.md)

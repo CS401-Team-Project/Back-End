@@ -1,5 +1,5 @@
 """
-TODO: Module docstring
+EmbeddedDocuments for Transaction
 """
 import datetime
 
@@ -8,7 +8,7 @@ from mongoengine import *
 
 class Item(Document):
     """
-    TODO: Class Docstring
+    Item class
     """
     # general info
     name = StringField(default='', max_length=60, required=True)
@@ -21,19 +21,17 @@ class Item(Document):
 
 class TransactionItem(EmbeddedDocument):
     """
-    TODO: Class docstring
+    TransactionItem class
     """
     # general info
-    item_id = ObjectIdField(required=True)
-    person = ObjectIdField(required=True)
+    item_id = StringField(required=True)
+    person = StringField(required=True)
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
-    # TODO last modified and modified by
-
 
 class Transaction(Document):
     """
-    TODO: Class docstring
+    Transaction class
     """
     # general info
     title = StringField(max_length=60, required=True)
@@ -42,16 +40,24 @@ class Transaction(Document):
     # linking
     group = ObjectIdField(required=True)
 
-    #
+    # who paid and who used stuff
+    who_paid = DictField(default={})
+    who_used = DictField(default={})
+
+    # balance keeping
+    ledger_deltas = DictField(default={})
+    balance_deltas = DictField(default={})
+
+    # keep track of when the purchase was made
     date_purchased = DateTimeField(default=datetime.datetime.utcnow)
 
     # keep track of when and who created it
     date_created = DateTimeField(default=datetime.datetime.utcnow)
-    created_by = ObjectIdField(required=True)
+    created_by = StringField(required=True)
 
     # keep track of when and who last modified it
     date_modified = DateTimeField(default=datetime.datetime.utcnow)
-    modified_by = ObjectIdField(required=True)
+    modified_by = StringField(required=True)
 
     # required meta data
     total_price = FloatField(default=0.0)

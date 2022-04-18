@@ -69,13 +69,26 @@ axios.post('/transaction/info', {
 
 ### Request:
 
-| Field       | Type   | Required | Default           | Description             |
-|-------------|--------|----------|-------------------|-------------------------|
-| id          | String | Yes      | -                 | Group ID                |
-| title       | String | Yes      | -                 | Transaction Title       |
-| desc        | String | Yes      | -                 | Transaction Description |
-| vendor      | String | Yes      | ""                | Transaction Vendor      |
-| date        | String | No       | Current Date-Time | Transaction Date        |
+| Field    | Type   | Required | Default           | Description                                                         |
+|----------|--------|----------|-------------------|---------------------------------------------------------------------|
+| id       | String | Yes      | -                 | Group ID                                                            |
+| title    | String | Yes      | -                 | Transaction Title                                                   |
+| desc     | String | Yes      | -                 | Transaction Description                                             |
+| vendor   | String | Yes      | ""                | Transaction Vendor                                                  |
+| date     | String | No       | Current Date-Time | Transaction Date                                                    |
+| who_paid | JSON   | Yes      | -                 | Dictionary of who paid and who much                                 |
+| items    | List   | Yes      | -                 | List of jsons, Each json should contain fields required for an item |
+
+### `items` Fields:
+
+| Field      | Type   | Required | Default            | Description                         |
+|------------|--------|----------|--------------------|-------------------------------------|
+| name       | String | Yes      | -                  | Name of the Item                    |
+| quantity   | Int    | Yes      | -                  | Number of Items                     |
+| desc       | String | Yes      | -                  | The item's description              |
+| unit_price | Float  | Yes      | -                  | Price of a single item              |
+| owed_by    | String | Yes      | -                  | user sub of who the item belongs to |
+
 
 ### Response:
 
@@ -196,104 +209,7 @@ axios.post('/transaction/delete', {
 
 ---
 
-## /transaction/add-item
 
-**HTTP Method**: POST
-
-**Description**: Add an item to an existing transaction
-
-### Request:
-
-| Field       | Type   | Required | Description                    |
-|-------------|--------|----------|--------------------------------|
-| id          | String | Yes      | Transaction ID                 |
-| items       | List   | Yes      | List of Items                  |
-
-### Response:
-
-| status | statusText  | data.msg                                             |
-|--------|-------------|------------------------------------------------------|
-| 200    | OK          | Successfully deleted the transaction.                |
-| 400    | Bad Request | Missing required field(s) or invalid type(s).        |
-| 404    | Not Found   | Token is unauthorized or transaction does not exist. |
-| 500    | Internal    | An unexpected error occurred.                        |
-
-### `items` Fields:
-
-| Field       | Type   | Required | Default            | Description                            |
-|-------------|--------|----------|--------------------|----------------------------------------|
-| name        | String | Yes      | -                  | Name of the Group                      |
-| quantity    | Int    | Yes      | -                  | The user emails to invite to the group |
-| desc        | String | Yes      | -                  | The group's description                |
-| unit_price  | Float  | Yes      | -                  | The user emails to invite to the group |
-| owned_by    | String | Yes      | -                  | The user emails to invite to the group |
-
-- TODO: Make owned_by not required and defaultly pass user calling add-item
-- `items` is an array of json objects each containing the following fields: name, quantity, desc, unit_price, owed_by
-
-### Examples:
-
-```js
-axios.post('/transaction/add-item', {
-    id: '<TRANSACTION_ID>',
-    items:{
-        name: '<ITEM_ID>',
-        quantity: '<QUANTITY>',
-        unit_price: '<UNIT_PRICE>',
-        owed_by: '<USER_ID>',
-        description: '<DESCRIPTION>'
-    }
-}).then(response => {
-    console.log(response.data);
-}).catch(error => {
-    console.log(error.response.data);
-});
-
-```
-
----
-
-## /transaction/remove-item
-
-**HTTP Method**: POST
-
-**Description**: Remove an item from an existing transaction
-
-### Request:
-
-| Field | Type   | Required | Description                    |
-|-------|--------|----------|--------------------------------|
-| id    | String | Yes      | Transaction ID                 |
-| data  | Object | Yes      | Transaction Item To Be Deleted |
-
-### Response:
-
-| status | statusText  | data.msg                                                  |
-|--------|-------------|-----------------------------------------------------------|
-| 200    | OK          | Successfully removed the item from the transaction        |
-| 400    | Bad Request | Missing required field(s) or invalid type(s).             |
-| 404    | Not Found   | Token is unauthorized or transaction/item does not exist. |
-| 500    | Internal    | An unexpected error occurred.                             |
-
-### Notes:
-
-- If successful, returns status code 200 and a message indicating tha the transaction
-was updated.
-
-### Examples:
-- TODO: Fix example - this is **not correct!**
-```js
-axios.post('/transaction/remove-item', {
-    id: '<TRANSACTION_ID>',
-    item_id: '<ITEM_ID>'
-}).then(response => {
-    console.log(response.data);
-}).catch(error => {
-    console.log(error.response.data);
-});
-```
-
----
 
 ## /item/info
 

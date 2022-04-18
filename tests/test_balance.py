@@ -36,7 +36,7 @@ class BalanceTests:
 
         # Read token from file and assign it to the header of the requests
         with open(token_file1, 'r') as file:
-            token = file.readline()
+            token = file.readline().strip()
         cls.header1 = {'Authorization': f'Bearer {token}'}
 
         # need to set up user stuff here for use later
@@ -50,7 +50,7 @@ class BalanceTests:
 
         # Read token from file and assign it to the header of the requests
         with open(token_file2, 'r') as file:
-            token = file.readline()
+            token = file.readline().strip()
             cls.header2 = {'Authorization': f'Bearer {token}'}
         # need to set up user stuff here for use later
         response = cls.do_post('/register', {}, cls.header2)

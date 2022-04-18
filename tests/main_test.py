@@ -306,7 +306,8 @@ class Tests:
         # check invites
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
-        assert invites == response.json()['data']['restricted']['invite_list']
+        print(invites, response.json())
+        assert invites == response.json()['data']['invites']
 
         # delete the group
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
@@ -317,7 +318,7 @@ class Tests:
         response = self.create_group(data)
         self.ensure_status_code_msg(response, 200, "Group successfully created.")
         self.group = response.json()['data']
-        assert len(self.group['restricted']['invite_list']) == 0
+        assert len(self.group['invites']) == 0
 
         # invite via the invite api call
         response = self.do_post('/group/invite', {'id': self.group['_id']['$oid'], 'emails': invites})
@@ -326,7 +327,7 @@ class Tests:
         # check invites
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
-        assert invites == response.json()['data']['restricted']['invite_list']
+        assert invites == response.json()['data']['invites']
 
         # delete the group
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})

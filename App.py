@@ -236,7 +236,7 @@ def register():
         status_code = 200
 
     # save the person object
-    person.date.last_login = datetime.datetime.utcnow()
+    person.date.last_login = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     # return status message
@@ -313,7 +313,7 @@ def update_profile(person):
             person[k] = v
 
     # save the person
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
     return jsonify({'msg': 'Successfully updated the user profile.'}), 200
 
@@ -395,7 +395,7 @@ def create_group(person):
     person.groups.append(group.id)
 
     # save the person object
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     if invite is not None:
@@ -411,7 +411,7 @@ def create_group(person):
             p = p.first()
             if group.id not in p.invites:
                 p.invites.append(group.id)
-            p.date.updated = datetime.datetime.utcnow()
+            p.date.updated = datetime.datetime.now(datetime.timezone.utc)
             p.save()
 
     # save the group
@@ -453,7 +453,7 @@ def delete_group(person):
 
         # try to remove person from group
         person.groups.remove(ObjectId(group_id))
-        person.date.updated = datetime.datetime.utcnow()
+        person.date.updated = datetime.datetime.now(datetime.timezone.utc)
         person.save()
 
     # iterate through transactions and items to decrement the item counts. waiting on items to be implemented
@@ -543,7 +543,7 @@ def update_group(person):
         else:
             group[k] = v
 
-    group.restricted.date.update = datetime.datetime.utcnow()
+    group.restricted.date.update = datetime.datetime.now(datetime.timezone.utc)
 
     # save the group
     group.save()
@@ -587,7 +587,7 @@ def join_group(person):
 
     # add person to group
     group.members.append(person.sub)
-    group.updated = datetime.datetime.utcnow()
+    group.updated = datetime.datetime.now(datetime.timezone.utc)
 
     # add person to the balances dict
     group.restricted.balances[person.sub] = {}
@@ -606,7 +606,7 @@ def join_group(person):
     person.groups.append(group.id)
 
     # save person
-    person.date.updated = datetime.datetime.utcnow()
+    person.date.updated = datetime.datetime.now(datetime.timezone.utc)
     person.save()
 
     return jsonify({'msg': 'User joined group.'}), 200
@@ -661,7 +661,7 @@ def invite_group(person):
                 p.save()
 
     # save group
-    group.restricted.date.updated = datetime.datetime.utcnow()
+    group.restricted.date.updated = datetime.datetime.now(datetime.timezone.utc)
     group.save()
     return jsonify({'msg': 'Invitation(s) successfully created.'}), 200
 
@@ -705,7 +705,7 @@ def remove_member(person):
     group.members.remove(sub)
 
     # save the group
-    group.updated = datetime.datetime.utcnow()
+    group.updated = datetime.datetime.now(datetime.timezone.utc)
     group.save()
 
     # if group is tied to person object
@@ -714,7 +714,7 @@ def remove_member(person):
         person.groups.remove(group_id)
 
         # save person
-        person.date.updated = datetime.datetime.utcnow()
+        person.date.updated = datetime.datetime.now(datetime.timezone.utc)
         person.save()
 
     return jsonify({'msg': 'Member successfully removed.'}), 200
@@ -752,7 +752,7 @@ def refresh_id(person):
     # TODO: need to update all links in person and Transaction DB
 
     # update times
-    time = datetime.datetime.utcnow()
+    time = datetime.datetime.now(datetime.timezone.utc)
     group.updated = time
     group.last_refreshed = time
 
@@ -800,7 +800,7 @@ def create_transaction(person):
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
     if date is None:
-        date = datetime.datetime.utcnow()
+        date = datetime.datetime.now(datetime.timezone.utc)
 
     # query the group to make sure it exists
     group = Group.objects.get(id=group_id)
@@ -1027,7 +1027,7 @@ def update_transaction(person):
 
     # update the last modified by
     transaction_new.modified_by = person.sub
-    transaction_new.date_modified = datetime.datetime.utcnow()
+    transaction_new.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
     # save the transaction
     transaction_new.save()
@@ -1263,7 +1263,7 @@ def remove_item_from_transaction(person):
 
     # update the last modified by
     transaction.modified_by = person.sub
-    transaction.date_modified = datetime.datetime.utcnow()
+    transaction.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
     # save transaction
     transaction.save()

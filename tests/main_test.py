@@ -34,7 +34,7 @@ class Tests:
 
         # Read token from file and assign it to the header of the requests
         with open(token_file, 'r') as file:
-            token = file.readline()
+            token = file.readline().strip()
             cls.header = {'Authorization': f'Bearer {token}'}
 
         # need to set up user stuff here for use later

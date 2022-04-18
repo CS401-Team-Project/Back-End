@@ -1,3 +1,4 @@
+import json
 import os
 import base64
 import requests
@@ -262,16 +263,27 @@ class Tests:
         assert self.group == response.json()['data']
 
         # create transaction
+        items = {
+            'name': "Borger",
+            'quantity': 1,
+            'desc': "borger",
+            'unit_price': 1.2,
+            'owned_by': self.user['data']['sub']
+        }
+        paid = {
+            self.user['data']['sub']: 0.69
+        }
+        #items = json.dumps(j_items, indent=4)
         transaction_data = {
             'id': self.group['_id']['$oid'],
             'title': 'Test Receipt Transaction',
             'desc': 'Test Receipt Description',
             'vendor': 'Test Receipt Vendor',
-            'items': ['Borger']
+            'items': [items],
+            'who_paid': paid
         }
         response = self.do_post('/transaction/create', transaction_data)
 
-        print(self.group)
         print("response: ", response.json())
         assert False
         #assert response.json()['id'] == self.group['_id']['$oid']

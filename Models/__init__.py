@@ -1,5 +1,5 @@
 """
-TODO: Module Docstring
+Module containing the models for the application.
 """
 __all__ = ["Group", "GroupRestricted", "GroupDate", "GroupPermissions",
            "Person", "TransactionItem", "Transaction", "Item", 'PayWith', 'PersonDate']

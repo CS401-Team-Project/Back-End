@@ -1,5 +1,5 @@
 """
-TODO: Module docstring
+EmbeddedDocuments for the Group model.
 """
 import datetime
 from mongoengine import *
@@ -7,7 +7,7 @@ from mongoengine import *
 
 class GroupPermissions(EmbeddedDocument):
     """
-    TODO: Class docstring
+    EmbeddedDocument for the GroupPermissions model.
     """
     # only the admin can invite people
     only_admin_invite = BooleanField(default=True)
@@ -33,7 +33,7 @@ class GroupPermissions(EmbeddedDocument):
 
 class GroupDate(EmbeddedDocument):
     """
-    TODO: Class Docstring
+    EmbeddedDocument for the GroupDate model.
     """
     created = DateTimeField(default=datetime.datetime.utcnow)
     updated = DateTimeField(default=datetime.datetime.utcnow)
@@ -42,7 +42,7 @@ class GroupDate(EmbeddedDocument):
 
 class GroupRestricted(EmbeddedDocument):
     """
-    TODO: Class Docstring
+    EmbeddedDocument for the GroupRestricted model.
     """
     permissions = EmbeddedDocumentField(GroupPermissions, default=GroupPermissions)
     balances = DictField(default={})
@@ -53,7 +53,7 @@ class GroupRestricted(EmbeddedDocument):
 
 class Group(Document):
     """
-    TODO: Class Docstring
+    Document for the Group model.
     """
     name = StringField(max_length=60, required=True)
     desc = StringField(max_length=255, default='')
@@ -62,9 +62,7 @@ class Group(Document):
     invites = ListField(default=[])
     restricted = EmbeddedDocumentField(GroupRestricted, default=GroupRestricted)
 
-
-    #
-    # TODO - add time when person joined group ( embedded document or map )
+    # TODO: add time when person joined group ( embedded document or map )
     #   - date group was created
     #   - group settings
     #      - who can modify transactions (just creator or everyone, etc.)

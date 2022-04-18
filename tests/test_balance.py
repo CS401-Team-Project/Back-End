@@ -174,7 +174,6 @@ class BalanceTests:
 
         # make sure the group has been joined and invites are clear
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']}, self.header1)
-        pprint(response.json())
 
         assert response.status_code == 200
         assert response.json()['data']['restricted']['balances'][self.user1['data']['sub']][
@@ -200,7 +199,6 @@ class BalanceTests:
 
         # make sure the group has been joined and invites are clear
         response = self.do_post('/group/info', {'id': self.group['_id']['$oid']}, self.header1)
-        pprint(response.json())
 
         assert response.status_code == 200
         assert response.json()['data']['restricted']['balances'][self.user1['data']['sub']][

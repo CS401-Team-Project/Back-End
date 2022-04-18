@@ -1,5 +1,5 @@
 """
-TODO: Module docstring
+EmbeddedDocuments for Transaction
 """
 import datetime
 
@@ -8,7 +8,7 @@ from mongoengine import *
 
 class Item(Document):
     """
-    TODO: Class Docstring
+    Item class
     """
     # general info
     name = StringField(default='', max_length=60, required=True)
@@ -21,7 +21,7 @@ class Item(Document):
 
 class TransactionItem(EmbeddedDocument):
     """
-    TODO: Class docstring
+    TransactionItem class
     """
     # general info
     item_id = StringField(required=True)
@@ -29,10 +29,9 @@ class TransactionItem(EmbeddedDocument):
     quantity = IntField(default=1, required=True)
     item_cost = FloatField(default=0.0, required=True)
 
-
 class Transaction(Document):
     """
-    TODO: Class docstring
+    Transaction class
     """
     # general info
     title = StringField(max_length=60, required=True)
@@ -66,5 +65,5 @@ class Transaction(Document):
 
     # optional meta data
     vendor = StringField(default='', required=False)
-    # TODO - have this as its own collection and have it hold the id to the receipt document
+    # TODO: have this as its own collection and have it hold the id to the receipt document
     # receipt         = ImageField(required=False)

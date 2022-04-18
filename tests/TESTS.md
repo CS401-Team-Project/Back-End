@@ -36,3 +36,13 @@ docker-compose up -d --build
 cd tests
 pytest main_test.py -v
 ```
+
+
+## Testing balances 
+```shell
+cd tests
+python3 test_balance.py
+```
+### Requirements
+- have token.txt in directory
+- have token2.txt in directory containing separate token for separate user

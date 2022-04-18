@@ -332,11 +332,7 @@ def delete_profile(person):
 
     # unlink person from all groups
     for g_id in person.groups:
-        print(g_id)
-        group = Group.objects.get(id=g_id)
-        print(group)
-        print(type(group))
-        print(len(group))
+        group = Group.objects(id=g_id)
         if len(group) == 0:
             continue
         group = group.first()
@@ -794,7 +790,7 @@ def create_transaction(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
-    group_id = request_data.get('group')
+    group_id = request_data.get('id')
     title = request_data.get('title')
     desc = request_data.get('desc')
     vendor = request_data.get('vendor')

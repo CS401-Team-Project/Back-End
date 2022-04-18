@@ -94,7 +94,7 @@ class BalanceTests:
             {'owed_by': self.user2['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 20, 'quantity': 1},
         ]
         t1 = {
-            'group': self.group['_id']['$oid'],
+            'id': self.group['_id']['$oid'],
             'title': 'transaction1',
             'who_paid': who_paid,
             'items': items
@@ -117,7 +117,7 @@ class BalanceTests:
             {'owed_by': self.user2['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 40, 'quantity': 1},
         ]
         t2 = {
-            'group': self.group['_id']['$oid'],
+            'id': self.group['_id']['$oid'],
             'title': 'transaction2',
             'who_paid': who_paid,
             'items': items
@@ -140,7 +140,7 @@ class BalanceTests:
             {'owed_by': self.user1['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 40, 'quantity': 1},
         ]
         t3 = {
-            'group': self.group['_id']['$oid'],
+            'id': self.group['_id']['$oid'],
             'title': 'transaction3',
             'who_paid': who_paid,
             'items': items
@@ -164,7 +164,7 @@ class BalanceTests:
             {'owed_by': self.user2['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 20, 'quantity': 1},
         ]
         t4 = {
-            'group': self.group['_id']['$oid'],
+            'id': self.group['_id']['$oid'],
             'title': 'transaction4',
             'who_paid': who_paid,
             'items': items
@@ -189,7 +189,7 @@ class BalanceTests:
             {'owed_by': self.user2['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 20, 'quantity': 1},
         ]
         t5 = {
-            'group': self.group['_id']['$oid'],
+            'id': self.group['_id']['$oid'],
             'title': 'transaction4',
             'who_paid': who_paid,
             'items': items

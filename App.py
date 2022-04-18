@@ -206,7 +206,7 @@ def register():
     """
     token = get_token(request)
     # verify the token
-    token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'])
+    token_info = id_token.verify_oauth2_token(token, requests.Request(), os.environ['CLIENT_ID'], clock_skew_in_seconds=5)
 
     # get the subject
     sub = token_info['sub']
@@ -1106,8 +1106,8 @@ def _delete_transaction(group, transaction):
     for p1 in people_involved:
         for p2 in people_involved:
             if p1 != p2:
-                group.balances[p1][p2] -= balance_deltas[p1][p2]
-        group.ledger[p1] -= ledger_deltas[p1]
+                group.restricted.balances[p1][p2] -= balance_deltas[p1][p2]
+        group.restricted.ledger[p1] -= ledger_deltas[p1]
 
     # iterate through all transaction items
     for transaction_item in transaction.items:
@@ -1115,7 +1115,7 @@ def _delete_transaction(group, transaction):
         item_id = transaction_item.item_id
 
         # try to get the item
-        item = Item.objects.get(id=item_id)
+        item = Item.objects(id=item_id)
         if len(item) == 0:
             continue
         item = item.first()

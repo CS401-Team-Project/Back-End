@@ -1325,6 +1325,7 @@ def add_receipt(person):
     request_data = request.get_json(force=True, silent=True)
     transaction_id = request_data['id']
 
+    # retrieve receipt string and convert to bytearray for ImageField
     img_data_decoded = request_data['receipt'].encode('utf-8')
     file_like = base64.b64decode(img_data_decoded)
     receiptBytes = bytearray(file_like)
@@ -1390,8 +1391,8 @@ def get_receipt(person):
     if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
+    # retrieve receipt object and convert to utf-8 string for JSON
     receiptObject = Receipt.objects.get(id=transaction.receipt)
-
     receiptBytes = receiptObject.receipt.read()
     receiptb64 = base64.b64encode(receiptBytes)
     receiptString = receiptb64.decode('utf-8')

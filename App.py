@@ -901,9 +901,6 @@ def create_transaction(person):
         _delete_transaction(group, transaction)
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
-    # # update the ledger
-    # for k, v in transaction.ledger_deltas.items():
-    #     group.restricted.ledger[k] += v
 
     # update group with the ledger deltas
     for k, v in transaction.ledger_deltas.items():
@@ -913,14 +910,6 @@ def create_transaction(person):
     for p1, d in transaction.balance_deltas.items():
         for p2, v in d.items():
             group.restricted.balances[p1][p2] += v
-    # update the balance deltas
-    print('=' * 30)
-    print(transaction.ledger_deltas)
-    print(transaction.balance_deltas)
-    print('-' * 30)
-    print(group.restricted.ledger)
-    print(group.restricted.balances)
-    print('=' * 30)
 
     # save the transaction
     transaction.save()
@@ -1007,21 +996,22 @@ def update_transaction(person):
 
     # add it to the group
     group.transactions.append(transaction_new.id)
-    group.save()
 
     # update the fields from the original transaction within the new transaction
+    total_used = 0
     for k, v in transaction_data.items():
         # if the key is equal to items that should not be modified, ignore it
-        if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price']:
+        if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price', 'who_paid']:
             continue
         # if user re-writing items
         elif k == 'items':
             # add the new transaction items
             for transaction_item in v:
                 # this assumes the user will pass the item information in the item field rather than the id
+                total_used += (transaction_item['quantity'] * transaction_item['item']['unit_price'])
                 _add_item_to_transaction(person, transaction_new,
                                          quantity=transaction_item['quantity'],
-                                         person_id=transaction_item['person'],
+                                         person_id=transaction_item['owed_by'],
                                          name=transaction_item['item']['name'],
                                          desc=transaction_item['item']['desc'],
                                          unit_price=transaction_item['item']['unit_price'])
@@ -1032,14 +1022,27 @@ def update_transaction(person):
             # TODO - cross our fingers this will work
             transaction_new[k] = v
 
+    # update the who paid
+    transaction_new.who_paid = {}
+
     # update the last modified by
     transaction_new.modified_by = person.sub
     transaction_new.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
+    # update group with the ledger deltas
+    for k, v in transaction_new.ledger_deltas.items():
+        group.restricted.ledger[k] += v
+
+    # update group with the balance deltas
+    for p1, d in transaction_new.balance_deltas.items():
+        for p2, v in d.items():
+            group.restricted.balances[p1][p2] += v
+
     # save the transaction
     transaction_new.save()
+    group.save()
 
-    return jsonify({'id': transaction_new.id, 'msg': 'Transaction updated.'}), 200
+    return jsonify({'id': str(transaction_new.id), 'msg': 'Transaction updated.'}), 200
 
 
 @app.route('/transaction/delete', methods=['POST'])

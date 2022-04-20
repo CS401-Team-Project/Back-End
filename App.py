@@ -756,8 +756,6 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO: need to update all links in person and Transaction DB
-
     # update times
     time = datetime.datetime.now(datetime.timezone.utc)
     group.updated = time
@@ -765,7 +763,23 @@ def refresh_id(person):
 
     # save the group
     group.save()
+
+    # update all people in the group
+    for p in group.members:
+        person = Person.objects.get(sub=p)
+        person.groups.remove(old_group.id)
+        person.groups.append(group.id)
+        person.save()
+
+    # update all transactions in the group
+    for t in group.restricted.transactions:
+        transac = Transaction.objects.get(id=t)
+        transac.group = group.id
+        transac.save()
+
+    # delete the old group
     old_group.delete()
+
     return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
 
 

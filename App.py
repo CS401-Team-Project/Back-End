@@ -3,6 +3,7 @@ Main api request endpoint
 """
 
 import array
+import base64
 import datetime
 import os
 import traceback
@@ -1306,54 +1307,54 @@ def get_transaction(person):
     return jsonify({'msg': 'Retrieved transaction.', 'data': transaction}), 200
 
 
-
 @app.route('/receipt/add', methods=['POST'])
 @verify_token
+@print_info
 def add_receipt(person):
     """
     Create a receipt item and attach to transaction
     request must contain:
         - token
         - id: transaction id
-        - receipt: receipt id
+        - receipt: receipt image bytes string
     :param person: the person making the request
     """
     # need token, transactionID, receipt
 
-    try:
-        # get the request data
-        request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-        receipt = request_data['receipt']
+    # get the request data
+    request_data = request.get_json(force=True, silent=True)
+    transaction_id = request_data['id']
+    receipt = request_data['receipt']
 
-        # query the transaction
-        transaction = Transaction.objects.get(id=transaction_id)
-        group_id = transaction.group
+    # decode string to be passed to receipt object
+    receipt = base64.b64decode(receipt)
 
-        # query the group to make sure it exists
-        group = Group.objects.get(id=group_id)
+    # query the transaction
+    transaction = Transaction.objects.get(id=transaction_id)
+    group_id = transaction.group
 
-        # make sure the user belongs to the group
-        if person.sub not in group.people:
-            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+    # query the group to make sure it exists
+    group = Group.objects.get(id=group_id)
 
-        receipt = Receipt(receipt=receipt)
-        receipt.save()
+    # make sure the user belongs to the group
+    if person.sub not in group.members:
+        return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
-        # attach receipt id to transaction and update transaction modification
-        transaction.receipt = receipt.id
-        transaction.modified_by = person.sub
-        transaction.date_modified = datetime.datetime.utcnow()
-        transaction.save()
+    receipt = Receipt(receipt=receipt)
+    receipt.save()
 
-        return jsonify({'msg': 'Receipt was successfully added.'}), 200
+    # attach receipt id to transaction and update transaction modification
+    # transaction.receipt = receipt.id
+    # transaction.modified_by = person.sub
+    # transaction.date_modified = datetime.datetime.utcnow()
+    # transaction.save()
 
-    except Exception:
-        return jsonify({'msg': 'An unexpected error occurred.'}), 500
+    return jsonify({'msg': 'Receipt was successfully added.'}), 200
 
 
 @app.route('/receipt/get', methods=['POST'])
 @verify_token
+@print_info
 def get_receipt(person):
     """
     Get receipt item and return jsonified image id
@@ -1364,28 +1365,28 @@ def get_receipt(person):
     """
     # need token, transactionID, receipt
 
+    # get the request data
+    request_data = request.get_json(force=True, silent=True)
+    transaction_id = request_data['id']
+
+    # query the transaction
     try:
-        # get the request data
-        request_data = request.get_json(force=True, silent=True)
-        transaction_id = request_data['id']
-
-        # query the transaction
         transaction = Transaction.objects.get(id=transaction_id)
-        group_id = transaction.group
+    except Exception as exp:
+        return jsonify({'msg': 'An error occured when querying the transaction.'}), 500
 
-        # query the group to make sure it exists
-        group = Group.objects.get(id=group_id)
+    group_id = transaction.group
+    # query the group to make sure it exists
+    group = Group.objects.get(id=group_id)
 
-        # make sure the user belongs to the group
-        if person.sub not in group.people:
-            return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+    # make sure the user belongs to the group
+    if person.sub not in group.members:
+        return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
-        receipt = Receipt.objects.get(id=transaction.receipt)
+    receipt = Receipt.objects.get(id=transaction.receipt)
 
-        return jsonify(receipt), 200
+    return jsonify({'id': receipt}), 200
 
-    except Exception:
-        return jsonify({'msg': 'An unexpected error occurred.'}), 500
 
 ###############################################################################################################
 ###############################################################################################################

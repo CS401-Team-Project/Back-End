@@ -263,37 +263,45 @@ class Tests:
         assert self.group == response.json()['data']
 
         # create transaction
-        items = {
-            'name': "Borger",
-            'quantity': 1,
-            'desc': "borger",
-            'unit_price': 1.2,
-            'owned_by': self.user['data']['sub']
+        items = [
+            {
+                'name': 'Borger',
+                'quantity': 1,
+                'desc': 'borger',
+                'unit_price': 20,
+                'owned_by': self.user['data']['sub']
+            }
+        ]
+        who_paid = {
+            self.user['data']['sub']: 20
         }
-        paid = {
-            self.user['data']['sub']: 0.69
-        }
-        #items = json.dumps(j_items, indent=4)
+
         transaction_data = {
             'id': self.group['_id']['$oid'],
             'title': 'Test Receipt Transaction',
             'desc': 'Test Receipt Description',
             'vendor': 'Test Receipt Vendor',
-            'items': [items],
-            'who_paid': paid
+            'items': items,
+            'who_paid': who_paid
         }
         response = self.do_post('/transaction/create', transaction_data)
+        self.ensure_status_code_msg(response, 200, 'Transaction Created Successfully.')
 
-        print("response: ", response.json())
-        assert False
-        #assert response.json()['id'] == self.group['_id']['$oid']
-
-        group_id = response.json()['id']
+        transaction_id = response.json()['id']
 
         # create receipt
-        receipt = base64.b64encode(requests.get("https://www.nj.com/resizer/ycNpwLnxkoNI4sX-iTfKuOKAt44=/1280x0/smart/advancelocal-adapter-image-uploads.s3.amazonaws.com/image.nj.com/home/njo-media/width2048/img/somerset_impact/photo/sm0429petjpg-c4f705b7c265effc.jpg").content)
-        response = self.do_post('/receipt/add', {'id': group_id, 'receipt': receipt})
-        self.ensure_status_code_msg(response, 200, "Receipt successfully added.")
+        receipt = (
+            base64.b64encode(
+                requests.get(
+                    "https://dajf.org.uk/wp-content/uploads/Space-image-NEW.jpeg"
+                ).content
+            )
+        )
+
+        receipt = receipt.decode('utf-8')
+
+        response = self.do_post('/receipt/add', {'id': transaction_id, 'receipt': receipt})
+        self.ensure_status_code_msg(response, 200, "Receipt was successfully added.")
 
     # def test_get_receipt(self):
     #     response = self.do_post('/receipt/get')

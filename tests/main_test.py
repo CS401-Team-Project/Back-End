@@ -354,8 +354,3 @@ class Tests:
         return requests.post(
             f'{cls.base_url}{endpoint}', json=data, headers=cls.header
         )
-
-if __name__ == "__main__":
-    t = Tests()
-    t.setup_class()
-    t.test_group_refresh_id()

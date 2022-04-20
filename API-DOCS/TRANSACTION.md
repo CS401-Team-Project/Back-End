@@ -12,10 +12,6 @@
 
 #### [/transaction/delete](#transactiondelete-1)
 
-#### [/transaction/add-item](#transactionadd-item-1)
-
-#### [/transaction/remove-item](#transactionremove-item-1)
-
 #### [/item/info](#iteminfo-1)
 
 #### NOTE: This document is not yet complete.

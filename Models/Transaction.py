@@ -2,7 +2,6 @@
 EmbeddedDocuments for Transaction
 """
 import datetime
-
 from mongoengine import *
 
 
@@ -74,5 +73,5 @@ class Receipt(Document):
     """
     TODO - add docstring
     """
-    receipt = ImageField(required=True)
+    receipt = ImageField(required=False)
 

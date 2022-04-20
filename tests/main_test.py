@@ -3,6 +3,10 @@ import os
 import base64
 import requests
 
+TRANSACTION_ID = 0
+RECEIPT_ID = ""
+RECEIPT_STRING = ""
+
 
 class Tests:
     """
@@ -244,6 +248,9 @@ class Tests:
         assert self.group['_id'] not in response.json()['data']['groups']
 
     def test_add_receipt(self):
+        global TRANSACTION_ID
+        global RECEIPT_ID
+        global RECEIPT_STRING
         # create group
         group_data = {
             'name': 'Test Receipt Group',
@@ -287,33 +294,27 @@ class Tests:
         response = self.do_post('/transaction/create', transaction_data)
         self.ensure_status_code_msg(response, 200, 'Transaction Created Successfully.')
 
-        transaction_id = response.json()['id']
+        TRANSACTION_ID = response.json()['id']
 
         # create receipt
-        receipt = (
-            base64.b64encode(
-                requests.get(
-                    "https://dajf.org.uk/wp-content/uploads/Space-image-NEW.jpeg"
-                ).content
-            )
-        )
+        img_data = requests.get('https://www.cleverfiles.com/howto/wp-content/uploads/2018/03/minion.jpg').content
+        img_data_b64 = base64.b64encode(img_data)
+        RECEIPT_STRING = img_data_b64.decode('utf-8')
 
-        receipt = receipt.decode('utf-8')
-
-        response = self.do_post('/receipt/add', {'id': transaction_id, 'receipt': receipt})
+        response = self.do_post('/receipt/add', {'id': TRANSACTION_ID, 'receipt': RECEIPT_STRING})
         self.ensure_status_code_msg(response, 200, "Receipt was successfully added.")
 
-    # def test_get_receipt(self):
-    #     response = self.do_post('/receipt/get')
-    #
-    #     # delete the transaction
-    #     response = self.do_post('/transaction/delete', )
-    #     self.ensure_status_code_msg(response, 200, "Transaction successfully deleted.")
-    #
-    #     # delete the group
-    #     response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
-    #     self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
+        RECEIPT_ID = response.json()['id']
 
+    def test_get_receipt(self):
+        response = self.do_post('/receipt/get', {'id': TRANSACTION_ID})
+        f = open('receipt_1.txt', 'w')
+        f.write(response.json()['data'])
+        f.close()
+        f = open('receipt_2.txt', 'w')
+        f.write(RECEIPT_STRING)
+        f.close()
+        assert response.json()['data'] == RECEIPT_STRING
 
     def test_invite(self):
         # create a group with list of invites

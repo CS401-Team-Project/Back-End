@@ -2,16 +2,16 @@
 Main api request endpoint
 """
 
+import os
 import array
 import base64
+import tempfile
 import datetime
-import os
 import traceback
 from copy import deepcopy
 from functools import wraps
-from bson.objectid import ObjectId
-
 import flask_limiter.errors
+from bson.objectid import ObjectId
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from flask_cors import CORS
@@ -1075,7 +1075,7 @@ def delete_transaction(person):
     # make sure user is authorized
     if (
             not (
-                    group.settings.admin_overrule_delete_transaction
+                    group.restricted.permissions.admin_overrule_delete_transaction
                     and group.admin == person.sub
             )
             and not group.settings.user_delete_transaction
@@ -1324,10 +1324,10 @@ def add_receipt(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     transaction_id = request_data['id']
-    receipt = request_data['receipt']
 
-    # decode string to be passed to receipt object
-    receipt = base64.b64decode(receipt)
+    img_data_decoded = request_data['receipt'].encode('utf-8')
+    file_like = base64.b64decode(img_data_decoded)
+    receiptBytes = bytearray(file_like)
 
     # query the transaction
     transaction = Transaction.objects.get(id=transaction_id)
@@ -1340,16 +1340,23 @@ def add_receipt(person):
     if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
-    receipt = Receipt(receipt=receipt)
-    receipt.save()
+    receiptObject = Receipt()
+
+    with tempfile.TemporaryFile() as f:
+        f.write(receiptBytes)
+        f.flush()
+        f.seek(0)
+        receiptObject.receipt.put(f)
+
+    receiptObject.save()
 
     # attach receipt id to transaction and update transaction modification
-    # transaction.receipt = receipt.id
-    # transaction.modified_by = person.sub
-    # transaction.date_modified = datetime.datetime.utcnow()
-    # transaction.save()
+    transaction.receipt = receiptObject.id
+    transaction.modified_by = person.sub
+    transaction.date_modified = datetime.datetime.utcnow()
+    transaction.save()
 
-    return jsonify({'msg': 'Receipt was successfully added.'}), 200
+    return jsonify({'id': str(receiptObject.id), 'msg': 'Receipt was successfully added.'}), 200
 
 
 @app.route('/receipt/get', methods=['POST'])
@@ -1363,7 +1370,7 @@ def get_receipt(person):
         - id: transaction id
     :param person: the person making the request
     """
-    # need token, transactionID, receipt
+    # need token, transactionID
 
     # get the request data
     request_data = request.get_json(force=True, silent=True)
@@ -1383,9 +1390,13 @@ def get_receipt(person):
     if person.sub not in group.members:
         return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
-    receipt = Receipt.objects.get(id=transaction.receipt)
+    receiptObject = Receipt.objects.get(id=transaction.receipt)
 
-    return jsonify({'id': receipt}), 200
+    receiptBytes = receiptObject.receipt.read()
+    receiptb64 = base64.b64encode(receiptBytes)
+    receiptString = receiptb64.decode('utf-8')
+
+    return jsonify({'msg': 'Retrieved receipt.', 'data': receiptString}), 200
 
 
 ###############################################################################################################

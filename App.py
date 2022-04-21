@@ -515,7 +515,7 @@ def update_group(person):
     request must contain:
         - token
         - id: group id
-        - group: dictionary that holds all fields you want to change
+        - data: dictionary that holds all fields you want to change
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -523,6 +523,10 @@ def update_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
     data = request_data.get('data')
+
+    # check for group id
+    if group_id is None:
+        return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # get the group
     group = Group.objects(id=group_id)
@@ -547,7 +551,7 @@ def update_group(person):
                     if person.sub != group.admin:
                         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
                     for k3, v3 in v2.items():
-                        group[k][k3] = v3
+                        group[k][k2][k3] = v3
         else:
             group[k] = v
 
@@ -731,6 +735,7 @@ def remove_member(person):
 @app.route('/group/refresh-id', methods=['POST'])
 @verify_token
 @print_info
+@limiter.limit("1/second", override_defaults=False)
 def refresh_id(person):
     """
     refreshes the group id
@@ -757,8 +762,6 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO: need to update all links in person and Transaction DB
-
     # update times
     time = datetime.datetime.now(datetime.timezone.utc)
     group.updated = time
@@ -766,8 +769,23 @@ def refresh_id(person):
 
     # save the group
     group.save()
+
+    # update all people in the group
+    for p in group.members:
+        person = Person.objects.get(sub=p)
+        person.groups.remove(old_group.id)
+        person.groups.append(group.id)
+        person.save()
+
+    # update all transactions in the group
+    for t in group.restricted.transactions:
+        transac = Transaction.objects.get(id=t)
+        transac.group = group.id
+        transac.save()
+
+    # delete the old group
     old_group.delete()
-    return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
+    return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': str(group.id)}), 200
 
 
 ###############################################################################################################

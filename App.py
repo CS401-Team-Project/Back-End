@@ -302,7 +302,7 @@ def update_profile(person):
     profile = request_data['data']
 
     # check for unallowed fields
-    if set(profile.keys()).intersection({'email', 'sub', 'date_joined', 'picture', 'groups'}):
+    if set(profile.keys()).difference({'pay_with', 'first_name', 'last_name'}):
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # iterate through given fields

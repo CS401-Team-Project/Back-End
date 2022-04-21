@@ -313,7 +313,14 @@ def update_profile(person):
         # if key is pay_with must iterate through embedded dictionary
         elif k == 'pay_with':
             for k2, v2 in v.items():
+                if k2 == 'preferred' and v2 not in ['paypal', 'venmo', 'cashapp', '']:
+                    return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
                 person[k][k2] = v2
+
+            # check pay_with method was not skipped over
+            if person['pay_with']['preferred'] != '' and not person['pay_with'][person['pay_with']['preferred']]:
+                return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+
         # set the keyed value
         else:
             person[k] = v
@@ -1328,6 +1335,7 @@ def get_transaction(person):
 @app.route('/receipt/add', methods=['POST'])
 @verify_token
 @print_info
+@limiter.limit("10/minute", override_defaults=False)
 def add_receipt(person):
     """
     Create a receipt item and attach to transaction

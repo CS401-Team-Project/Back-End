@@ -111,8 +111,7 @@ class Tests:
             }
         }
         response = self.do_post('/user/update', {'data': data})
-        self.ensure_status_code_msg(response, 200, "Successfully updated the user profile.")
-        # TODO Change App.py to prevent a preferred payment method when the username hasn't been saved for that method
+        self.ensure_status_code_msg(response, 400, "Missing Required Field(s) / Invalid Type(s).")
 
         # assign nonsense as 'pay_with' parameter
         data = {

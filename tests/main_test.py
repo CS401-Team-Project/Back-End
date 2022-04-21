@@ -281,6 +281,56 @@ class Tests:
         response = self.do_post('/group/delete', {'id': self.group['_id']['$oid']})
         self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
 
+    def test_group_refresh_id(self):
+        """
+        test
+        :return:
+        """
+
+        # create a group
+        data = {
+            'name': 'test group name',
+            'desc': 'test group desc',
+        }
+        response = self.do_post('/group/create', {'data': data})
+        self.group = response.json()['data']
+        self.ensure_status_code_msg(response, 200, "Group successfully created.")
+
+        # add some extra stuff to check
+        data = {
+            'restricted': {
+                'permissions': {
+                    'admin_overrule_modify_transaction': False
+                }
+            }
+        }
+        response = self.do_post('/group/update', {'id':self.group['_id']['$oid'], 'data': data})
+        self.ensure_status_code_msg(response, 200, "Group successfully updated.")
+
+        # get new copy of group
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']})
+        self.group = response.json()['data']
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+
+        # check persons groups
+        response = self.do_post('/group/refresh-id', {'id': self.group['_id']['$oid']})
+        self.ensure_status_code_msg(response, 200, "Group's unique identifier successfully refreshed.")
+        id = response.json()['id']
+
+        # check to make sure id's are different and fields are the same
+        response = self.do_post('/group/info', {'id': id})
+        self.ensure_status_code_msg(response, 200, "Group successfully retrieved.")
+        group = response.json()['data']
+        assert self.group['name'] == group['name']
+        assert self.group['desc'] == group['desc']
+        assert self.group['restricted']['permissions']['admin_overrule_modify_transaction'] \
+               == group['restricted']['permissions']['admin_overrule_modify_transaction']
+        assert self.group['_id'] != group['_id']
+
+        # delete the group
+        response = self.do_post('/group/delete', {'id': id})
+        self.ensure_status_code_msg(response, 200, "Group successfully deleted.")
+
     # This test passed, DO NOT RUN unless you want your profile deleted for the tests.
     # def test_delete_profile(self):
     #     """

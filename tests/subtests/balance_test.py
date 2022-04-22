@@ -1,10 +1,7 @@
-import os
-
-import requests
-from pprint import pprint
+from start_test import *
 
 
-class BalanceTests:
+class BalanceTests(Tests):
     """
     Unit tests for the Back-End.
     """
@@ -29,7 +26,7 @@ class BalanceTests:
         assert is_api_ok, '/test_get endpoint reported a Connection Error. Is the API running?'
 
         ####################################################################################
-        token_file1: str = 'token.txt'
+        token_file1: str = 'tokens/token.txt'
         assert os.path.isfile(token_file1) == True, f'Token file not found ({token_file1}). ' \
                                                     f'Please create this file and fill it with your ' \
                                                     f'OAuth token from Front-End.'

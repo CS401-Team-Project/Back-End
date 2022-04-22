@@ -41,7 +41,7 @@ pytest main_test.py -v
 ## Testing balances 
 ```shell
 cd tests
-python3 test_balance.py
+python3 balance_test.py
 ```
 ### Requirements
 - have token.txt in directory

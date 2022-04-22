@@ -170,4 +170,7 @@ token2.txt
 
 # Unit Test - Image files
 test_image_*
+
+# Unit Test - Shell Location
+shell_loc.txt
 # End of https://www.toptal.com/developers/gitignore/api/python

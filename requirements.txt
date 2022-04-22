@@ -28,3 +28,5 @@ Flask-Limiter==2.2.0
 flask2postman==1.4.4
 bleach==4.1.0
 MongoSanitizer==0.0.1
+Pillow==9.1.0
+

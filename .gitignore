@@ -164,7 +164,10 @@ cython_debug/
 # Virtual environment
 .venv
 
-# Unit Test - Token file
+# Unit Test - Token files
 token.txt
 token2.txt
+
+# Unit Test - Image files
+test_image_*
 # End of https://www.toptal.com/developers/gitignore/api/python

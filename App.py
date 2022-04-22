@@ -2,16 +2,17 @@
 Main api request endpoint
 """
 
-import array
-import datetime
 import os
+import array
+import base64
+import tempfile
+import datetime
 import traceback
 import bleach
 from copy import deepcopy
 from functools import wraps
-from bson.objectid import ObjectId
-
 import flask_limiter.errors
+from bson.objectid import ObjectId
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from flask_cors import CORS
@@ -19,7 +20,7 @@ from flask import Flask, request, jsonify
 from flask_mongoengine import MongoEngine
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from Models import Person, Group, Item, TransactionItem, Transaction
+from Models import Person, Group, Item, TransactionItem, Transaction, Receipt
 from mongoengine import *
 from mongosanitizer.sanitizer import sanitize
 from bleach import clean
@@ -307,7 +308,7 @@ def update_profile(person):
     sanitize(profile)
 
     # check for unallowed fields
-    if set(profile.keys()).intersection({'email', 'sub', 'date_joined', 'picture', 'groups'}):
+    if set(profile.keys()).difference({'pay_with', 'first_name', 'last_name'}):
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     # iterate through given fields
@@ -318,9 +319,16 @@ def update_profile(person):
         # if key is pay_with must iterate through embedded dictionary
         elif k == 'pay_with':
             for k2, v2 in v.items():
-                if k2 in ['venmo', 'cashapp', 'paypal', 'preferred']:
-                    v2 = bleach.clean(v2)
-                    person[k][k2] = v2
+
+                if k2 == 'preferred' and v2 not in ['paypal', 'venmo', 'cashapp', '']:
+                    return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+                v2 = bleach.clean(v2)
+                person[k][k2] = v2
+
+            # check pay_with method was not skipped over
+            if person['pay_with']['preferred'] != '' and not person['pay_with'][person['pay_with']['preferred']]:
+                return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+              
         # set the keyed value
         else:
             if isinstance(v, str):
@@ -537,7 +545,7 @@ def update_group(person):
     request must contain:
         - token
         - id: group id
-        - group: dictionary that holds all fields you want to change
+        - data: dictionary that holds all fields you want to change
     :param person: the person making the request
     :return: returns json with group id and msg
     """
@@ -546,6 +554,10 @@ def update_group(person):
     sanitize(request_data)
     group_id = request_data.get('id')
     data = request_data.get('data')
+
+    # check for group id
+    if group_id is None:
+        return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     sanitize(group_id)
     sanitize(data)
@@ -579,8 +591,6 @@ def update_group(person):
                         else:
                             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         else:
-            #if k not in group:
-            #    pass
             if isinstance(v, str):
                 v = bleach.clean(v)
             group[k] = v
@@ -775,6 +785,7 @@ def remove_member(person):
 @app.route('/group/refresh-id', methods=['POST'])
 @verify_token
 @print_info
+@limiter.limit("1/second", override_defaults=False)
 def refresh_id(person):
     """
     refreshes the group id
@@ -803,8 +814,6 @@ def refresh_id(person):
     group = deepcopy(old_group)
     group.id = None
 
-    # TODO: need to update all links in person and Transaction DB
-
     # update times
     time = datetime.datetime.now(datetime.timezone.utc)
     group.updated = time
@@ -812,8 +821,23 @@ def refresh_id(person):
 
     # save the group
     group.save()
+
+    # update all people in the group
+    for p in group.members:
+        person = Person.objects.get(sub=p)
+        person.groups.remove(old_group.id)
+        person.groups.append(group.id)
+        person.save()
+
+    # update all transactions in the group
+    for t in group.restricted.transactions:
+        transac = Transaction.objects.get(id=t)
+        transac.group = group.id
+        transac.save()
+
+    # delete the old group
     old_group.delete()
-    return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': group.id}), 200
+    return jsonify({'msg': "Group's unique identifier successfully refreshed.", 'id': str(group.id)}), 200
 
 
 ###############################################################################################################
@@ -1164,7 +1188,7 @@ def delete_transaction(person):
     # make sure user is authorized
     if (
             not (
-                    group.settings.admin_overrule_delete_transaction
+                    group.restricted.permissions.admin_overrule_delete_transaction
                     and group.admin == person.sub
             )
             and not group.settings.user_delete_transaction
@@ -1398,6 +1422,100 @@ def get_transaction(person):
         return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
 
     return jsonify({'msg': 'Retrieved transaction.', 'data': transaction}), 200
+
+
+@app.route('/receipt/add', methods=['POST'])
+@verify_token
+@print_info
+@limiter.limit("10/minute", override_defaults=False)
+def add_receipt(person):
+    """
+    Create a receipt item and attach to transaction
+    request must contain:
+        - token
+        - id: transaction id
+        - receipt: receipt image bytes string
+    :param person: the person making the request
+    """
+    # need token, transactionID, receipt
+
+    # get the request data
+    request_data = request.get_json(force=True, silent=True)
+    transaction_id = request_data['id']
+
+    # retrieve receipt string and convert to bytearray for ImageField
+    img_data_decoded = request_data['receipt'].encode('utf-8')
+    file_like = base64.b64decode(img_data_decoded)
+    receiptBytes = bytearray(file_like)
+
+    # query the transaction
+    transaction = Transaction.objects.get(id=transaction_id)
+    group_id = transaction.group
+
+    # query the group to make sure it exists
+    group = Group.objects.get(id=group_id)
+
+    # make sure the user belongs to the group
+    if person.sub not in group.members:
+        return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+
+    receiptObject = Receipt()
+
+    with tempfile.TemporaryFile() as f:
+        f.write(receiptBytes)
+        f.flush()
+        f.seek(0)
+        receiptObject.receipt.put(f)
+
+    receiptObject.save()
+
+    # attach receipt id to transaction and update transaction modification
+    transaction.receipt = receiptObject.id
+    transaction.modified_by = person.sub
+    transaction.date_modified = datetime.datetime.utcnow()
+    transaction.save()
+
+    return jsonify({'id': str(receiptObject.id), 'msg': 'Receipt was successfully added.'}), 200
+
+
+@app.route('/receipt/get', methods=['POST'])
+@verify_token
+@print_info
+def get_receipt(person):
+    """
+    Get receipt item and return jsonified image id
+    request must contain:
+        - token
+        - id: transaction id
+    :param person: the person making the request
+    """
+    # need token, transactionID
+
+    # get the request data
+    request_data = request.get_json(force=True, silent=True)
+    transaction_id = request_data['id']
+
+    # query the transaction
+    try:
+        transaction = Transaction.objects.get(id=transaction_id)
+    except Exception as exp:
+        return jsonify({'msg': 'An error occured when querying the transaction.'}), 500
+
+    group_id = transaction.group
+    # query the group to make sure it exists
+    group = Group.objects.get(id=group_id)
+
+    # make sure the user belongs to the group
+    if person.sub not in group.members:
+        return jsonify({'msg': 'Token is unauthorized or transaction does not exist.'}), 404
+
+    # retrieve receipt object and convert to utf-8 string for JSON
+    receiptObject = Receipt.objects.get(id=transaction.receipt)
+    receiptBytes = receiptObject.receipt.read()
+    receiptb64 = base64.b64encode(receiptBytes)
+    receiptString = receiptb64.decode('utf-8')
+
+    return jsonify({'msg': 'Retrieved receipt.', 'data': receiptString}), 200
 
 
 ###############################################################################################################

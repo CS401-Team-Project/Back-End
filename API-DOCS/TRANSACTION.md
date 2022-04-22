@@ -72,7 +72,7 @@ axios.post('/transaction/info', {
 | desc     | String | Yes      | -                 | Transaction Description                                             |
 | vendor   | String | Yes      | ""                | Transaction Vendor                                                  |
 | date     | String | No       | Current Date-Time | Transaction Date                                                    |
-| who_paid | JSON   | Yes      | -                 | Dictionary of who paid and who much                                 |
+| who_paid | JSON   | Yes      | -                 | Dictionary of who paid and how much                                 |
 | items    | List   | Yes      | -                 | List of jsons, Each json should contain fields required for an item |
 
 ### `items` Fields:

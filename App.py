@@ -22,6 +22,7 @@ from flask_limiter.util import get_remote_address
 from Models import Person, Group, Item, TransactionItem, Transaction
 from mongoengine import *
 from mongosanitizer.sanitizer import sanitize
+from bleach import clean
 
 # setup the Flask server
 app = Flask(__name__)
@@ -395,7 +396,7 @@ def create_group(person):
     group_desc = data.get('desc')
     invite = data.get('invites')
     
-    group_name = bleach.clean(group_name)
+    group_name = clean(group_name)
     if isinstance(group_desc, str):
         group_desc = bleach.clean(group_desc)
     
@@ -575,7 +576,7 @@ def update_group(person):
                         if k3 in ['only_admin_invite','only_admin_remove_user','only_owner_modify_transaction','admin_overrule_modify_transaction','user_delete_transaction','only_owner_delete_transaction','admin_overrule_delete_transaction',]:
                             if isinstance(v3, bool):
                                 group[k][k2][k3] = v3
-                        else
+                        else:
                             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         else:
             #if k not in group:

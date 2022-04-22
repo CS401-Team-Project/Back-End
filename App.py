@@ -575,6 +575,8 @@ def update_group(person):
                         if k3 in ['only_admin_invite','only_admin_remove_user','only_owner_modify_transaction','admin_overrule_modify_transaction','user_delete_transaction','only_owner_delete_transaction','admin_overrule_delete_transaction',]:
                             if isinstance(v3, bool):
                                 group[k][k2][k3] = v3
+                        else
+                            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         else:
             #if k not in group:
             #    pass
@@ -884,6 +886,11 @@ def create_transaction(person):
     if items is None and who_paid is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
+    for v in who_paid.values():
+        if v <= 0:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+            
+
     # create the transaction
     transaction = Transaction(title=title,
                               group=group_id,
@@ -936,10 +943,6 @@ def create_transaction(person):
             if desc not None:
                 desc = bleach.clean(desc)
 
-
-            if not isinstance(total_price, float) or not isinstance(quantity, int) or not isinstance(unit_price, float):
-                transaction.delete()
-                return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
             if total_price is None and (quantity is None or unit_price is None):
                 transaction.delete()
@@ -1253,6 +1256,10 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     # check quantity for proper value
     if quantity < 1:
         raise Exception('Quantity cannot be less than 1.')
+
+    # check unit price for proper value
+    if unit_price < 0:
+        raise Exception('Unit price cannot be less than 0.')
 
     # query the item to make sure it exists
     item = _create_item(name, desc, unit_price)

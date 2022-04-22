@@ -883,11 +883,11 @@ def create_transaction(person):
     sanitize(items)
 
     
-    if title not None:
+    if title is not None:
         title = bleach.clean(title)
-    if desc not None:
+    if desc is not None:
         desc = bleach.clean(desc)
-    if vendor not None:
+    if vendor is not None:
         vendor = bleach.clean(vendor)
     
     
@@ -961,11 +961,11 @@ def create_transaction(person):
             unit_price = item.get('unit_price')
 
             
-            if person_id not None and isinstance(person_id, str):
+            if person_id is not None and isinstance(person_id, str):
                 person_id = bleach.clean(person_id)
-            if name not None:
+            if name is not None:
                 name = bleach.clean(name)
-            if desc not None:
+            if desc is not None:
                 desc = bleach.clean(desc)
 
 

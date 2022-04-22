@@ -8,6 +8,7 @@ import base64
 import tempfile
 import datetime
 import traceback
+import bleach
 from copy import deepcopy
 from functools import wraps
 import flask_limiter.errors
@@ -21,6 +22,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from Models import Person, Group, Item, TransactionItem, Transaction, Receipt
 from mongoengine import *
+from mongosanitizer.sanitizer import sanitize
+from bleach import clean
 
 # setup the Flask server
 app = Flask(__name__)
@@ -231,9 +234,9 @@ def register():
     # if person not in DB create them
     if person is None:
         # create the person object
-        person = Person(first_name=token_info['given_name'],
-                        last_name=token_info['family_name'],
-                        email=token_info['email'],
+        person = Person(first_name=bleach.clean(token_info['given_name'], strip=True),
+                        last_name=bleach.clean(token_info['family_name'], strip=True),
+                        email=bleach.clean(token_info['email'], strip=True),
                         sub=token_info['sub'],
                         picture=token_info['picture'])
 
@@ -265,7 +268,9 @@ def user_profile(person):
 
     # if sub was given to us
     if 'sub' in request_data and request_data.get('sub') != person.sub:
-        person = Person.objects(sub=request_data.get('sub'))
+        sub_sanitized = request_data.get('sub')
+        sanitize(sub_sanitized)
+        person = Person.objects(sub=sub_sanitized)
         if len(person) == 0:
             return jsonify({'msg': 'Token is unauthorized or user does not exist.'}), 404
         person = person.first()
@@ -300,6 +305,7 @@ def update_profile(person):
     # get fields
     request_data = request.get_json(force=True, silent=True)
     profile = request_data['data']
+    sanitize(profile)
 
     # check for unallowed fields
     if set(profile.keys()).difference({'pay_with', 'first_name', 'last_name'}):
@@ -313,16 +319,20 @@ def update_profile(person):
         # if key is pay_with must iterate through embedded dictionary
         elif k == 'pay_with':
             for k2, v2 in v.items():
+
                 if k2 == 'preferred' and v2 not in ['paypal', 'venmo', 'cashapp', '']:
                     return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+                v2 = bleach.clean(v2)
                 person[k][k2] = v2
 
             # check pay_with method was not skipped over
             if person['pay_with']['preferred'] != '' and not person['pay_with'][person['pay_with']['preferred']]:
                 return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
-
+              
         # set the keyed value
         else:
+            if isinstance(v, str):
+                v = bleach.clean(v)
             person[k] = v
 
     # save the person
@@ -385,12 +395,20 @@ def create_group(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     data = request_data.get('data')
+    sanitize(data)
+
     if 'name' not in data:
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
     group_name = data['name']
     group_desc = data.get('desc')
     invite = data.get('invites')
+    
+    group_name = clean(group_name)
+    if isinstance(group_desc, str):
+        group_desc = bleach.clean(group_desc)
+    
+
 
     # create the group
     group = Group(name=group_name, desc=group_desc, admin=person.sub)
@@ -418,6 +436,7 @@ def create_group(person):
         if not isinstance(invite, list):
             return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         for email in invite:
+            email = bleach.clean(email)
             group.restricted.invite_list.append(email)
 
             # save the invite in the person
@@ -449,6 +468,8 @@ def delete_group(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data['id']
+
+    sanitize(group_id)
 
     # query the group
     group = Group.objects(id=group_id)
@@ -499,6 +520,8 @@ def get_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
 
+    sanitize(group_id)
+
     if group_id is None:
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
 
@@ -528,12 +551,16 @@ def update_group(person):
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
+    sanitize(request_data)
     group_id = request_data.get('id')
     data = request_data.get('data')
 
     # check for group id
     if group_id is None:
         return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
+
+    sanitize(group_id)
+    sanitize(data)
 
     # get the group
     group = Group.objects(id=group_id)
@@ -558,8 +585,14 @@ def update_group(person):
                     if person.sub != group.admin:
                         return jsonify({'msg': 'Token is unauthorized or group does not exist.'}), 404
                     for k3, v3 in v2.items():
-                        group[k][k2][k3] = v3
+                        if k3 in ['only_admin_invite','only_admin_remove_user','only_owner_modify_transaction','admin_overrule_modify_transaction','user_delete_transaction','only_owner_delete_transaction','admin_overrule_delete_transaction',]:
+                            if isinstance(v3, bool):
+                                group[k][k2][k3] = v3
+                        else:
+                            return jsonify({'msg': 'Missing Required Field(s) / Invalid Type(s).'}), 400
         else:
+            if isinstance(v, str):
+                v = bleach.clean(v)
             group[k] = v
 
     group.restricted.date.update = datetime.datetime.now(datetime.timezone.utc)
@@ -589,6 +622,8 @@ def join_group(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
+
+    sanitize(group_id)
 
     # query the group
     group = Group.objects(id=group_id)
@@ -646,6 +681,8 @@ def invite_group(person):
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
     emails = request_data.get('emails')
+    
+    sanitize(group_id)
 
     # query the group
     group = Group.objects(id=group_id)
@@ -659,6 +696,8 @@ def invite_group(person):
 
     for email in emails:
         # check if already invited
+        sanitize(email)
+        email = bleach.clean(email)
         if email in group.restricted.invite_list:
             return jsonify({'msg': 'User is already a invited.'}), 409
 
@@ -694,14 +733,18 @@ def remove_member(person):
     request must contain:
         - token
         - id: group id
-        - userid: [optional] user to remove from the grou
+        - userid: [optional] user to remove from the group
     :param person: the person making the request
     """
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
     sub = request_data.get('userid')
-
+    
+    sanitize(group_id)
+    sanitize(sub)
+    if isinstance(sub, str):
+        sub = bleach.clean(sub)
     # query the group
     group = Group.objects(id=group_id)
     if len(group) == 0:
@@ -754,6 +797,8 @@ def refresh_id(person):
     # get the request data
     request_data = request.get_json(force=True, silent=True)
     group_id = request_data.get('id')
+
+    sanitize(group_id)
 
     # query the group
     group = Group.objects(id=group_id)
@@ -828,6 +873,26 @@ def create_transaction(person):
     who_paid = request_data.get('who_paid')
     date = request_data.get('date')
     items = request_data.get('items')
+    
+    sanitize(group_id)
+    sanitize(title)
+    sanitize(desc)
+    sanitize(vendor)
+    sanitize(who_paid)
+    sanitize(date)
+    sanitize(items)
+
+    
+    if title is not None:
+        title = bleach.clean(title)
+    if desc is not None:
+        desc = bleach.clean(desc)
+    if vendor is not None:
+        vendor = bleach.clean(vendor)
+    
+    
+    
+
 
     if group_id is None or title is None or items is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
@@ -845,6 +910,11 @@ def create_transaction(person):
     # can't calculate who_paid later on
     if items is None and who_paid is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+
+    for v in who_paid.values():
+        if v <= 0:
+            return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+            
 
     # create the transaction
     transaction = Transaction(title=title,
@@ -882,7 +952,6 @@ def create_transaction(person):
     if items is not None:
         for item in items:
             person_id = item.get('owed_by')
-
             # get the item data from the request
             name = item.get('name')
             desc = item.get('desc')
@@ -890,6 +959,15 @@ def create_transaction(person):
             total_price = item.get('total_price')
             quantity = item.get('quantity')
             unit_price = item.get('unit_price')
+
+            
+            if person_id is not None and isinstance(person_id, str):
+                person_id = bleach.clean(person_id)
+            if name is not None:
+                name = bleach.clean(name)
+            if desc is not None:
+                desc = bleach.clean(desc)
+
 
             if total_price is None and (quantity is None or unit_price is None):
                 transaction.delete()
@@ -977,6 +1055,11 @@ def update_transaction(person):
     transaction_id = request_data.get('id')
     transaction_data = request_data.get('data')
 
+    sanitize(transaction_id)
+    sanitize(transaction_data)
+
+    
+
     if transaction_id is None or transaction_data is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
@@ -1010,6 +1093,8 @@ def update_transaction(person):
     # save the new transaction
     transaction_new.save()
 
+    #ASK_
+    #unsure about this bc it is a dict of people
     if 'who_paid' in transaction_data:
         transaction_new.who_paid = transaction_data['who_paid']
 
@@ -1047,15 +1132,17 @@ def update_transaction(person):
                 # this assumes the user will pass the item information in the item field rather than the id
                 _add_item_to_transaction(person, transaction_new,
                                          quantity=transaction_item['quantity'],
-                                         person_id=transaction_item['person'],
-                                         name=transaction_item['item']['name'],
-                                         desc=transaction_item['item']['desc'],
+                                         person_id=bleach.clean(transaction_item['person']),
+                                         name=bleach.clean(transaction_item['item']['name']),
+                                         desc=bleach.clean(transaction_item['item']['desc']),
                                          unit_price=transaction_item['item']['unit_price'])
                 transaction_new.reload()
 
         # if normal string field
         else:
             # TODO - cross our fingers this will work
+            if isinstance(v, str):
+                v = bleach.clean(v)
             transaction_new[k] = v
 
     # update the last modified by
@@ -1085,6 +1172,7 @@ def delete_transaction(person):
 
     if transaction_id is None:
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
+    sanitize(transaction_id)
 
     # query the transaction
     transaction = Transaction.objects.get(id=transaction_id)
@@ -1193,6 +1281,10 @@ def _add_item_to_transaction(person, transaction, quantity, person_id, name, des
     # check quantity for proper value
     if quantity < 1:
         raise Exception('Quantity cannot be less than 1.')
+
+    # check unit price for proper value
+    if unit_price < 0:
+        raise Exception('Unit price cannot be less than 0.')
 
     # query the item to make sure it exists
     item = _create_item(name, desc, unit_price)

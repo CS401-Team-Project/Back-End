@@ -206,6 +206,71 @@ class BalanceTests:
         assert response.json()['data']['restricted']['balances'][self.user2['data']['sub']][
                    self.user1['data']['sub']] == 0
 
+
+    def test_update_transaction(self):
+        # create a group with list of invites
+        data = {
+            'name': 'test group name',
+            'desc': 'test group description',
+            'invites': [self.user2['data']['email']]
+        }
+        response = self.do_post('/group/create', {'data': data}, self.header1)
+        assert response.status_code == 200
+        self.group = response.json()['data']
+
+        # join the group with the second user
+        response = self.do_post('/group/join', {'id': self.group['_id']['$oid']}, self.header2)
+        assert response.status_code == 200
+
+        # make sure the group has been joined and invites are clear
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']}, self.header1)
+        assert response.status_code == 200
+        assert len(response.json()['data']['members']) == 2
+        assert len(response.json()['data']['restricted']['invite_list']) == 0
+
+        ####################################################################################
+        ## Transaction 1
+        who_paid = {self.user1['data']['sub']: 40}
+        items = [
+            {'owed_by': self.user1['data']['sub'], 'name': 'item1', 'desc': 'item1', 'unit_price': 20, 'quantity': 1},
+            {'owed_by': self.user2['data']['sub'], 'name': 'item2', 'desc': 'item2', 'unit_price': 20, 'quantity': 1},
+        ]
+        t1 = {
+            'id': self.group['_id']['$oid'],
+            'title': 'transaction1',
+            'desc': 'transaction1 desc',
+            'who_paid': who_paid,
+            'items': items
+        }
+        response = self.do_post('/transaction/create', t1, self.header1)
+        t1_id = response.json()['id']
+        assert response.status_code == 200
+
+        # make sure the group has been joined and invites are clear
+        response = self.do_post('/group/info', {'id': self.group['_id']['$oid']}, self.header1)
+        assert response.status_code == 200
+        assert {'$oid': t1_id} in response.json()['data']['restricted']['transactions']
+        ## Update Transaction 1
+        who_paid = {self.user2['data']['sub']: 40}
+        t1_update = {
+            'id': t1_id,
+            'data': {
+                'who_paid': who_paid
+            }
+        }
+        response = self.do_post('/transaction/update', t1_update, self.header1)
+        assert response.status_code == 200
+        t1_update_id = response.json()['id']
+
+        # check if the balances are correct
+        response = self.do_post('/transaction/info', {'id': t1_update_id}, self.header1)
+        pprint(response.json())
+        # assert response.status_code == 200
+        # assert response.json()['data']['restricted']['balances'][self.user1['data']['sub']][
+        #            self.user2['data']['sub']] == 0
+        # assert response.json()['data']['restricted']['balances'][self.user2['data']['sub']][
+        #            self.user1['data']['sub']] == 0
+
     @classmethod
     def do_post(cls, endpoint, data, header):
         """
@@ -220,4 +285,4 @@ class BalanceTests:
 if '__main__' == __name__:
     test = BalanceTests()
     test.setup_class()
-    test.test_balance()
+    test.test_update_transaction()

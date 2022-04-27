@@ -927,9 +927,6 @@ def create_transaction(person):
         _delete_transaction(group, transaction)
         return jsonify({'msg': 'Missing required field(s) or invalid type(s).'}), 400
 
-    # # update the ledger
-    # for k, v in transaction.ledger_deltas.items():
-    #     group.restricted.ledger[k] += v
 
     # update group with the ledger deltas
     for k, v in transaction.ledger_deltas.items():
@@ -939,14 +936,6 @@ def create_transaction(person):
     for p1, d in transaction.balance_deltas.items():
         for p2, v in d.items():
             group.restricted.balances[p1][p2] += v
-    # update the balance deltas
-    print('=' * 30)
-    print(transaction.ledger_deltas)
-    print(transaction.balance_deltas)
-    print('-' * 30)
-    print(group.restricted.ledger)
-    print(group.restricted.balances)
-    print('=' * 30)
 
     # save the transaction
     transaction.save()
@@ -984,7 +973,8 @@ def update_transaction(person):
     transaction = Transaction.objects.get(id=transaction_id)
 
     # perform a deep copy of the old transaction
-    transaction_new = Transaction(**transaction)  # TODO - this may not work, may need to copy another way
+    transaction_new = deepcopy(transaction)
+    transaction_new.id = None
 
     # query the group to make sure it exists
     group_id = transaction.group
@@ -996,22 +986,25 @@ def update_transaction(person):
 
     # make sure user is authorized
     if not (
-            group.settings.admin_overrule_transaction and group.admin == person.sub
+            group.restricted.permissions.admin_overrule_modify_transaction and group.admin == person.sub
     ) and not (
-            group.settings.only_owner_modify_transaction
+            group.restricted.permissions.only_owner_modify_transaction
             and transaction.created_by == person.sub
     ):
         return jsonify({'msg': 'Token is unauthorized.'}), 404
 
     # delete the previous transaction and unlink it from the group
-    group.restricted.transactions.remove(transaction_id)
+    group.restricted.transactions.remove(ObjectId(transaction_id))
     _delete_transaction(group, transaction)
 
     # save the new transaction
     transaction_new.save()
 
+    transaction_new.items = []
     if 'who_paid' in transaction_data:
         transaction_new.who_paid = transaction_data['who_paid']
+    else:
+        transaction_new.who_paid = transaction.who_paid
 
     # init transaction deltas
     balance_deltas = {}
@@ -1026,46 +1019,69 @@ def update_transaction(person):
     # init the ledger deltas
     for p in group.members:
         if p in transaction_new.who_paid:
-            transaction_new.ledger_deltas[p] = transaction.who_paid[p]
+            transaction_new.ledger_deltas[p] = transaction_new.who_paid[p]
         else:
             transaction_new.ledger_deltas[p] = 0
     transaction_new.save()
 
     # add it to the group
-    group.transactions.append(transaction_new.id)
-    group.save()
+    group.restricted.transactions.append(transaction_new.id)
 
     # update the fields from the original transaction within the new transaction
+
     for k, v in transaction_data.items():
         # if the key is equal to items that should not be modified, ignore it
-        if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price']:
+        if k in ['group', 'date_created', 'created_by', 'date_modified', 'modified_by', 'total_price', 'who_paid']:
             continue
-        # if user re-writing items
-        elif k == 'items':
-            # add the new transaction items
-            for transaction_item in v:
-                # this assumes the user will pass the item information in the item field rather than the id
-                _add_item_to_transaction(person, transaction_new,
-                                         quantity=transaction_item['quantity'],
-                                         person_id=transaction_item['person'],
-                                         name=transaction_item['item']['name'],
-                                         desc=transaction_item['item']['desc'],
-                                         unit_price=transaction_item['item']['unit_price'])
-                transaction_new.reload()
-
         # if normal string field
         else:
-            # TODO - cross our fingers this will work
             transaction_new[k] = v
+
+    # re add the items to the transaction
+    if 'items' in transaction_data:
+        items = list(transaction_data['items'])
+    else:
+        items = []
+        for item in list(transaction.items):
+            item = item.to_mongo().to_dict()
+            print(item)
+            i = Item.objects.get(id=item['item_id'])
+            item['unit_price'] = i.unit_price
+            item['name'] = i.name
+            item['desc'] = i.desc
+            _delete_item(i)
+            items.append(item)
+    total_used = 0
+
+    for transaction_item in items:
+        # this assumes the user will pass the item information in the item field rather than the id
+        total_used += (transaction_item['quantity'] * transaction_item['unit_price'])
+        _add_item_to_transaction(person, transaction_new,
+                                 quantity=transaction_item['quantity'],
+                                 person_id=transaction_item['person'],
+                                 name=transaction_item['name'],
+                                 desc=transaction_item['desc'],
+                                 unit_price=transaction_item['unit_price'])
+        transaction_new.reload()
 
     # update the last modified by
     transaction_new.modified_by = person.sub
     transaction_new.date_modified = datetime.datetime.now(datetime.timezone.utc)
 
+    # update group with the ledger deltas
+    for k, v in transaction_new.ledger_deltas.items():
+        group.restricted.ledger[k] += v
+
+    # update group with the balance deltas
+    for p1, d in transaction_new.balance_deltas.items():
+        for p2, v in d.items():
+            group.restricted.balances[p1][p2] += v
+
     # save the transaction
     transaction_new.save()
+    group.save()
 
-    return jsonify({'id': transaction_new.id, 'msg': 'Transaction updated.'}), 200
+    return jsonify({'id': str(transaction_new.id), 'msg': 'Transaction updated.'}), 200
 
 
 @app.route('/transaction/delete', methods=['POST'])

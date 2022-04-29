@@ -509,6 +509,20 @@ def get_group(person):
     if person.sub not in group.members:
         group.restricted = None
 
+    group = group.to_mongo().to_dict()
+
+    members = []
+    for m in group['members']:
+        p = Person.objects.get(sub=m)
+        p = {
+            'sub': p.sub,
+            'first_name': p.first_name,
+            'last_name': p.last_name
+        }
+        members.append(p)
+    group['members'] = members
+    group['_id'] = {'$oid': str(group['_id'])}
+    print(group)
     # return the group
     return jsonify({'msg': 'Group successfully retrieved.', 'data': group}), 200
 

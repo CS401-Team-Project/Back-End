@@ -522,7 +522,6 @@ def get_group(person):
         members.append(p)
     group['members'] = members
     group['_id'] = {'$oid': str(group['_id'])}
-    print(group)
     # return the group
     return jsonify({'msg': 'Group successfully retrieved.', 'data': group}), 200
 

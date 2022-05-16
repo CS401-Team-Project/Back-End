@@ -513,13 +513,16 @@ def get_group(person):
 
     members = []
     for m in group['members']:
-        p = Person.objects.get(sub=m)
-        p = {
-            'sub': p.sub,
-            'first_name': p.first_name,
-            'last_name': p.last_name
-        }
-        members.append(p)
+        try:
+            p = Person.objects.get(sub=m)
+            p = {
+                'sub': p.sub,
+                'first_name': p.first_name,
+                'last_name': p.last_name
+            }
+            members.append(p)
+        except:
+            continue
     group['members'] = members
     group['_id'] = {'$oid': str(group['_id'])}
     # return the group

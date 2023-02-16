@@ -15,7 +15,7 @@ pymongo==4.0
 randomname==0.1.5
 six==1.16.0
 termcolor==1.1.0
-Werkzeug==2.0.3
+Werkzeug==2.2.3
 WTForms==3.0.1
 google-api-python-client==2.41.0
 google-auth-httplib2==0.1.0
